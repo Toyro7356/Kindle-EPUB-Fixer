@@ -5,7 +5,6 @@ Kindle EPUB Fixer — Tkinter GUI (v1.0.0)
 
 import ctypes
 import os
-import struct
 import sys
 import tempfile
 import threading
@@ -30,49 +29,24 @@ except Exception:
         pass
 
 # ---------------------------------------------------------------------------
-# Drag & Drop support (Windows WM_DROPFILES)
+# Drag & Drop support (tkinterdnd2)
 # ---------------------------------------------------------------------------
-WM_DROPFILES = 0x0233
-GWL_WNDPROC = -4
-HDROP = ctypes.c_void_p
-DragAcceptFiles = ctypes.windll.shell32.DragAcceptFiles
-DragQueryFile = ctypes.windll.shell32.DragQueryFileW
-DragFinish = ctypes.windll.shell32.DragFinish
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
 
-WNDPROC = ctypes.WINFUNCTYPE(
-    ctypes.c_long, ctypes.c_int, ctypes.c_uint, ctypes.c_ulonglong, ctypes.c_longlong
-)
-user32 = ctypes.windll.user32
-GetWindowLong = user32.GetWindowLongW
-SetWindowLong = user32.SetWindowLongW
-CallWindowProc = user32.CallWindowProcW
+    _TKDND_AVAILABLE = True
+except Exception:
+    _TKDND_AVAILABLE = False
+    TkinterDnD = None  # type: ignore[misc,assignment]
+    DND_FILES = None  # type: ignore[misc,assignment]
 
-
-def _make_drop_handler(target_list: List[str], listbox: tk.Listbox) -> WNDPROC:
-    original_wndproc = GetWindowLong(listbox.winfo_id(), GWL_WNDPROC)
-
-    def wndproc(hwnd: int, msg: int, wparam: int, lparam: int) -> int:  # type: ignore[misc]
-        if msg == WM_DROPFILES:
-            hdrop = HDROP(wparam)
-            count = DragQueryFile(hdrop, 0xFFFFFFFF, None, 0)
-            for i in range(count):
-                buf = ctypes.create_unicode_buffer(260)
-                DragQueryFile(hdrop, i, buf, 260)
-                file_path = buf.value
-                if file_path.lower().endswith(".epub") and file_path not in target_list:
-                    target_list.append(file_path)
-                    listbox.insert("end", Path(file_path).name)
-            DragFinish(hdrop)
-            return 0
-        return CallWindowProc(original_wndproc, hwnd, msg, wparam, lparam)
-
-    return WNDPROC(wndproc)
+_BaseTk = TkinterDnD.Tk if _TKDND_AVAILABLE else tk.Tk
 
 
 # ---------------------------------------------------------------------------
 # GUI
 # ---------------------------------------------------------------------------
-class KindleEpubFixerGUI(tk.Tk):
+class KindleEpubFixerGUI(_BaseTk):
     def __init__(self) -> None:
         super().__init__()
         self.title(f"{__title__} v{__version__}")
@@ -85,6 +59,9 @@ class KindleEpubFixerGUI(tk.Tk):
         self._log_queue: List[str] = []
         self._log_lock = threading.Lock()
         self._after_id: Optional[str] = None
+        self._font_event = threading.Event()
+        self._font_result: Optional[Dict[str, str]] = None
+        self._cancelled = False
 
         self._setup_theme()
         self._build_ui()
@@ -209,6 +186,7 @@ class KindleEpubFixerGUI(tk.Tk):
 
         self.start_btn = ttk.Button(action_frame, text="开始处理", command=self._on_start)
         self.start_btn.grid(row=0, column=1, padx=(0, 8))
+        self._is_running = False
 
         ttk.Button(action_frame, text="打开输出目录", command=self._on_open_output_dir).grid(row=0, column=2)
 
@@ -221,10 +199,20 @@ class KindleEpubFixerGUI(tk.Tk):
         self.geometry(f"{width}x{height}+{x}+{y}")
 
     def _enable_drop(self) -> None:
-        hwnd = self.file_listbox.winfo_id()
-        DragAcceptFiles(hwnd, True)
-        self._drop_wndproc = _make_drop_handler(self.input_files, self.file_listbox)
-        SetWindowLong(hwnd, GWL_WNDPROC, self._drop_wndproc)
+        if not _TKDND_AVAILABLE:
+            return
+        self.file_listbox.drop_target_register(DND_FILES)
+        self.file_listbox.dnd_bind("<<Drop>>", self._on_drop)
+
+    def _on_drop(self, event=None) -> None:
+        if event is None or not event.data:
+            return
+        files = self.tk.splitlist(event.data)
+        for f in files:
+            f = f.strip()
+            if f.lower().endswith(".epub") and f not in self.input_files:
+                self.input_files.append(f)
+                self.file_listbox.insert("end", Path(f).name)
 
     # -----------------------------------------------------------------------
     # Output entry placeholder
@@ -308,6 +296,8 @@ class KindleEpubFixerGUI(tk.Tk):
     # Processing
     # -----------------------------------------------------------------------
     def _on_start(self) -> None:
+        if self._is_running:
+            return
         if not self.input_files:
             messagebox.showwarning("提示", "请先添加 EPUB 文件")
             return
@@ -317,13 +307,66 @@ class KindleEpubFixerGUI(tk.Tk):
             out_dir = ""
         out_dir = out_dir or None
 
-        self.start_btn.config(state="disabled")
+        self._is_running = True
+        self.start_btn.config(text="取消处理", command=self._on_cancel)
         self.progress["value"] = 0
+        self._cancelled = False
         self.log_text.config(state="normal")
         self.log_text.delete("1.0", "end")
         self.log_text.config(state="disabled")
 
-        # 字体缺失预扫描（主线程中执行，确保对话框安全）
+        thread = threading.Thread(
+            target=self._worker,
+            args=(out_dir,),
+            daemon=True,
+        )
+        thread.start()
+
+    def _prompt_font_import(self, all_missing: set) -> None:
+        """在主线程中执行字体导入对话框。"""
+        families_str = ", ".join(sorted(all_missing))
+        answer = messagebox.askyesnocancel(
+            "缺失字体",
+            f"以下字体在 EPUB 中缺失且非 Kindle 内置字体：\n{families_str}\n\n是否从本地导入这些字体？",
+        )
+
+        imported: Dict[str, str] = {}
+        if answer is True:
+            families = sorted(all_missing)
+            for idx, family in enumerate(families):
+                fp = filedialog.askopenfilename(
+                    title=f"选择字体文件: {family} ({idx+1}/{len(families)})",
+                    filetypes=[
+                        ("Font files", "*.ttf *.otf *.woff *.woff2"),
+                        ("All files", "*.*"),
+                    ],
+                )
+                if fp:
+                    imported[family] = fp
+                    self._log(f"用户选择导入字体: {family} -> {fp}")
+                else:
+                    # 用户取消了选择，询问是否继续为剩余字体导入
+                    remaining = families[idx + 1:]
+                    if remaining:
+                        cont = messagebox.askyesno(
+                            "跳过剩余字体",
+                            f"未选择 {family} 的字体文件。\n\n是否继续为剩余的 {len(remaining)} 个字体导入？",
+                        )
+                        if not cont:
+                            break
+        elif answer is False:
+            self._log("用户选择不导入缺失字体，将继续处理（使用回退字体）")
+        else:  # answer is None (取消 / 点叉)
+            self._log("用户取消处理任务")
+            self._cancelled = True
+
+        self._font_result = imported
+        self._font_event.set()
+
+    def _worker(self, out_dir: Optional[str]) -> None:
+        total = len(self.input_files)
+
+        # 1. 字体缺失预扫描（在工作线程中执行，避免 UI 卡顿）
         all_missing: set = set()
         per_file_missing: Dict[str, set] = {}
         self._log("正在扫描字体引用...")
@@ -339,42 +382,20 @@ class KindleEpubFixerGUI(tk.Tk):
                 self._log(f"[Warning] 字体预扫描失败 {Path(epub_path).name}: {e}", "warn")
 
         imported_fonts_map: Dict[str, str] = {}
-        if all_missing:
-            families_str = ", ".join(sorted(all_missing))
-            if messagebox.askyesno(
-                "缺失字体",
-                f"以下字体在 EPUB 中缺失且非 Kindle 内置字体：\n{families_str}\n\n是否从本地导入这些字体？",
-            ):
-                for family in sorted(all_missing):
-                    fp = filedialog.askopenfilename(
-                        title=f"选择字体文件: {family}",
-                        filetypes=[
-                            ("Font files", "*.ttf *.otf *.woff *.woff2"),
-                            ("All files", "*.*"),
-                        ],
-                    )
-                    if fp:
-                        imported_fonts_map[family] = fp
-                        self._log(f"用户选择导入字体: {family} -> {fp}")
+        if all_missing and not self._cancelled:
+            self._font_event.clear()
+            self._font_result = None
+            self.after(0, lambda: self._prompt_font_import(all_missing))
+            self._font_event.wait()
+            imported_fonts_map = self._font_result or {}
 
-        per_file_imports: Dict[str, Dict[str, str]] = {}
-        for epub_path in self.input_files:
-            missing = per_file_missing.get(epub_path, set())
-            per_file_imports[epub_path] = {
-                f: imported_fonts_map[f] for f in missing if f in imported_fonts_map
-            }
-
-        thread = threading.Thread(
-            target=self._worker,
-            args=(out_dir, per_file_imports),
-            daemon=True,
-        )
-        thread.start()
-
-    def _worker(self, out_dir: Optional[str], per_file_imports: Dict[str, Dict[str, str]]) -> None:
-        total = len(self.input_files)
+        # 2. 逐文件处理
         success = 0
         for idx, epub_path in enumerate(self.input_files, start=1):
+            if self._cancelled:
+                self._log("处理已取消")
+                break
+
             basename = Path(epub_path).name
             self._log(f"[{idx}/{total}] 开始处理: {basename}")
 
@@ -383,7 +404,8 @@ class KindleEpubFixerGUI(tk.Tk):
             else:
                 output_path = None
 
-            imported = per_file_imports.get(epub_path, {})
+            missing_for_file = per_file_missing.get(epub_path, set())
+            imported = {k: imported_fonts_map[k] for k in missing_for_file if k in imported_fonts_map}
             try:
                 result = process_epub(
                     epub_path,
@@ -396,15 +418,27 @@ class KindleEpubFixerGUI(tk.Tk):
             except Exception as exc:
                 self._log(f"  -> 错误: {exc}", "error")
 
-            progress = (idx / total) * 100
+            progress = ((idx if not self._cancelled else idx - 1) / total) * 100
             self.after(0, lambda v=progress: self.progress.config(value=v))
 
         self.after(0, self._on_finished, success, total)
 
+    def _on_cancel(self) -> None:
+        if not self._is_running:
+            return
+        self._cancelled = True
+        self._font_event.set()
+        self._log("用户请求取消任务...", "warn")
+
     def _on_finished(self, success: int, total: int) -> None:
-        self.start_btn.config(state="normal")
-        self.progress["value"] = 100
-        messagebox.showinfo("处理完成", f"成功 {success} / 总计 {total}")
+        self._is_running = False
+        self.start_btn.config(text="开始处理", command=self._on_start, state="normal")
+        if self.progress["value"] < 100:
+            self.progress["value"] = 100
+        if self._cancelled:
+            messagebox.showinfo("处理取消", f"已完成 {success} / 总计 {total}")
+        else:
+            messagebox.showinfo("处理完成", f"成功 {success} / 总计 {total}")
 
 
 def main() -> None:

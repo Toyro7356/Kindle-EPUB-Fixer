@@ -8,7 +8,7 @@ from .epub_io import opf_dir
 from .utils import write_xhtml_doc
 
 
-def remove_scripts_from_novel(opf_path: str) -> int:
+def remove_scripts_from_book(opf_path: str) -> int:
     """
     从小说 XHTML 中移除 <script> 标签与事件属性，并清理 manifest 中的脚本引用。
     Kobo 等平台的脚本在 Kindle 上无意义，且可能触发 ET 崩溃。
@@ -53,6 +53,7 @@ def remove_scripts_from_novel(opf_path: str) -> int:
             fixed += 1
 
     # 清理 manifest 中的 script 条目
+    script_items = []
     if manifest is not None:
         script_items = manifest.xpath(
             "//opf:manifest/opf:item[contains(@media-type,'javascript') or contains(@href,'.js')]",
@@ -61,7 +62,16 @@ def remove_scripts_from_novel(opf_path: str) -> int:
         for si in script_items:
             manifest.remove(si)
 
-    if fixed or script_items:
+    # 删除磁盘上遗留的物理 JS 文件
+    deleted_js = 0
+    for js_path in base_dir.rglob("*.js"):
+        try:
+            js_path.unlink()
+            deleted_js += 1
+        except OSError:
+            pass
+
+    if fixed or script_items or deleted_js:
         tree.write(opf_path, encoding="utf-8", xml_declaration=True)
 
     return fixed

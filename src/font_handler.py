@@ -209,6 +209,146 @@ def scan_fonts(temp_dir: str) -> Tuple[Dict[str, Dict], Set[str], list]:
     return embedded, missing, css_files
 
 
+def _get_book_language(opf_path: str) -> str:
+    tree = etree.parse(opf_path)
+    root = tree.getroot()
+    metadata = root.find(f"{{{NS_OPF}}}metadata")
+    if metadata is not None:
+        for lang in metadata.findall(f"{{{NS_OPF}}}language"):
+            text = (lang.text or "").strip().lower()
+            if text:
+                return text
+        for child in metadata:
+            if child.tag == "language" or child.tag.endswith("}language"):
+                text = (child.text or "").strip().lower()
+                if text:
+                    return text
+    return ""
+
+
+def _fallback_font_family(language: str) -> str:
+    if language.startswith("zh"):
+        return "宋体, SimSun, serif"
+    if language.startswith("ja"):
+        return "游明朝, Yu Mincho, serif"
+    if language.startswith("ko"):
+        return "Batang, serif"
+    return "serif"
+
+
+def _sanitize_css_font_family(css_content: str, missing: Set[str], fallback: str) -> str:
+    """将 CSS 中 font-family 里的缺失字体替换为回退字体，保留原始引号格式。"""
+
+    def _replace_decl(m):
+        prefix = m.group(1)
+        values = m.group(2)
+        parts = [p.strip() for p in values.split(",")]
+        # 只移除确实缺失的字体，保留 Kindle 内置字体和现有自定义字体
+        kept = []
+        for p in parts:
+            name = p.strip('"\'').strip().lower()
+            if name not in missing:
+                kept.append(p)  # 保留原始格式（含引号）
+        if kept:
+            return prefix + ", ".join(kept)
+        return prefix + fallback
+
+    # 匹配 font-family: ... ;（支持无分号、inline style、CSS block 等多种边界）
+    pattern = re.compile(
+        r'(font-family\s*:\s*)([^;}\n]+?)(?=[;}\n]|$)',
+        re.IGNORECASE,
+    )
+    return pattern.sub(_replace_decl, css_content)
+
+
+def sanitize_missing_fonts(
+    temp_dir: str,
+    missing: Set[str],
+    log: LogCallback = _default_log,
+) -> None:
+    """
+    清理缺失的外部字体引用：
+    1. 从 CSS 中移除缺失的 @font-face 规则
+    2. 将 CSS/HTML 中 font-family 里的缺失字体替换为 Kindle 内置回退字体
+    """
+    if not missing:
+        return
+
+    opf_path = find_opf(temp_dir)
+    base_dir = Path(opf_dir(opf_path))
+    language = _get_book_language(opf_path)
+    fallback = _fallback_font_family(language)
+
+    _, _, css_files = scan_fonts(temp_dir)
+
+    # ---- 1. 从 CSS 中移除缺失的 @font-face ----
+    removed_faces = 0
+    for css_path in css_files:
+        content = css_path.read_text(encoding="utf-8")
+        original = content
+        for family in missing:
+            pattern = re.compile(
+                rf'@font-face\s*\{{[^}}]*font-family\s*:\s*["\']?{re.escape(family)}["\']?\s*;[^}}]*\}}',
+                re.IGNORECASE,
+            )
+            content, count = pattern.subn("", content)
+            removed_faces += count
+        if content != original:
+            css_path.write_text(content, encoding="utf-8")
+
+    if removed_faces:
+        log(f"已移除 {removed_faces} 个缺失字体的 @font-face 声明")
+
+    # ---- 2. 替换 CSS 中的 font-family ----
+    replaced_css = 0
+    for css_path in css_files:
+        content = css_path.read_text(encoding="utf-8")
+        original = content
+        content = _sanitize_css_font_family(content, missing, fallback)
+        if content != original:
+            css_path.write_text(content, encoding="utf-8")
+            replaced_css += 1
+
+    if replaced_css:
+        log(f"已在 {replaced_css} 个 CSS 文件中替换缺失字体为回退字体")
+
+    # ---- 3. 替换 HTML inline style 中的 font-family ----
+    tree = etree.parse(opf_path)
+    xhtml_items = tree.xpath(
+        "//opf:manifest/opf:item[@media-type='application/xhtml+xml']",
+        namespaces={"opf": NS_OPF},
+    )
+    replaced_html = 0
+    for item in xhtml_items:
+        href = item.get("href")
+        if not href:
+            continue
+        fp = base_dir / href.replace("/", os.sep)
+        if not fp.exists():
+            continue
+        try:
+            doc = etree.parse(str(fp))
+        except etree.XMLSyntaxError:
+            continue
+        root_elem = doc.getroot()
+        changed = False
+        for elem in root_elem.iter():
+            style = elem.get("style") or ""
+            if not style or "font-family" not in style.lower():
+                continue
+            new_style = _sanitize_css_font_family(style, missing, fallback)
+            if new_style != style:
+                elem.set("style", new_style)
+                changed = True
+        if changed:
+            from .utils import write_xhtml_doc
+            write_xhtml_doc(doc, fp)
+            replaced_html += 1
+
+    if replaced_html:
+        log(f"已在 {replaced_html} 个 HTML 文件中替换缺失字体为回退字体")
+
+
 def handle_fonts(
     temp_dir: str,
     log: LogCallback = _default_log,
@@ -298,10 +438,11 @@ def handle_fonts(
             missing.discard(family)
             log(f"已导入缺失字体: {family} -> {target_path.name}")
 
+    # ---- 清理仍缺失的字体引用 ----
     if missing:
-        log(
-            f"[Warning] 以下字体缺失且非 Kindle 内置: {', '.join(sorted(missing))}"
-        )
+        sanitize_missing_fonts(temp_dir, missing, log)
+        # 清理完成后，将 missing 置空，避免继续报警
+        missing.clear()
 
     # ---- 收集全书使用到的字符 ----
     chars: Set[str] = set()

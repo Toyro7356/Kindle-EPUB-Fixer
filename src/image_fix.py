@@ -5,6 +5,7 @@ from typing import Dict
 from lxml import etree
 from PIL import Image
 
+from .constants import NS_OPF
 from .epub_io import opf_dir
 
 

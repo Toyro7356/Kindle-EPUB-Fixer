@@ -81,7 +81,7 @@ python main.py "input.epub" "output.epub"
 ├── src/
 │   ├── __init__.py          # 包入口
 │   ├── __version__.py       # 版本信息
-│   ├── gui.py               # Tkinter GUI（HiDPI / 拖拽 / Win11 风格）
+│   ├── gui.py               # Tkinter GUI（HiDPI / 拖拽 / Win11 风格 / 取消任务）
 │   ├── core.py              # 主调度入口
 │   ├── epub_io.py           # EPUB 解包/打包/OPF 定位
 │   ├── book_type.py         # 漫画/小说自动识别
@@ -90,11 +90,16 @@ python main.py "input.epub" "output.epub"
 │   ├── html_fix.py          # HTML 结构修复
 │   ├── footnote_fix.py      # Pop-up 脚注转换
 │   ├── opf_sanitize.py      # OPF 元数据清理
-│   ├── font_handler.py      # 字体检测/导入/转换/子集化
+│   ├── font_handler.py      # 字体检测/导入/转换/子集化/回退
 │   ├── vertical_fix.py      # 竖排降级处理
 │   ├── script_remove.py     # 脚本清理
+│   ├── language_fix.py      # 自动语言检测与修正
+│   ├── comic_fix.py         # 漫画固定布局元数据注入
+│   ├── epub_validator.py    # 后处理结构验证
 │   ├── constants.py         # XML 命名空间常量
 │   └── utils.py             # 通用工具函数
+├── tools/
+│   └── diff_epub.py         # 原始 vs 处理后 EPUB 差异审计
 ├── main.py                  # CLI 入口
 ├── main_gui.py              # GUI 入口
 ├── build_exe.py             # PyInstaller 打包脚本
@@ -146,6 +151,7 @@ A: 如果原始漫画文件缺少 `rendition:layout=pre-paginated` 等 fixed-lay
 - [Pillow](https://python-pillow.org/)
 - [lxml](https://lxml.de/)
 - [fonttools](https://fonttools.readthedocs.io/)
+- [tkinterdnd2](https://github.com/pmgagne/tkinterdnd2)（GUI 拖拽支持）
 - [PyInstaller](https://pyinstaller.org/)（仅打包时需要）
 
 ---
