@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from lxml import etree
 
 from .constants import NS_OPF
@@ -91,3 +93,47 @@ def fix_spine_direction_for_novel(opf_path: str) -> bool:
         tree.write(opf_path, encoding="utf-8", xml_declaration=True)
         return True
     return False
+
+
+def inject_dcterms_modified(opf_path: str) -> bool:
+    """
+    若 OPF 中缺少 dcterms:modified，则注入当前 UTC 时间。
+    依据：EPUB 3.0/3.2 规范，dcterms:modified 为 required 元数据。
+    格式：YYYY-MM-DDTHH:MM:SSZ
+    """
+    tree = etree.parse(opf_path)
+    root = tree.getroot()
+    metadata = root.find(f"{{{NS_OPF}}}metadata")
+    if metadata is None:
+        return False
+
+    existing = metadata.xpath(
+        ".//opf:meta[@property='dcterms:modified']",
+        namespaces={"opf": NS_OPF},
+    )
+    if existing:
+        return False
+
+    # 检查无命名空间版本
+    for child in metadata:
+        tag = child.tag
+        if tag == "meta" or tag.endswith("}meta"):
+            if child.get("property") == "dcterms:modified":
+                return False
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    meta = etree.Element(f"{{{NS_OPF}}}meta")
+    meta.set("property", "dcterms:modified")
+    meta.text = now
+    # 插入到 metadata 开头附近（dc:identifier 之后或 language 之后）
+    inserted = False
+    for idx, child in enumerate(metadata):
+        tag = child.tag
+        if tag == f"{{{NS_OPF}}}language" or tag.endswith("}language"):
+            metadata.insert(idx + 1, meta)
+            inserted = True
+            break
+    if not inserted:
+        metadata.insert(0, meta)
+    tree.write(opf_path, encoding="utf-8", xml_declaration=True)
+    return True

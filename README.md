@@ -95,6 +95,7 @@ python main.py "input.epub" "output.epub"
 │   ├── script_remove.py     # 脚本清理
 │   ├── language_fix.py      # 自动语言检测与修正
 │   ├── comic_fix.py         # 漫画固定布局元数据注入
+│   ├── css_sanitize.py      # 清理 Kindle 不支持的 CSS 属性
 │   ├── epub_validator.py    # 后处理结构验证
 │   ├── constants.py         # XML 命名空间常量
 │   └── utils.py             # 通用工具函数

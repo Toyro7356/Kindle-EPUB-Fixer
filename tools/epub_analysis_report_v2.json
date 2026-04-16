@@ -1,0 +1,2960 @@
+{
+  "summary": {
+    "missing_dcterms_modified": 29,
+    "missing_doctype": 16,
+    "missing_html_lang": 42,
+    "css_font_face": 34,
+    "css_kindle_unsafe": 33,
+    "manifest_js": 15,
+    "html_inline_script": 15,
+    "css_missing_font_file": 20,
+    "js_files": 15,
+    "duplicate_ids": 20,
+    "manifest_webp": 12,
+    "missing_image_refs": 12,
+    "webp_images": 12,
+    "illegal_self_closing": 1,
+    "stale_svg_property": 1,
+    "large_images": 1
+  },
+  "details": [
+    {
+      "file": "OVERLOAD 05.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/Section007-42.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section007-31.xhtml",
+          "OEBPS/Text/Section003-1.xhtml",
+          "OEBPS/Text/Section002-1.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section000-1.xhtml",
+          "OEBPS/Text/Section007-50.xhtml",
+          "OEBPS/Text/Section007-21.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/Section007-42.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section007-31.xhtml",
+          "OEBPS/Text/Section003-1.xhtml",
+          "OEBPS/Text/Section002-1.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section000-1.xhtml",
+          "OEBPS/Text/Section007-50.xhtml",
+          "OEBPS/Text/Section007-21.xhtml"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ],
+        "css_kindle_unsafe": [
+          "stylesheet.css: float, webkit-prefix, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 87,
+        "opf_language": "zh",
+        "title": "OVERLOAD 05",
+        "ppd": "ltr",
+        "manifest_count": 79,
+        "spine_count": 40,
+        "has_ncx": true,
+        "html_count": 40,
+        "css_count": 2,
+        "image_count": 31,
+        "font_count": 5,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "OVERLOAD 13.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section009-05.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section007.xhtml",
+          "OEBPS/Text/Section009-03.xhtml",
+          "OEBPS/Text/Section005-2.xhtml",
+          "OEBPS/Text/Illus3.xhtml",
+          "OEBPS/Text/Section006.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section009-05.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section007.xhtml",
+          "OEBPS/Text/Section009-03.xhtml",
+          "OEBPS/Text/Section005-2.xhtml",
+          "OEBPS/Text/Illus3.xhtml",
+          "OEBPS/Text/Section006.xhtml"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ],
+        "css_kindle_unsafe": [
+          "stylesheet.css: float, webkit-prefix, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 80,
+        "opf_language": "zh",
+        "title": "OVERLOAD 13",
+        "ppd": "ltr",
+        "manifest_count": 72,
+        "spine_count": 38,
+        "has_ncx": true,
+        "html_count": 38,
+        "css_count": 2,
+        "image_count": 27,
+        "font_count": 4,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "Re：从零开始的异世界生活 08.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "manifest_js": [
+          "Misc/notereplace.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section018.xhtml",
+          "OEBPS/Text/Section014-1.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section007.xhtml",
+          "OEBPS/Text/Author.xhtml",
+          "OEBPS/Text/Section006.xhtml",
+          "OEBPS/Text/Section022.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section018.xhtml",
+          "OEBPS/Text/Section014-1.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section007.xhtml",
+          "OEBPS/Text/Author.xhtml",
+          "OEBPS/Text/Illus3.xhtml"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/style.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/style.css -> ../Fonts/illus2.ttf",
+          "OEBPS/Styles/style.css -> ../Fonts/illus3.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: float, webkit-prefix, text-shadow, transform"
+        ],
+        "js_files": [
+          "OEBPS/Misc/notereplace.js"
+        ]
+      },
+      "stats": {
+        "file_count": 85,
+        "opf_language": "zh-TW",
+        "title": "Re：从零开始的异世界生活 08",
+        "ppd": "ltr",
+        "manifest_count": 82,
+        "spine_count": 42,
+        "has_ncx": true,
+        "html_count": 42,
+        "css_count": 1,
+        "image_count": 32,
+        "font_count": 5,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "Re：从零开始的异世界生活 16.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "manifest_js": [
+          "Misc/notereplace.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section003.xhtml",
+          "OEBPS/Text/Section002.xhtml",
+          "OEBPS/Text/Section006.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/illus3.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section007.xhtml"
+        ],
+        "duplicate_ids": [
+          "n1"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/style.css"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: float, webkit-prefix, text-shadow, transform"
+        ],
+        "js_files": [
+          "OEBPS/Misc/notereplace.js"
+        ]
+      },
+      "stats": {
+        "file_count": 46,
+        "opf_language": "zh-CN",
+        "title": "Re：从零开始的异世界生活 16",
+        "ppd": "ltr",
+        "manifest_count": 43,
+        "spine_count": 18,
+        "has_ncx": true,
+        "html_count": 18,
+        "css_count": 1,
+        "image_count": 18,
+        "font_count": 4,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "Re：从零开始的异世界生活 24.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Setting-illus.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Postscript.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/illus3.xhtml"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/style.css"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: float, webkit-prefix, text-shadow, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 47,
+        "opf_language": "zh-CN",
+        "title": "Re：从零开始的异世界生活 24",
+        "ppd": "ltr",
+        "manifest_count": 44,
+        "spine_count": 19,
+        "has_ncx": true,
+        "html_count": 19,
+        "css_count": 1,
+        "image_count": 19,
+        "font_count": 4,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "一点都不想相亲的我设下高门槛条件，结果同班同学成了婚约对象!_ 05.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/asa.webp",
+          "Images/kuchie-001.webp",
+          "Images/kuchie-002.webp",
+          "Images/kuchie-003.webp",
+          "Images/kuchie-004.webp",
+          "Images/note.webp",
+          "Images/p015.webp",
+          "Images/p040.webp",
+          "Images/p054.webp",
+          "Images/p083.webp",
+          "Images/p095.webp",
+          "Images/p109.webp",
+          "Images/p189.webp",
+          "Images/p201.webp",
+          "Images/p227.webp",
+          "Images/p269.webp",
+          "Images/t1.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/p-006.xhtml",
+          "OEBPS/Text/p-003.xhtml",
+          "OEBPS/Text/p-001.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/p-fmatter-002.xhtml",
+          "OEBPS/Text/p-007.xhtml",
+          "OEBPS/Text/p-cover.xhtml",
+          "OEBPS/Text/p-fmatter-004.xhtml",
+          "OEBPS/Text/navigation-documents.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/p-006.xhtml",
+          "OEBPS/Text/p-003.xhtml",
+          "OEBPS/Text/p-001.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/p-fmatter-002.xhtml",
+          "OEBPS/Text/p-007.xhtml",
+          "OEBPS/Text/p-cover.xhtml",
+          "OEBPS/Text/p-fmatter-004.xhtml",
+          "OEBPS/Text/navigation-documents.xhtml"
+        ],
+        "duplicate_ids": [
+          "note001",
+          "note002"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/p-001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-004.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-005.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-003.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-004.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt1.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/emoji.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/p040.webp",
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/p095.webp",
+          "OEBPS/Images/kuchie-002.webp",
+          "OEBPS/Images/p227.webp",
+          "OEBPS/Images/p015.webp",
+          "OEBPS/Images/kuchie-004.webp",
+          "OEBPS/Images/p201.webp",
+          "OEBPS/Images/p189.webp",
+          "OEBPS/Images/kuchie-001.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 56,
+        "opf_language": "zh",
+        "title": "一点都不想相亲的我设下高门槛条件，结果同班同学成了婚约对象!? 05",
+        "ppd": "ltr",
+        "manifest_count": 51,
+        "spine_count": 17,
+        "has_ncx": true,
+        "html_count": 17,
+        "css_count": 3,
+        "image_count": 18,
+        "font_count": 11,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "义妹生活 03.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/kuchie-001.webp",
+          "Images/kuchie-002.webp",
+          "Images/kuchie-003.webp",
+          "Images/kuchie-004.webp",
+          "Images/kuchie-005.webp",
+          "Images/kuchie-006.webp",
+          "Images/kuchie-007.webp",
+          "Images/kuchie-008.webp",
+          "Images/kuchie-009.webp",
+          "Images/logo.webp",
+          "Images/p039.webp",
+          "Images/p074.webp",
+          "Images/p077.webp",
+          "Images/p098.webp",
+          "Images/p114.webp",
+          "Images/p127.webp",
+          "Images/p148.webp",
+          "Images/p196.webp",
+          "Images/p208.webp",
+          "Images/p219.webp",
+          "Images/p230.webp",
+          "Images/p260.webp",
+          "Images/t1.webp",
+          "Images/t2.webp",
+          "Images/t3.webp",
+          "Images/t4.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/start.xhtml",
+          "OEBPS/Text/chaper0006.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/chaper00000.xhtml",
+          "OEBPS/Text/chaper0007.xhtml",
+          "OEBPS/Text/polo.xhtml",
+          "OEBPS/Text/chaper0005.xhtml",
+          "OEBPS/Text/illus0006.xhtml",
+          "OEBPS/Text/illus0005.xhtml",
+          "OEBPS/Text/summary.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/start.xhtml",
+          "OEBPS/Text/chaper0006.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/chaper00000.xhtml",
+          "OEBPS/Text/chaper0007.xhtml",
+          "OEBPS/Text/polo.xhtml",
+          "OEBPS/Text/chaper0005.xhtml",
+          "OEBPS/Text/illus0006.xhtml",
+          "OEBPS/Text/illus0005.xhtml",
+          "OEBPS/Text/summary.xhtml"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/backcover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chaper0001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chaper0002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chaper0003.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chaper0004.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chaper0006.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chaper0007.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/character.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus0001.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus1.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus2.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus3.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/note.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/p127.webp",
+          "OEBPS/Images/p230.webp",
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/p208.webp",
+          "OEBPS/Images/kuchie-007.webp",
+          "OEBPS/Images/logo.webp",
+          "OEBPS/Images/kuchie-002.webp",
+          "OEBPS/Images/p196.webp",
+          "OEBPS/Images/p260.webp",
+          "OEBPS/Images/kuchie-006.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 72,
+        "opf_language": "zh",
+        "title": "义妹生活 03",
+        "ppd": "ltr",
+        "manifest_count": 67,
+        "spine_count": 26,
+        "has_ncx": true,
+        "html_count": 26,
+        "css_count": 3,
+        "image_count": 27,
+        "font_count": 9,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "义妹生活 07.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/kuchie-001.webp",
+          "Images/kuchie-002.webp",
+          "Images/kuchie-003.webp",
+          "Images/kuchie-004.webp",
+          "Images/kuchie-005.webp",
+          "Images/kuchie-006.webp",
+          "Images/kuchie-008.webp",
+          "Images/logo.webp",
+          "Images/note.webp",
+          "Images/p046.webp",
+          "Images/p061.webp",
+          "Images/p072.webp",
+          "Images/p095.webp",
+          "Images/p166.webp",
+          "Images/p208.webp",
+          "Images/p233.webp",
+          "Images/p292.webp",
+          "Images/p301.webp",
+          "Images/t1.webp",
+          "Images/t2.webp",
+          "Images/t3.webp",
+          "Images/t4.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/start.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/TOC.xhtml",
+          "OEBPS/Text/chapter0006.xhtml",
+          "OEBPS/Text/chapter0001.xhtml",
+          "OEBPS/Text/illus0006.xhtml",
+          "OEBPS/Text/illus0005.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/chapter0009.xhtml",
+          "OEBPS/Text/cover.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/start.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/TOC.xhtml",
+          "OEBPS/Text/chapter0006.xhtml",
+          "OEBPS/Text/chapter0001.xhtml",
+          "OEBPS/Text/illus0006.xhtml",
+          "OEBPS/Text/illus0005.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/chapter0009.xhtml",
+          "OEBPS/Text/cover.xhtml"
+        ],
+        "duplicate_ids": [
+          "note001"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/chapter0002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0003.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0004.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0008.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0009.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0011.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0012.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus0001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus0002.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus1.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus2.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus3.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/emoji.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/sym.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/p095.webp",
+          "OEBPS/Images/p208.webp",
+          "OEBPS/Images/logo.webp",
+          "OEBPS/Images/kuchie-002.webp",
+          "OEBPS/Images/kuchie-006.webp",
+          "OEBPS/Images/p072.webp",
+          "OEBPS/Images/t2.webp",
+          "OEBPS/Images/kuchie-004.webp",
+          "OEBPS/Images/p292.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 71,
+        "opf_language": "zh",
+        "title": "义妹生活 07",
+        "ppd": "ltr",
+        "manifest_count": 65,
+        "spine_count": 27,
+        "has_ncx": true,
+        "html_count": 27,
+        "css_count": 3,
+        "image_count": 23,
+        "font_count": 10,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "义妹生活 10.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/kuchie-001.webp",
+          "Images/kuchie-002.webp",
+          "Images/kuchie-003.webp",
+          "Images/kuchie-004.webp",
+          "Images/kuchie-005.webp",
+          "Images/logo.webp",
+          "Images/note.webp",
+          "Images/p043.webp",
+          "Images/p083.webp",
+          "Images/p092.webp",
+          "Images/p122.webp",
+          "Images/p131.webp",
+          "Images/p207.webp",
+          "Images/p225.webp",
+          "Images/p245.webp",
+          "Images/p276.webp",
+          "Images/p290.webp",
+          "Images/p294-295.webp",
+          "Images/t1.webp",
+          "Images/t2.webp",
+          "Images/t3.webp",
+          "Images/t4.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "illegal_self_closing": [
+          "OEBPS/Text/message.xhtml"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/TOC.xhtml",
+          "OEBPS/Text/chapter0006.xhtml",
+          "OEBPS/Text/chapter0001.xhtml",
+          "OEBPS/Text/illus0006.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/illus0005.xhtml",
+          "OEBPS/Text/chapter0009.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/illus0003.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/TOC.xhtml",
+          "OEBPS/Text/chapter0006.xhtml",
+          "OEBPS/Text/chapter0001.xhtml",
+          "OEBPS/Text/illus0006.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/illus0005.xhtml",
+          "OEBPS/Text/chapter0009.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/illus0003.xhtml"
+        ],
+        "duplicate_ids": [
+          "note005",
+          "note006",
+          "note007",
+          "note_ref001",
+          "note001",
+          "note002",
+          "note003",
+          "note008",
+          "note009",
+          "note010"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/chapter00000.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0004.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0005.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0006.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0011.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0012.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/chapter0013.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus0001.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus1.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus2.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus3.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/emoji.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/sym.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/p043.webp",
+          "OEBPS/Images/p245.webp",
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/p225.webp",
+          "OEBPS/Images/logo.webp",
+          "OEBPS/Images/p294-295.webp",
+          "OEBPS/Images/kuchie-002.webp",
+          "OEBPS/Images/p276.webp",
+          "OEBPS/Images/p122.webp",
+          "OEBPS/Images/t2.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 73,
+        "opf_language": "zh",
+        "title": "义妹生活 10",
+        "ppd": "ltr",
+        "manifest_count": 67,
+        "spine_count": 29,
+        "has_ncx": true,
+        "html_count": 29,
+        "css_count": 3,
+        "image_count": 23,
+        "font_count": 10,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "乙女游戏世界对路人角色很不友好 09.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Illus1.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section009.xhtml",
+          "OEBPS/Text/Section005.xhtml"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: box-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 56,
+        "opf_language": "zh-CN",
+        "title": "乙女游戏世界对路人角色很不友好 09",
+        "ppd": "ltr",
+        "manifest_count": 47,
+        "spine_count": 21,
+        "has_ncx": true,
+        "html_count": 21,
+        "css_count": 1,
+        "image_count": 17,
+        "font_count": 7,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "你们赶紧给我结婚吧！被这么说的女生居然有三个？ 01.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/asa.webp",
+          "Images/c1.webp",
+          "Images/c2.webp",
+          "Images/ctt.webp",
+          "Images/ex01.webp",
+          "Images/ex02.webp",
+          "Images/ex03.webp",
+          "Images/ex04.webp",
+          "Images/kuchie-001.webp",
+          "Images/kuchie-002.webp",
+          "Images/kuchie-003.webp",
+          "Images/kuchie-004.webp",
+          "Images/kuchie-005.webp",
+          "Images/note.webp",
+          "Images/p025.webp",
+          "Images/p069.webp",
+          "Images/p099.webp",
+          "Images/p111.webp",
+          "Images/p146.webp",
+          "Images/p188-189.webp",
+          "Images/p195.webp",
+          "Images/p231.webp",
+          "Images/p267.webp",
+          "Images/p280-281.webp",
+          "Images/p308.webp",
+          "Images/p309.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section16.xhtml",
+          "OEBPS/Text/illus05.xhtml",
+          "OEBPS/Text/Section01.xhtml",
+          "OEBPS/Text/illus02.xhtml",
+          "OEBPS/Text/illus03.xhtml",
+          "OEBPS/Text/illus01.xhtml",
+          "OEBPS/Text/illus06.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/illus07.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section16.xhtml",
+          "OEBPS/Text/illus05.xhtml",
+          "OEBPS/Text/Section01.xhtml",
+          "OEBPS/Text/illus02.xhtml",
+          "OEBPS/Text/illus03.xhtml",
+          "OEBPS/Text/illus01.xhtml",
+          "OEBPS/Text/illus06.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/illus07.xhtml"
+        ],
+        "duplicate_ids": [
+          "note001",
+          "note002"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/Section02.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section04.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section05.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section06.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section07.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section09.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section10.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section11.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section12.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cover.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus3.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/emoji.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/p195.webp",
+          "OEBPS/Images/p069.webp",
+          "OEBPS/Images/kuchie-005.webp",
+          "OEBPS/Images/asa.webp",
+          "OEBPS/Images/p099.webp",
+          "OEBPS/Images/p309.webp",
+          "OEBPS/Images/p280-281.webp",
+          "OEBPS/Images/ctt.webp",
+          "OEBPS/Images/p146.webp",
+          "OEBPS/Images/p231.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 86,
+        "opf_language": "zh",
+        "title": "你们赶紧给我结婚吧！被这么说的女生居然有三个？ 01",
+        "ppd": "ltr",
+        "manifest_count": 81,
+        "spine_count": 37,
+        "has_ncx": true,
+        "html_count": 37,
+        "css_count": 3,
+        "image_count": 27,
+        "font_count": 12,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "你喜欢被可爱女生攻陷吗？ 03.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Bookmark1.xhtml",
+          "OEBPS/Text/Postscript.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section000.xhtml",
+          "OEBPS/Text/illus3.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Bookmark1.xhtml",
+          "OEBPS/Text/Postscript.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section000.xhtml",
+          "OEBPS/Text/illus3.xhtml"
+        ],
+        "duplicate_ids": [
+          "note_ref1",
+          "note1",
+          "note_ref2",
+          "note2",
+          "note_ref3",
+          "note3"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ],
+        "css_kindle_unsafe": [
+          "stylesheet.css: float, text-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 55,
+        "opf_language": "zh",
+        "title": "你喜欢被可爱女生攻陷吗？ 03",
+        "ppd": "ltr",
+        "manifest_count": 47,
+        "spine_count": 21,
+        "has_ncx": true,
+        "html_count": 21,
+        "css_count": 2,
+        "image_count": 21,
+        "font_count": 2,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "关于我在无意间被隔壁的天使变成废柴这件事 03.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/1111.webp",
+          "Images/kuchie-01.webp",
+          "Images/kuchie-02.webp",
+          "Images/kuchie-03.webp",
+          "Images/kuchie-04.webp",
+          "Images/kuchie-05.webp",
+          "Images/note.webp",
+          "Images/p013.webp",
+          "Images/p019.webp",
+          "Images/p052.webp",
+          "Images/p105.webp",
+          "Images/p161.webp",
+          "Images/p217.webp",
+          "Images/p237.webp",
+          "Images/t1.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/p-006.xhtml",
+          "OEBPS/Text/p-003.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/p-001.xhtml",
+          "OEBPS/Text/another.xhtml",
+          "OEBPS/Text/p-010.xhtml",
+          "OEBPS/Text/p-009.xhtml",
+          "OEBPS/Text/p-fmatter-002.xhtml",
+          "OEBPS/Text/p-007.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/p-006.xhtml",
+          "OEBPS/Text/p-003.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/p-001.xhtml",
+          "OEBPS/Text/another.xhtml",
+          "OEBPS/Text/p-010.xhtml",
+          "OEBPS/Text/p-009.xhtml",
+          "OEBPS/Text/p-fmatter-002.xhtml",
+          "OEBPS/Text/p-007.xhtml"
+        ],
+        "duplicate_ids": [
+          "note001",
+          "note002"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/message.xhtml -> none (resolved: OEBPS/Text/none)",
+          "OEBPS/Text/p-001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-006.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-009.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-010.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-011.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-002.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/mes.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt1.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/emoji.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/sym.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/kuchie-05.webp",
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/p105.webp",
+          "OEBPS/Images/kuchie-04.webp",
+          "OEBPS/Images/p052.webp",
+          "OEBPS/Images/p237.webp",
+          "OEBPS/Images/p013.webp",
+          "OEBPS/Images/p161.webp",
+          "OEBPS/Images/kuchie-02.webp",
+          "OEBPS/Images/note.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 63,
+        "opf_language": "zh",
+        "title": "关于我在无意间被隔壁的天使变成废柴这件事 03",
+        "ppd": "ltr",
+        "manifest_count": 58,
+        "spine_count": 26,
+        "has_ncx": true,
+        "html_count": 26,
+        "css_count": 3,
+        "image_count": 16,
+        "font_count": 11,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "关于我在无意间被隔壁的天使变成废柴这件事 09.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/1111.webp",
+          "Images/kuchie-01.webp",
+          "Images/kuchie-02.webp",
+          "Images/kuchie-03.webp",
+          "Images/kuchie-04.webp",
+          "Images/logo.webp",
+          "Images/note.webp",
+          "Images/p015.webp",
+          "Images/p033.webp",
+          "Images/p041.webp",
+          "Images/p045.webp",
+          "Images/p090.webp",
+          "Images/p176.webp",
+          "Images/p185.webp",
+          "Images/p191.webp",
+          "Images/p219.webp",
+          "Images/p231.webp",
+          "Images/p243.webp",
+          "Images/p244.webp",
+          "Images/p245.webp",
+          "Images/p246.webp",
+          "Images/p247.webp",
+          "Images/t1.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/p-006.xhtml",
+          "OEBPS/Text/p-003.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/p-001.xhtml",
+          "OEBPS/Text/another.xhtml",
+          "OEBPS/Text/p-010.xhtml",
+          "OEBPS/Text/p-009.xhtml",
+          "OEBPS/Text/p-fmatter-002.xhtml",
+          "OEBPS/Text/p-007.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/p-006.xhtml",
+          "OEBPS/Text/p-003.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/p-001.xhtml",
+          "OEBPS/Text/another.xhtml",
+          "OEBPS/Text/p-010.xhtml",
+          "OEBPS/Text/p-009.xhtml",
+          "OEBPS/Text/p-fmatter-002.xhtml",
+          "OEBPS/Text/p-007.xhtml"
+        ],
+        "duplicate_ids": [
+          "note002",
+          "note003",
+          "note001"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/message.xhtml -> none (resolved: OEBPS/Text/none)",
+          "OEBPS/Text/p-001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-004.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-008.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-009.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-fmatter-003.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/mes.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt1.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/emoji.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/sym.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/p033.webp",
+          "OEBPS/Images/p245.webp",
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/p243.webp",
+          "OEBPS/Images/logo.webp",
+          "OEBPS/Images/p246.webp",
+          "OEBPS/Images/p185.webp",
+          "OEBPS/Images/p015.webp",
+          "OEBPS/Images/p247.webp",
+          "OEBPS/Images/p219.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 66,
+        "opf_language": "zh",
+        "title": "关于我在无意间被隔壁的天使变成废柴这件事 09",
+        "ppd": "ltr",
+        "manifest_count": 61,
+        "spine_count": 21,
+        "has_ncx": true,
+        "html_count": 21,
+        "css_count": 3,
+        "image_count": 24,
+        "font_count": 11,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "吹响吧！上低音号 12.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/chapter3.xhtml",
+          "OEBPS/Text/chapter5.xhtml",
+          "OEBPS/Text/chapter41.xhtml",
+          "OEBPS/Text/chapter51.xhtml",
+          "OEBPS/Text/chapter21.xhtml",
+          "OEBPS/Text/chapter11.xhtml",
+          "OEBPS/Text/message.xhtml",
+          "OEBPS/Text/introduction.xhtml",
+          "OEBPS/Text/chapter1.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/chapter3.xhtml",
+          "OEBPS/Text/chapter5.xhtml",
+          "OEBPS/Text/chapter41.xhtml",
+          "OEBPS/Text/chapter51.xhtml",
+          "OEBPS/Text/chapter21.xhtml",
+          "OEBPS/Text/chapter11.xhtml",
+          "OEBPS/Text/message.xhtml",
+          "OEBPS/Text/introduction.xhtml",
+          "OEBPS/Text/chapter1.xhtml"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ],
+        "css_kindle_unsafe": [
+          "stylesheet.css: webkit-prefix, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 30,
+        "opf_language": "zh",
+        "title": "吹响吧！上低音号 12",
+        "ppd": "ltr",
+        "manifest_count": 23,
+        "spine_count": 15,
+        "has_ncx": true,
+        "html_count": 15,
+        "css_count": 2,
+        "image_count": 1,
+        "font_count": 4,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "孤单一人的异世界攻略 04.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/Section042.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/Section038.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section024.xhtml",
+          "OEBPS/Text/Section018.xhtml",
+          "OEBPS/Text/illus3.xhtml",
+          "OEBPS/Text/Section005.xhtml"
+        ],
+        "duplicate_ids": [
+          "note_ref1",
+          "note1",
+          "note_ref2",
+          "note2",
+          "note3"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/style.css"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: float, webkit-prefix, text-shadow, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 88,
+        "opf_language": "zh-CN",
+        "title": "孤单一人的异世界攻略 04",
+        "ppd": "ltr",
+        "manifest_count": 85,
+        "spine_count": 59,
+        "has_ncx": true,
+        "html_count": 59,
+        "css_count": 1,
+        "image_count": 21,
+        "font_count": 3,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "孤单一人的异世界攻略 12.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "index_split_002.html",
+          "index_split_001.html",
+          "titlepage.xhtml",
+          "index_split_000.html"
+        ],
+        "missing_html_lang": [
+          "index_split_002.html",
+          "index_split_001.html",
+          "titlepage.xhtml",
+          "index_split_000.html"
+        ]
+      },
+      "stats": {
+        "file_count": 12,
+        "opf_language": "zh",
+        "title": "孤单一人的异世界攻略 12",
+        "ppd": "ltr",
+        "manifest_count": 8,
+        "spine_count": 4,
+        "has_ncx": true,
+        "html_count": 4,
+        "css_count": 2,
+        "image_count": 1,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "平凡职业造就世界最强 09.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "manifest_js": [
+          "OEBPS/Misc/notereplace.js"
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus2-1.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section000.xhtml",
+          "OEBPS/Text/Section007-1.xhtml",
+          "OEBPS/Text/Section009.xhtml",
+          "OEBPS/Text/illus3.xhtml"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section000.xhtml",
+          "OEBPS/Text/Section007-1.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Section003.xhtml",
+          "OEBPS/Text/Section002.xhtml",
+          "OEBPS/Text/Section006.xhtml",
+          "OEBPS/Text/author.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus2-1.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section000.xhtml",
+          "OEBPS/Text/Section007-1.xhtml",
+          "OEBPS/Text/Section009.xhtml",
+          "OEBPS/Text/illus3.xhtml"
+        ],
+        "duplicate_ids": [
+          "A_1",
+          "n1",
+          "n2",
+          "n3"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ],
+        "css_kindle_unsafe": [
+          "stylesheet.css: float, webkit-prefix, box-shadow, text-shadow, transform"
+        ],
+        "js_files": [
+          "OEBPS/Misc/notereplace.js"
+        ]
+      },
+      "stats": {
+        "file_count": 62,
+        "opf_language": "zh",
+        "title": "平凡职业造就世界最强 09",
+        "ppd": "ltr",
+        "manifest_count": 53,
+        "spine_count": 23,
+        "has_ncx": true,
+        "html_count": 23,
+        "css_count": 2,
+        "image_count": 22,
+        "font_count": 4,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "平凡职业造就世界最强 13.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/chapter-6.xhtml",
+          "OEBPS/Text/images-1.xhtml",
+          "OEBPS/Text/images-3.xhtml",
+          "OEBPS/Text/Section0001_0001.xhtml",
+          "OEBPS/Text/chapter-2.xhtml",
+          "OEBPS/Text/images-2.xhtml",
+          "OEBPS/Text/images-4.xhtml",
+          "OEBPS/Text/Section0001.xhtml",
+          "OEBPS/Text/Section0001_0004.xhtml",
+          "OEBPS/Text/Section0002.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/chapter-6.xhtml",
+          "OEBPS/Text/images-1.xhtml",
+          "OEBPS/Text/images-3.xhtml",
+          "OEBPS/Text/Section0001_0001.xhtml",
+          "OEBPS/Text/chapter-2.xhtml",
+          "OEBPS/Text/images-2.xhtml",
+          "OEBPS/Text/images-4.xhtml",
+          "OEBPS/Text/Section0001.xhtml",
+          "OEBPS/Text/Section0001_0004.xhtml",
+          "OEBPS/Text/Section0002.xhtml"
+        ]
+      },
+      "stats": {
+        "file_count": 57,
+        "opf_language": "en",
+        "title": "平凡职业造就世界最强 13",
+        "ppd": "ltr",
+        "manifest_count": 49,
+        "spine_count": 29,
+        "has_ncx": true,
+        "html_count": 29,
+        "css_count": 2,
+        "image_count": 17,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "弹珠汽水瓶里的千岁同学 06.epub",
+      "issues": {
+        "stale_svg_property": [
+          "Text/cover.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/illu3.xhtml",
+          "OEBPS/Text/illu4.xhtml",
+          "OEBPS/Text/message.xhtml",
+          "OEBPS/Text/introduction.xhtml",
+          "OEBPS/Text/characters.xhtml",
+          "OEBPS/Text/backcover2.xhtml",
+          "OEBPS/Text/illu2.xhtml",
+          "OEBPS/Text/author.xhtml"
+        ],
+        "duplicate_ids": [
+          "note_ref1",
+          "note9",
+          "note10",
+          "note12",
+          "note13",
+          "note6",
+          "note7",
+          "note8",
+          "note1",
+          "note2"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/font_style.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/font_style.css -> ../Fonts/art.ttf",
+          "OEBPS/Styles/font_style.css -> ../Fonts/title1.ttf",
+          "OEBPS/Styles/font_style.css -> ../Fonts/title2.ttf",
+          "OEBPS/Styles/font_style.css -> ../Fonts/toc.ttf",
+          "OEBPS/Styles/font_style.css -> ../Fonts/serif.ttf",
+          "OEBPS/Styles/font_style.css -> ../Fonts/san-serif.ttf",
+          "OEBPS/Styles/font_style.css -> ../Fonts/ht.ttf",
+          "OEBPS/Styles/font_style.css -> res:///opt/sony/ebook/FONT/ht.ttf",
+          "OEBPS/Styles/font_style.css -> res:///Data/FONT/ht.ttf",
+          "OEBPS/Styles/font_style.css -> res:///opt/sony/ebook/FONT/tt0011m_.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/summary_style.css: box-shadow",
+          "OEBPS/Styles/user_style.css: box-shadow, text-shadow",
+          "OEBPS/Styles/main_style.css: float, webkit-prefix, text-shadow, transform",
+          "OEBPS/Styles/title_style.css: text-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 52,
+        "opf_language": "zh-CN",
+        "title": "弹珠汽水瓶里的千岁同学 06",
+        "ppd": "ltr",
+        "manifest_count": 49,
+        "spine_count": 19,
+        "has_ncx": true,
+        "html_count": 19,
+        "css_count": 6,
+        "image_count": 19,
+        "font_count": 4,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "怪人的沙拉碗 03.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/002.webp",
+          "Images/003.webp",
+          "Images/004.webp",
+          "Images/005.webp",
+          "Images/006.webp",
+          "Images/007.webp",
+          "Images/008.webp",
+          "Images/009.webp",
+          "Images/010.webp",
+          "Images/011.webp",
+          "Images/012.webp",
+          "Images/013.webp",
+          "Images/014.webp",
+          "Images/015.webp",
+          "Images/016.webp",
+          "Images/017.webp",
+          "Images/018.webp",
+          "Images/019.webp",
+          "Images/020.webp",
+          "Images/021.webp",
+          "Images/022.webp",
+          "Images/023.webp",
+          "Images/024.webp",
+          "Images/025.webp",
+          "Images/1111.webp",
+          "Images/i1.webp",
+          "Images/i2.webp",
+          "Images/note.webp",
+          "Images/sq1.webp",
+          "Images/sq2.webp",
+          "Images/t1.webp",
+          "Images/td1.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/TOC1.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/td3.xhtml",
+          "OEBPS/Text/sq2.xhtml",
+          "OEBPS/Text/character2.xhtml",
+          "OEBPS/Text/cr4.xhtml",
+          "OEBPS/Text/illus3.xhtml",
+          "OEBPS/Text/td2.xhtml",
+          "OEBPS/Text/cr13.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/TOC1.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/td3.xhtml",
+          "OEBPS/Text/sq2.xhtml",
+          "OEBPS/Text/character2.xhtml",
+          "OEBPS/Text/cr4.xhtml",
+          "OEBPS/Text/illus3.xhtml",
+          "OEBPS/Text/td2.xhtml",
+          "OEBPS/Text/cr13.xhtml"
+        ],
+        "duplicate_ids": [
+          "note007",
+          "note012",
+          "note013",
+          "note014",
+          "note015",
+          "note011",
+          "note008",
+          "note009",
+          "note010",
+          "note001"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/character.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/character1.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/character2.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/character3.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/character4.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/character5.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/character6.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/character7.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/contents.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cover.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus3.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/mes.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt1.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/008.webp",
+          "OEBPS/Images/009.webp",
+          "OEBPS/Images/006.webp",
+          "OEBPS/Images/016.webp",
+          "OEBPS/Images/025.webp",
+          "OEBPS/Images/i1.webp",
+          "OEBPS/Images/sq1.webp",
+          "OEBPS/Images/012.webp",
+          "OEBPS/Images/1111.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 94,
+        "opf_language": "zh",
+        "title": "怪人的沙拉碗 03",
+        "ppd": "ltr",
+        "manifest_count": 89,
+        "spine_count": 42,
+        "has_ncx": true,
+        "html_count": 42,
+        "css_count": 3,
+        "image_count": 33,
+        "font_count": 9,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "怪人的沙拉碗 08.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/asa.webp",
+          "Images/bdimg.webp",
+          "Images/c01.webp",
+          "Images/c02.webp",
+          "Images/c03.webp",
+          "Images/c04.webp",
+          "Images/ctt.webp",
+          "Images/i-0001_01.webp",
+          "Images/i-0002-0003_01.webp",
+          "Images/i-0004-0005_01.webp",
+          "Images/i-0006-0007_01.webp",
+          "Images/i-0008_01.webp",
+          "Images/i-0010-0011_01.webp",
+          "Images/i-0055_01.webp",
+          "Images/i-0059_01.webp",
+          "Images/i-0093_01.webp",
+          "Images/i-0103_01.webp",
+          "Images/i-0115_01.webp",
+          "Images/i-0143_01.webp",
+          "Images/i-0149_01.webp",
+          "Images/i-0166_01.webp",
+          "Images/i-0167_01.webp",
+          "Images/i-0192_01.webp",
+          "Images/i-0203_01.webp",
+          "Images/i-0218_01.webp",
+          "Images/i-0219_01.webp",
+          "Images/i-0223_01.webp",
+          "Images/i-0240_01.webp",
+          "Images/i-0245_01.webp",
+          "Images/note.webp",
+          "Images/s_gifu08.webp",
+          "Images/t1.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus12.xhtml",
+          "OEBPS/Text/illus05.xhtml",
+          "OEBPS/Text/Section01.xhtml",
+          "OEBPS/Text/illus02.xhtml",
+          "OEBPS/Text/illus03.xhtml",
+          "OEBPS/Text/illus01.xhtml",
+          "OEBPS/Text/illus06.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/illus07.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus12.xhtml",
+          "OEBPS/Text/illus05.xhtml",
+          "OEBPS/Text/Section01.xhtml",
+          "OEBPS/Text/illus02.xhtml",
+          "OEBPS/Text/illus03.xhtml",
+          "OEBPS/Text/illus01.xhtml",
+          "OEBPS/Text/illus06.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/illus07.xhtml"
+        ],
+        "duplicate_ids": [
+          "note009",
+          "note001",
+          "note002",
+          "note003",
+          "note004",
+          "note005",
+          "note006",
+          "note008",
+          "note007",
+          "note010"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/Section02.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section03.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section04.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section05.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section10.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section11.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus01.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus02.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus03.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus3.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt1.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/emoji.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/i-0143_01.webp",
+          "OEBPS/Images/c03.webp",
+          "OEBPS/Images/asa.webp",
+          "OEBPS/Images/i-0219_01.webp",
+          "OEBPS/Images/i-0167_01.webp",
+          "OEBPS/Images/i-0166_01.webp",
+          "OEBPS/Images/i-0004-0005_01.webp",
+          "OEBPS/Images/c04.webp",
+          "OEBPS/Images/i-0002-0003_01.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 86,
+        "opf_language": "zh",
+        "title": "怪人的沙拉碗 08",
+        "ppd": "ltr",
+        "manifest_count": 80,
+        "spine_count": 32,
+        "has_ncx": true,
+        "html_count": 32,
+        "css_count": 3,
+        "image_count": 33,
+        "font_count": 10,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "我不是说了能力要平均值么 06.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OPS/chapter7.html",
+          "OPS/coverpage.html",
+          "OPS/chapter2.html",
+          "OPS/chapter1.html",
+          "OPS/chapter9.html",
+          "OPS/chapter13.html",
+          "OPS/chapter5.html",
+          "OPS/chapter11.html",
+          "OPS/chapter6.html",
+          "OPS/chapter4.html"
+        ],
+        "missing_html_lang": [
+          "OPS/chapter7.html",
+          "OPS/coverpage.html",
+          "OPS/chapter2.html",
+          "OPS/chapter1.html",
+          "OPS/chapter9.html",
+          "OPS/chapter13.html",
+          "OPS/chapter5.html",
+          "OPS/chapter11.html",
+          "OPS/chapter6.html",
+          "OPS/chapter4.html"
+        ],
+        "css_font_face": [
+          "OPS/css/main.css"
+        ],
+        "css_missing_font_file": [
+          "OPS/css/main.css -> res:///opt/sony/ebook/FONT/tt0011m_.ttf",
+          "OPS/css/main.css -> res:///tt0011m_.ttf"
+        ]
+      },
+      "stats": {
+        "file_count": 38,
+        "opf_language": "zh-CN",
+        "title": "我不是说了能力要平均值么 06",
+        "ppd": "ltr",
+        "manifest_count": 19,
+        "spine_count": 15,
+        "has_ncx": true,
+        "html_count": 15,
+        "css_count": 1,
+        "image_count": 14,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "我和女友的妹妹接吻了。 02.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/icon.webp",
+          "Images/kuchie-01.webp",
+          "Images/kuchie-02.webp",
+          "Images/kuchie-03.webp",
+          "Images/kuchie-04.webp",
+          "Images/kuchie-05.webp",
+          "Images/note.webp",
+          "Images/p029.webp",
+          "Images/p047.webp",
+          "Images/p087.webp",
+          "Images/p135.webp",
+          "Images/p141.webp",
+          "Images/p169.webp",
+          "Images/p181.webp",
+          "Images/p213.webp",
+          "Images/p231.webp",
+          "Images/p289.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/p-006.xhtml",
+          "OEBPS/Text/p-003.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/p-001.xhtml",
+          "OEBPS/Text/p-010.xhtml",
+          "OEBPS/Text/p-009.xhtml",
+          "OEBPS/Text/p-fmatter-002.xhtml",
+          "OEBPS/Text/p-007.xhtml",
+          "OEBPS/Text/p-cover.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/p-006.xhtml",
+          "OEBPS/Text/p-003.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/p-001.xhtml",
+          "OEBPS/Text/p-010.xhtml",
+          "OEBPS/Text/p-009.xhtml",
+          "OEBPS/Text/p-fmatter-002.xhtml",
+          "OEBPS/Text/p-007.xhtml",
+          "OEBPS/Text/p-cover.xhtml"
+        ],
+        "duplicate_ids": [
+          "note001",
+          "note003",
+          "note002"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/p-001.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-002.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-003.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-004.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-006.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-007.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-008.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-009.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-010.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/p-cover.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/illus2.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus3.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/mes.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/sum.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt1.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor",
+          "OEBPS/Styles/stylesheet.css: text-shadow"
+        ],
+        "webp_images": [
+          "OEBPS/Images/icon.webp",
+          "OEBPS/Images/p169.webp",
+          "OEBPS/Images/p029.webp",
+          "OEBPS/Images/kuchie-05.webp",
+          "OEBPS/Images/p289.webp",
+          "OEBPS/Images/p213.webp",
+          "OEBPS/Images/kuchie-04.webp",
+          "OEBPS/Images/p135.webp",
+          "OEBPS/Images/p231.webp",
+          "OEBPS/Images/kuchie-02.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 59,
+        "opf_language": "zh-CN",
+        "title": "我和女友的妹妹接吻了。 02",
+        "ppd": "ltr",
+        "manifest_count": 54,
+        "spine_count": 22,
+        "has_ncx": true,
+        "html_count": 22,
+        "css_count": 3,
+        "image_count": 18,
+        "font_count": 9,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "我怎么可能成为你的恋人，不行不行！(※不是不可能！？) 06.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "chapter-2.xhtml",
+          "chapter-0.xhtml",
+          "chapter-EX1.xhtml",
+          "cover-title.xhtml",
+          "postscript.xhtml",
+          "summary.xhtml",
+          "contents.xhtml",
+          "introduction.xhtml",
+          "chapter-1.xhtml",
+          "chapter-4.xhtml"
+        ],
+        "css_font_face": [
+          "contents.css",
+          "Style0001.css"
+        ],
+        "css_missing_font_file": [
+          "contents.css -> ../Fonts/hiraginokaku.ttf",
+          "contents.css -> ../Fonts/xinyalan.ttf",
+          "Style0001.css -> Fonts/title.ttf",
+          "Style0001.css -> Fonts/illus1.ttf",
+          "Style0001.css -> Fonts/jp.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "contents.css: text-shadow",
+          "Style0001.css: float, webkit-prefix, text-shadow, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 38,
+        "opf_language": "en",
+        "title": "我怎么可能成为你的恋人，不行不行！(※不是不可能！？) 06",
+        "ppd": "ltr",
+        "manifest_count": 34,
+        "spine_count": 16,
+        "has_ncx": true,
+        "html_count": 16,
+        "css_count": 2,
+        "image_count": 15,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "我的推是坏人大小姐。 03.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/message-2.xhtml",
+          "OEBPS/Text/Section014.xhtml",
+          "OEBPS/Text/Illus1.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/LOGO.xhtml",
+          "OEBPS/Text/Section009.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/message-2.xhtml",
+          "OEBPS/Text/Section014.xhtml",
+          "OEBPS/Text/Illus1.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/LOGO.xhtml",
+          "OEBPS/Text/Section009.xhtml"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ],
+        "css_missing_font_file": [
+          "page_styles.css -> OEBPS/Fonts/ssa.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "stylesheet.css: float, text-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 56,
+        "opf_language": "zh",
+        "title": "我的推是坏人大小姐。 03",
+        "ppd": "ltr",
+        "manifest_count": 48,
+        "spine_count": 23,
+        "has_ncx": true,
+        "html_count": 23,
+        "css_count": 3,
+        "image_count": 17,
+        "font_count": 4,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "才女的侍从 04.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Bookmark1.xhtml",
+          "OEBPS/Text/Postscript.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section000.xhtml",
+          "OEBPS/Text/illus3.xhtml"
+        ],
+        "duplicate_ids": [
+          "note_ref1",
+          "note1",
+          "note2",
+          "note3"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/style.css"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: float, webkit-prefix, text-shadow, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 49,
+        "opf_language": "zh-CN",
+        "title": "才女的侍从 04",
+        "ppd": "ltr",
+        "manifest_count": 46,
+        "spine_count": 22,
+        "has_ncx": true,
+        "html_count": 22,
+        "css_count": 1,
+        "image_count": 20,
+        "font_count": 2,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "才女的侍从 08.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/05.xhtml",
+          "OEBPS/Text/07.xhtml",
+          "OEBPS/Text/color.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/00.xhtml",
+          "OEBPS/Text/04.xhtml",
+          "OEBPS/Text/02.xhtml",
+          "OEBPS/Text/01.xhtml",
+          "OEBPS/Text/08.xhtml",
+          "OEBPS/Text/03.xhtml"
+        ]
+      },
+      "stats": {
+        "file_count": 31,
+        "opf_language": "zh",
+        "title": "才女的侍从 08",
+        "ppd": "ltr",
+        "manifest_count": 28,
+        "spine_count": 11,
+        "has_ncx": true,
+        "html_count": 11,
+        "css_count": 0,
+        "image_count": 16,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "打倒女神勇者的下流手段 04.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "index_split_000.html",
+          "index_split_001.html",
+          "titlepage.xhtml"
+        ],
+        "missing_html_lang": [
+          "titlepage.xhtml"
+        ]
+      },
+      "stats": {
+        "file_count": 26,
+        "opf_language": "zh",
+        "title": "打倒女神勇者的下流手段 04",
+        "ppd": "ltr",
+        "manifest_count": 21,
+        "spine_count": 3,
+        "has_ncx": true,
+        "html_count": 3,
+        "css_count": 2,
+        "image_count": 15,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "最狂辅助职业【话术士】世界最强战团听我号令 03.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/chapter_0002.xhtml",
+          "OEBPS/Text/chapter_0006.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/chapter_0001.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/chapter_0003.xhtml",
+          "OEBPS/Text/chapter_0004.xhtml",
+          "OEBPS/Text/message.xhtml",
+          "OEBPS/Text/illus2.xhtml"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/stylesheet.css"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/stylesheet.css: float, webkit-prefix, text-shadow, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 40,
+        "opf_language": "zh",
+        "title": "最狂辅助职业【话术士】世界最强战团听我号令 03",
+        "ppd": "ltr",
+        "manifest_count": 36,
+        "spine_count": 13,
+        "has_ncx": true,
+        "html_count": 13,
+        "css_count": 1,
+        "image_count": 18,
+        "font_count": 3,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "朋友的妹妹只缠着我 06.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/illus3.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Inro-illus.xhtml",
+          "OEBPS/Text/Next-illus2.xhtml",
+          "OEBPS/Text/Section007.xhtml",
+          "OEBPS/Text/Special-illus.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/illus3.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Inro-illus.xhtml",
+          "OEBPS/Text/Next-illus2.xhtml",
+          "OEBPS/Text/Section007.xhtml",
+          "OEBPS/Text/Special-illus.xhtml"
+        ],
+        "duplicate_ids": [
+          "note_ref1",
+          "note1",
+          "note_ref2",
+          "note2"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ],
+        "css_kindle_unsafe": [
+          "stylesheet.css: webkit-prefix, text-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 80,
+        "opf_language": "zh",
+        "title": "朋友的妹妹只缠着我 06",
+        "ppd": "ltr",
+        "manifest_count": 72,
+        "spine_count": 37,
+        "has_ncx": true,
+        "html_count": 37,
+        "css_count": 2,
+        "image_count": 29,
+        "font_count": 3,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "治愈魔法的错误使用法～奔赴战场的回复要员～ 07.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section016.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section014.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section009.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section012.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/Section016.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Section014.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section009.xhtml"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ]
+      },
+      "stats": {
+        "file_count": 57,
+        "opf_language": "zh",
+        "title": "治愈魔法的错误使用法～奔赴战场的回复要员～ 07",
+        "ppd": "ltr",
+        "manifest_count": 49,
+        "spine_count": 25,
+        "has_ncx": true,
+        "html_count": 25,
+        "css_count": 2,
+        "image_count": 19,
+        "font_count": 2,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "理想的小白脸生活 06.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OPS/chapter7.html",
+          "OPS/chapter2.html",
+          "OPS/chapter1.html",
+          "OPS/chapter5.html",
+          "OPS/chapter6.html",
+          "OPS/chapter4.html",
+          "OPS/chapter3.html",
+          "OPS/chapter8.html",
+          "titlepage.xhtml"
+        ],
+        "missing_html_lang": [
+          "OPS/chapter7.html",
+          "OPS/chapter2.html",
+          "OPS/chapter1.html",
+          "OPS/chapter5.html",
+          "OPS/chapter6.html",
+          "OPS/chapter4.html",
+          "OPS/chapter3.html",
+          "OPS/chapter8.html",
+          "titlepage.xhtml"
+        ],
+        "css_font_face": [
+          "page_styles.css"
+        ],
+        "css_missing_font_file": [
+          "page_styles.css -> res:///opt/sony/ebook/FONT/tt0011m_.ttf",
+          "page_styles.css -> res:///tt0011m_.ttf"
+        ]
+      },
+      "stats": {
+        "file_count": 34,
+        "opf_language": "zh",
+        "title": "理想的小白脸生活 06",
+        "ppd": "ltr",
+        "manifest_count": 28,
+        "spine_count": 9,
+        "has_ncx": true,
+        "html_count": 9,
+        "css_count": 2,
+        "image_count": 16,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "理想的小白脸生活 10.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "index_split_002.html",
+          "index_split_003.html",
+          "index_split_004.html",
+          "index_split_000.html",
+          "index_split_001.html",
+          "titlepage.xhtml"
+        ],
+        "missing_html_lang": [
+          "titlepage.xhtml"
+        ]
+      },
+      "stats": {
+        "file_count": 29,
+        "opf_language": "en",
+        "title": "理想的小白脸生活 10",
+        "ppd": "ltr",
+        "manifest_count": 24,
+        "spine_count": 6,
+        "has_ncx": true,
+        "html_count": 6,
+        "css_count": 2,
+        "image_count": 15,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "男女之间存在纯友情吗？（不，不存在！） 07.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/002.webp",
+          "Images/003.webp",
+          "Images/004.webp",
+          "Images/005.webp",
+          "Images/006.webp",
+          "Images/007.webp",
+          "Images/008.webp",
+          "Images/009.webp",
+          "Images/010.webp",
+          "Images/011.webp",
+          "Images/012.webp",
+          "Images/013.webp",
+          "Images/014.webp",
+          "Images/015.webp",
+          "Images/016.webp",
+          "Images/1111.webp",
+          "Images/b1.webp",
+          "Images/c1.webp",
+          "Images/c2.webp",
+          "Images/t1.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/cr4.xhtml",
+          "OEBPS/Text/TOC.xhtml",
+          "OEBPS/Text/cr7.xhtml",
+          "OEBPS/Text/illus3.xhtml",
+          "OEBPS/Text/cr6.xhtml",
+          "OEBPS/Text/nav.xhtml",
+          "OEBPS/Text/cr1.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/cr4.xhtml",
+          "OEBPS/Text/TOC.xhtml",
+          "OEBPS/Text/cr7.xhtml",
+          "OEBPS/Text/illus3.xhtml",
+          "OEBPS/Text/cr6.xhtml",
+          "OEBPS/Text/nav.xhtml",
+          "OEBPS/Text/cr1.xhtml"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/contents.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cr1.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cr2.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cr4.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cr6.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cr8.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus1.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus2.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus3.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/mes.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt1.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/note.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/emoji.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/c1.webp",
+          "OEBPS/Images/003.webp",
+          "OEBPS/Images/013.webp",
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/008.webp",
+          "OEBPS/Images/007.webp",
+          "OEBPS/Images/015.webp",
+          "OEBPS/Images/009.webp",
+          "OEBPS/Images/006.webp",
+          "OEBPS/Images/016.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 61,
+        "opf_language": "zh",
+        "title": "男女之间存在纯友情吗？（不，不存在！） Flag 6. 难道现在这样的我不行吗？",
+        "ppd": "ltr",
+        "manifest_count": 55,
+        "spine_count": 18,
+        "has_ncx": true,
+        "html_count": 18,
+        "css_count": 3,
+        "image_count": 21,
+        "font_count": 11,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "能够率直说出喜欢的女生无双 02.epub",
+      "issues": {
+        "manifest_webp": [
+          "Images/asa.webp",
+          "Images/bdcolor.webp",
+          "Images/ctt1.webp",
+          "Images/ctt2.webp",
+          "Images/kuchie-001.webp",
+          "Images/kuchie-002.webp",
+          "Images/kuchie-003.webp",
+          "Images/kuchie-004.webp",
+          "Images/kuchie-005.webp",
+          "Images/kugiri.webp",
+          "Images/p023.webp",
+          "Images/p027.webp",
+          "Images/p050.webp",
+          "Images/p085.webp",
+          "Images/p091.webp",
+          "Images/p108.webp",
+          "Images/p182.webp",
+          "Images/p202.webp",
+          "Images/p257.webp",
+          "Images/p293.webp",
+          "Images/t1.webp",
+          "Images/t2.webp"
+        ],
+        "manifest_js": [
+          "Misc/script.js"
+        ],
+        "html_inline_script": [
+          "OEBPS/Text/Section08.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/Section09.xhtml",
+          "OEBPS/Text/Postscript.xhtml",
+          "OEBPS/Text/Section02.xhtml",
+          "OEBPS/Text/nav.xhtml",
+          "OEBPS/Text/Section07.xhtml",
+          "OEBPS/Text/illus05.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/Section08.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/summary.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/Section09.xhtml",
+          "OEBPS/Text/Postscript.xhtml",
+          "OEBPS/Text/Section02.xhtml",
+          "OEBPS/Text/nav.xhtml",
+          "OEBPS/Text/Section07.xhtml",
+          "OEBPS/Text/illus05.xhtml"
+        ],
+        "missing_image_refs": [
+          "OEBPS/Text/Section01.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section02.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section03.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section05.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section06.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section07.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section08.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/Section09.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/cover.xhtml -> self (resolved: OEBPS/Text/self)",
+          "OEBPS/Text/illus01.xhtml -> self (resolved: OEBPS/Text/self)"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/default.css",
+          "OEBPS/Styles/necessary.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/default.css -> ../Fonts/title.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus1.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus4.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/illus5.ttf",
+          "OEBPS/Styles/default.css -> ../Fonts/num.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/cont.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt1.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/ctt2.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/int.ttf",
+          "OEBPS/Styles/necessary.css -> ../Fonts/note.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/default.css: float, webkit-prefix, box-shadow, text-shadow, transform",
+          "OEBPS/Styles/necessary.css: z-index, webkit-prefix, text-shadow, transform, cursor"
+        ],
+        "webp_images": [
+          "OEBPS/Images/p050.webp",
+          "OEBPS/Images/ctt1.webp",
+          "OEBPS/Images/t1.webp",
+          "OEBPS/Images/bdcolor.webp",
+          "OEBPS/Images/p293.webp",
+          "OEBPS/Images/kugiri.webp",
+          "OEBPS/Images/kuchie-002.webp",
+          "OEBPS/Images/p027.webp",
+          "OEBPS/Images/p202.webp",
+          "OEBPS/Images/t2.webp"
+        ],
+        "js_files": [
+          "OEBPS/Misc/script.js"
+        ]
+      },
+      "stats": {
+        "file_count": 64,
+        "opf_language": "zh",
+        "title": "能够率直说出喜欢的女生无双 02",
+        "ppd": "ltr",
+        "manifest_count": 59,
+        "spine_count": 22,
+        "has_ncx": true,
+        "html_count": 22,
+        "css_count": 3,
+        "image_count": 23,
+        "font_count": 9,
+        "js_count": 1
+      }
+    },
+    {
+      "file": "被卷入了勇者召唤事件却发现异世界很和平 11.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "OEBPS/Text/1108-ch05-0000.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/1110-sp-characters-0000.xhtml",
+          "OEBPS/Text/1104-ch02-0001.xhtml",
+          "OEBPS/Text/cover0003.xhtml",
+          "OEBPS/Text/cover0007.xhtml",
+          "OEBPS/Text/1105-ch03-0001.xhtml",
+          "OEBPS/Text/1108-ch05-0004.xhtml",
+          "OEBPS/Text/1103-ch01-0000.xhtml",
+          "OEBPS/Text/1103-ch01-0001.xhtml"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/1108-ch05-0000.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/1110-sp-characters-0000.xhtml",
+          "OEBPS/Text/1104-ch02-0001.xhtml",
+          "OEBPS/Text/cover0003.xhtml",
+          "OEBPS/Text/cover0007.xhtml",
+          "OEBPS/Text/1105-ch03-0001.xhtml",
+          "OEBPS/Text/1108-ch05-0004.xhtml",
+          "OEBPS/Text/1103-ch01-0000.xhtml",
+          "OEBPS/Text/1103-ch01-0001.xhtml"
+        ]
+      },
+      "stats": {
+        "file_count": 58,
+        "opf_language": "zh",
+        "title": "被卷入了勇者召唤事件却发现异世界很和平 11",
+        "ppd": "ltr",
+        "manifest_count": 51,
+        "spine_count": 34,
+        "has_ncx": true,
+        "html_count": 34,
+        "css_count": 2,
+        "image_count": 14,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "败北女角太多了！ 05.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/ch4.xhtml",
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/sp6.xhtml",
+          "OEBPS/Text/sp1.xhtml",
+          "OEBPS/Text/Intermission3.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/inside.xhtml",
+          "OEBPS/Text/ch1.xhtml",
+          "OEBPS/Text/illus4.xhtml",
+          "OEBPS/Text/sp4.xhtml"
+        ],
+        "duplicate_ids": [
+          "note2",
+          "note3",
+          "note4",
+          "note1",
+          "note5",
+          "note6",
+          "note7"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/style.css"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: webkit-prefix, text-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 66,
+        "opf_language": "zh-CN",
+        "title": "败北女角太多了！ 05",
+        "ppd": "ltr",
+        "manifest_count": 63,
+        "spine_count": 34,
+        "has_ncx": true,
+        "html_count": 34,
+        "css_count": 1,
+        "image_count": 24,
+        "font_count": 3,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "贵族千金，只与我亲近 02.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Illus1.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section005.xhtml",
+          "OEBPS/Text/Illus3-1.xhtml",
+          "OEBPS/Text/Section007.xhtml",
+          "OEBPS/Text/Illus2.xhtml"
+        ],
+        "duplicate_ids": [
+          "note1",
+          "note2"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/style.css"
+        ],
+        "css_missing_font_file": [
+          "OEBPS/Styles/style.css -> ../Fonts/ziti1.otf"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: float, webkit-prefix, moz-prefix, box-shadow, text-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 43,
+        "opf_language": "zh",
+        "title": "贵族千金，只与我亲近 02",
+        "ppd": "ltr",
+        "manifest_count": 38,
+        "spine_count": 22,
+        "has_ncx": true,
+        "html_count": 22,
+        "css_count": 1,
+        "image_count": 9,
+        "font_count": 5,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "贵族千金，只与我亲近 03.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/contents-illus.xhtml",
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/Section011.xhtml",
+          "OEBPS/Text/cover.xhtml",
+          "OEBPS/Text/Section001.xhtml",
+          "OEBPS/Text/Illus1.xhtml",
+          "OEBPS/Text/Section008.xhtml",
+          "OEBPS/Text/Section004.xhtml",
+          "OEBPS/Text/Section009.xhtml",
+          "OEBPS/Text/Section005.xhtml"
+        ],
+        "duplicate_ids": [
+          "note2",
+          "note1"
+        ],
+        "css_font_face": [
+          "OEBPS/Styles/style.css"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/style.css: float, webkit-prefix, moz-prefix, box-shadow, text-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 54,
+        "opf_language": "zh",
+        "title": "贵族千金，只与我亲近 03",
+        "ppd": "ltr",
+        "manifest_count": 48,
+        "spine_count": 23,
+        "has_ncx": true,
+        "html_count": 23,
+        "css_count": 1,
+        "image_count": 16,
+        "font_count": 7,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "转生成蜘蛛又怎样！ 12.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "large_images": [
+          "OEBPS/Images/003.jpg (5MB)"
+        ],
+        "missing_html_lang": [
+          "OEBPS/Text/title.xhtml",
+          "OEBPS/Text/CoverPage.xhtml",
+          "OEBPS/Text/Chapter_7.xhtml",
+          "OEBPS/Text/Chapter_20.xhtml",
+          "OEBPS/Text/Chapter_22.xhtml",
+          "OEBPS/Text/Chapter_11.xhtml",
+          "OEBPS/Text/Chapter_19.xhtml",
+          "OEBPS/Text/Chapter_1.xhtml",
+          "OEBPS/Text/Chapter_12.xhtml",
+          "OEBPS/Text/Chapter_3.xhtml"
+        ],
+        "css_kindle_unsafe": [
+          "OEBPS/Styles/styles.css: text-shadow"
+        ]
+      },
+      "stats": {
+        "file_count": 62,
+        "opf_language": "zh",
+        "title": "转生成蜘蛛又怎样！ 12",
+        "ppd": "ltr",
+        "manifest_count": 59,
+        "spine_count": 28,
+        "has_ncx": true,
+        "html_count": 28,
+        "css_count": 1,
+        "image_count": 29,
+        "font_count": 0,
+        "js_count": 0
+      }
+    },
+    {
+      "file": "青春野狼不做双肩包幼女的梦 09.epub",
+      "issues": {
+        "missing_dcterms_modified": [
+          true
+        ],
+        "missing_doctype": [
+          "chapter2-2.xhtml",
+          "illusion2.xhtml",
+          "chapter1-4.xhtml",
+          "chapter1-1.xhtml",
+          "chapter3-2.xhtml",
+          "chapter4-3.xhtml",
+          "title.xhtml",
+          "chapter2-4.xhtml",
+          "chapter2-1.xhtml",
+          "chapter3-3.xhtml"
+        ],
+        "missing_html_lang": [
+          "chapter2-2.xhtml",
+          "illusion2.xhtml",
+          "chapter1-4.xhtml",
+          "chapter1-1.xhtml",
+          "chapter3-2.xhtml",
+          "chapter4-3.xhtml",
+          "title.xhtml",
+          "chapter2-4.xhtml",
+          "chapter2-1.xhtml",
+          "chapter3-3.xhtml"
+        ],
+        "duplicate_ids": [
+          "toc_1",
+          "toc_2"
+        ],
+        "css_font_face": [
+          "style.css"
+        ],
+        "css_missing_font_file": [
+          "style.css -> OEBPS/Styles/SIMYOU.ttf",
+          "style.css -> OEBPS/Styles/simhei.ttf",
+          "style.css -> OEBPS/Styles/STHUPO.ttf"
+        ],
+        "css_kindle_unsafe": [
+          "style.css: float, webkit-prefix, moz-prefix, text-shadow, transform"
+        ]
+      },
+      "stats": {
+        "file_count": 43,
+        "opf_language": "zh",
+        "title": "青春野狼不做双肩包幼女的梦 09",
+        "ppd": "ltr",
+        "manifest_count": 39,
+        "spine_count": 29,
+        "has_ncx": true,
+        "html_count": 29,
+        "css_count": 1,
+        "image_count": 8,
+        "font_count": 0,
+        "js_count": 0
+      }
+    }
+  ]
+}

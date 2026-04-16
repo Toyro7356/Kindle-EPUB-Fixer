@@ -13,10 +13,11 @@ from .book_type import detect_book_type
 from .epub_io import find_opf, repack_epub, unpack_epub
 from .font_handler import handle_fonts, scan_fonts
 from .footnote_fix import fix_footnotes_for_kindle
-from .html_fix import clean_html_meta, fix_html_structure, fix_self_closing_tags
-from .image_fix import convert_webp_images, update_html_css_webp_refs, update_opf_webp_refs
+from .css_sanitize import sanitize_css_for_kindle
+from .html_fix import clean_html_meta, fix_duplicate_ids, fix_html_structure, fix_self_closing_tags
+from .image_fix import clean_invalid_image_refs, convert_webp_images, update_html_css_webp_refs, update_opf_webp_refs
 from .language_fix import fix_language_tags
-from .opf_sanitize import fix_spine_direction_for_novel, sanitize_opf_for_kindle
+from .opf_sanitize import fix_spine_direction_for_novel, inject_dcterms_modified, sanitize_opf_for_kindle
 from .comic_fix import sanitize_comic_for_kindle
 from .epub_validator import validate_epub
 from .script_remove import remove_scripts_from_book
@@ -44,6 +45,10 @@ def process_files(
         log("已根据正文内容修正语言标签")
 
     handle_fonts(temp_dir, log, imported_fonts)
+
+    invalid_img_fixed = clean_invalid_image_refs(opf_path)
+    if invalid_img_fixed:
+        log(f"已修复 {invalid_img_fixed} 个 HTML 文件中的无效图片引用")
 
     mapping = convert_webp_images(opf_path)
     if mapping:
@@ -88,6 +93,19 @@ def process_files(
     sc_fixed = fix_self_closing_tags(opf_path)
     if sc_fixed:
         log(f"已修复 {sc_fixed} 个 HTML 文件中的自闭合标签")
+
+    dup_fixed = fix_duplicate_ids(opf_path)
+    if dup_fixed:
+        log(f"已修复 {dup_fixed} 个 HTML 文件中的重复 id")
+
+    css_stats = sanitize_css_for_kindle(opf_path)
+    if css_stats.get("css_files"):
+        log(f"已清理 {css_stats['css_files']} 个 CSS 文件中的 Kindle 不兼容属性")
+    if css_stats.get("html_files"):
+        log(f"已清理 {css_stats['html_files']} 个 HTML 文件内联样式中的 Kindle 不兼容属性")
+
+    if inject_dcterms_modified(opf_path):
+        log("已注入缺失的 dcterms:modified 元数据")
 
     sanitize_opf_for_kindle(opf_path, book_type)
     log(f"已根据 {book_type} 类型清理 OPF 不兼容元数据")
