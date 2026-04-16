@@ -14,10 +14,9 @@ from .epub_io import find_opf, repack_epub, unpack_epub
 from .font_handler import handle_fonts, scan_fonts
 from .footnote_fix import fix_footnotes_for_kindle
 from .html_fix import clean_html_meta, fix_html_structure, fix_self_closing_tags
-from .image_fix import clean_invalid_image_refs, convert_webp_images, update_html_css_webp_refs, update_opf_webp_refs
+from .image_fix import convert_webp_images, update_html_css_webp_refs, update_opf_webp_refs
 from .language_fix import fix_language_tags
-from .ncx_fix import fix_ncx_parent_navpoints
-from .opf_sanitize import fix_spine_direction_for_novel, inject_dcterms_modified, sanitize_opf_for_kindle
+from .opf_sanitize import fix_spine_direction_for_novel, sanitize_opf_for_kindle
 from .comic_fix import sanitize_comic_for_kindle
 from .epub_validator import validate_epub
 from .script_remove import remove_scripts_from_book
@@ -26,29 +25,59 @@ from .utils import LogCallback, _default_log
 from .vertical_fix import fix_vertical_writing_mode
 
 
+def _is_kobo_book(temp_dir: str) -> bool:
+    """通过 Adept DRM 特征识别 Kobo 购买的书籍。"""
+    for root, _, files in os.walk(temp_dir):
+        for name in files:
+            if name.endswith((".html", ".xhtml", ".htm", ".opf")):
+                path = os.path.join(root, name)
+                try:
+                    with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+                        chunk = fh.read(8192)
+                        if "Adept.expected.resource" in chunk:
+                            return True
+                except Exception:
+                    continue
+    return False
+
+
 def process_files(
     temp_dir: str,
     log: LogCallback = _default_log,
     imported_fonts: Optional[Dict[str, str]] = None,
 ) -> str:
-    """对解压后的 EPUB 临时目录执行全套修复，返回检测到的书籍类型。"""
+    """对解压后的 EPUB 临时目录执行修复，返回检测到的书籍类型。"""
     try:
         opf_path = find_opf(temp_dir)
     except FileNotFoundError as e:
         log(f"[Warning] 无法定位 OPF: {e}")
         return "unknown"
 
+    is_kobo = _is_kobo_book(temp_dir)
+    if is_kobo:
+        log("检测到 Kobo 书籍，执行完整修复流程")
+    else:
+        log("检测到非 Kobo 书籍，仅执行图片格式转换")
+
+    # 无论是否 Kobo 书籍，都先检测类型用于后续校验
     book_type = detect_book_type(opf_path)
+
+    if not is_kobo:
+        # 非 Kobo 书籍：仅转换不支持的图片格式
+        mapping = convert_webp_images(opf_path)
+        if mapping:
+            log(f"转换了 {len(mapping)} 张 webp 图片")
+            update_opf_webp_refs(opf_path, mapping)
+            update_html_css_webp_refs(opf_path, mapping)
+        return book_type
+
+    # Kobo 书籍：执行 1.1.0 完整处理流程
     log(f"检测到书籍类型: {book_type}")
 
     if fix_language_tags(opf_path):
         log("已根据正文内容修正语言标签")
 
     handle_fonts(temp_dir, log, imported_fonts)
-
-    invalid_img_fixed = clean_invalid_image_refs(opf_path)
-    if invalid_img_fixed:
-        log(f"已修复 {invalid_img_fixed} 个 HTML 文件中的无效图片引用")
 
     mapping = convert_webp_images(opf_path)
     if mapping:
@@ -93,13 +122,6 @@ def process_files(
     sc_fixed = fix_self_closing_tags(opf_path)
     if sc_fixed:
         log(f"已修复 {sc_fixed} 个 HTML 文件中的自闭合标签")
-
-    ncx_fixed = fix_ncx_parent_navpoints(opf_path)
-    if ncx_fixed:
-        log(f"已修复 {ncx_fixed} 处 NCX 目录层级结构")
-
-    if inject_dcterms_modified(opf_path):
-        log("已注入缺失的 dcterms:modified 元数据")
 
     sanitize_opf_for_kindle(opf_path, book_type)
     log(f"已根据 {book_type} 类型清理 OPF 不兼容元数据")

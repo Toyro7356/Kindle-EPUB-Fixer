@@ -12,34 +12,16 @@ Version numbering rules:
 
 ---
 
-## [1.2.0] - 2026-04-15
+## [1.3.0-beta] - 2026-04-16
 
-### Added
-- **通用 CSS 清理器** (`src/css_sanitize.py`)
-  - 自动移除 Kindle 不支持的 CSS 属性：`position: fixed/sticky`、`z-index`、
-    `box-shadow`、`text-shadow`、`animation`、`transition`、`transform`、
-    `cursor`、`pointer-events`、`-webkit-*`（白名单除外）、`-moz-*` 等。
-  - 同时清理 CSS 文件和 HTML inline style。
-  - 依据：Amazon Kindle Publishing Guidelines 对 CSS 支持的明确限制。
-- **无效图片引用修复** (`src/image_fix.py`)
-  - 处理 HTML 中 `src="self"`、`src="none"`、`src=""`、`src="#"` 等常见占位符错误，
-    替换为透明 1x1 GIF data URI，避免 Kindle 解析崩溃。
-  - 移除无效的多看/掌阅专属属性 `zy-enlarge-src="self"` 等。
-  - 对懒加载占位符 `data-src` 进行提升处理（若主 `src` 无效）。
-- **单文件重复 id 修复** (`src/html_fix.py`)
-  - 检测并修复单个 XHTML 文件内重复的 `id`，递增重命名（`id-1`, `id-2`），
-    并同步更新该文件内所有 `href="#id"`、`src="#id"` 等片段引用。
-  - 依据：XML ID 唯一性要求；重复 id 会导致内部链接/NCX/脚注失效。
-- **自动注入 dcterms:modified** (`src/opf_sanitize.py`)
-  - 若 OPF 缺少 `dcterms:modified`，自动注入当前 UTC 时间。
-  - 依据：EPUB 3.0/3.2 规范，该元数据为 required。
-
-### Fixed
-- 修复 `epub_validator.py` 对 URL 编码图片路径（如 `%E7%89%B9%E5%85%B8...`）的误报，
-  校验前先做 `urllib.parse.unquote` 解码。
-
-### Verified
-- 对 42 本不同作者自制的 EPUB 进行批量处理与校验，**全部通过** `epub_validator`。
+### Changed
+- **彻底放弃 v1.2.0-beta 路线，回退至 v1.1.0 稳定基础重新演进。**
+- **新增 Kobo 书籍识别功能** (`src/core.py`)
+  - 通过 Adobe Adept DRM 特征 (`Adept.expected.resource`) 精准识别 Kobo 购买书籍。
+  - 经测试，24/24 本 Kobo 样本正确识别，44/44 本自制 EPUB 正确排除。
+- **差异化处理策略**
+  - **Kobo 书籍**：继续执行 v1.1 全套 Kindle 兼容性修复（语言、字体、SVG、脚本、竖排、脚注、OPF 清理等）。
+  - **非 Kobo 书籍**：仅检测并转换 Kindle 不支持的图片格式（WebP → JPG/PNG），其余内容保持原样，避免对自制书籍的过度干预。
 
 ---
 

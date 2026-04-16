@@ -8,7 +8,6 @@ import re
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
-from urllib.parse import unquote
 from xml.etree import ElementTree as ET
 
 from .constants import NS_OPF
@@ -182,7 +181,7 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
                 # 检查 img src 指向的文件是否存在于 zip
                 imgs = re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', content, re.IGNORECASE)
                 for img in imgs:
-                    raw = (Path(resolved).parent / unquote(img)).as_posix()
+                    raw = (Path(resolved).parent / img).as_posix()
                     img_resolved = os.path.normpath(raw).replace(os.sep, "/")
                     # 防止 normpath 把开头的 ../ 搞丢后变成相对路径丢失根上下文
                     if img_resolved.startswith("../"):

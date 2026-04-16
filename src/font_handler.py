@@ -170,10 +170,12 @@ def scan_fonts(temp_dir: str) -> Tuple[Dict[str, Dict], Set[str], list]:
             family = face["family"].strip()
             src_url = face["src_url"]
             if not src_url:
-                missing.add(family)
+                if family not in KINDLE_BUILTIN_FONTS:
+                    missing.add(family)
                 continue
             if src_url.startswith(("http://", "https://", "data:")):
-                missing.add(family)
+                if family not in KINDLE_BUILTIN_FONTS:
+                    missing.add(family)
                 continue
             if src_url.startswith("/"):
                 resolved = (base_dir / src_url.lstrip("/")).resolve()
@@ -182,7 +184,8 @@ def scan_fonts(temp_dir: str) -> Tuple[Dict[str, Dict], Set[str], list]:
             try:
                 resolved.relative_to(base_dir.resolve())
             except ValueError:
-                missing.add(family)
+                if family not in KINDLE_BUILTIN_FONTS:
+                    missing.add(family)
                 continue
             if resolved.exists():
                 fmt = face["format"]
@@ -201,7 +204,8 @@ def scan_fonts(temp_dir: str) -> Tuple[Dict[str, Dict], Set[str], list]:
                     "src_url": src_url,
                 }
             else:
-                missing.add(family)
+                if family not in KINDLE_BUILTIN_FONTS:
+                    missing.add(family)
     return embedded, missing, css_files
 
 
@@ -245,9 +249,6 @@ def _sanitize_css_font_family(css_content: str, missing: Set[str], fallback: str
             name = p.strip('"\'').strip().lower()
             if name not in missing:
                 kept.append(p)  # 保留原始格式（含引号）
-            elif name in KINDLE_BUILTIN_FONTS:
-                # 缺失但为 Kindle 内置字体：保留原样（无需回退）
-                kept.append(p)
         if kept:
             return prefix + ", ".join(kept)
         return prefix + fallback
