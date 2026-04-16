@@ -13,10 +13,10 @@ from .book_type import detect_book_type
 from .epub_io import find_opf, repack_epub, unpack_epub
 from .font_handler import handle_fonts, scan_fonts
 from .footnote_fix import fix_footnotes_for_kindle
-from .css_sanitize import sanitize_css_for_kindle
-from .html_fix import clean_html_meta, fix_duplicate_ids, fix_html_structure, fix_self_closing_tags
+from .html_fix import clean_html_meta, fix_html_structure, fix_self_closing_tags
 from .image_fix import clean_invalid_image_refs, convert_webp_images, update_html_css_webp_refs, update_opf_webp_refs
 from .language_fix import fix_language_tags
+from .ncx_fix import fix_ncx_parent_navpoints
 from .opf_sanitize import fix_spine_direction_for_novel, inject_dcterms_modified, sanitize_opf_for_kindle
 from .comic_fix import sanitize_comic_for_kindle
 from .epub_validator import validate_epub
@@ -94,15 +94,9 @@ def process_files(
     if sc_fixed:
         log(f"已修复 {sc_fixed} 个 HTML 文件中的自闭合标签")
 
-    dup_fixed = fix_duplicate_ids(opf_path)
-    if dup_fixed:
-        log(f"已修复 {dup_fixed} 个 HTML 文件中的重复 id")
-
-    css_stats = sanitize_css_for_kindle(opf_path)
-    if css_stats.get("css_files"):
-        log(f"已清理 {css_stats['css_files']} 个 CSS 文件中的 Kindle 不兼容属性")
-    if css_stats.get("html_files"):
-        log(f"已清理 {css_stats['html_files']} 个 HTML 文件内联样式中的 Kindle 不兼容属性")
+    ncx_fixed = fix_ncx_parent_navpoints(opf_path)
+    if ncx_fixed:
+        log(f"已修复 {ncx_fixed} 处 NCX 目录层级结构")
 
     if inject_dcterms_modified(opf_path):
         log("已注入缺失的 dcterms:modified 元数据")
