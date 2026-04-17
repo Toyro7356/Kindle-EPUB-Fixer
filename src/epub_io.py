@@ -30,13 +30,13 @@ def repack_epub(temp_dir: str, output_path: str) -> None:
 def find_opf(temp_dir: str) -> str:
     container_path = Path(temp_dir) / "META-INF" / "container.xml"
     if not container_path.exists():
-        raise FileNotFoundError("META-INF/container.xml 不存在")
+        raise FileNotFoundError("META-INF/container.xml does not exist")
     tree = etree.parse(str(container_path))
     for rf in tree.xpath("//container:rootfiles/container:rootfile", namespaces=NSMAP):
         full_path = rf.get("full-path")
         if full_path:
             return str(Path(temp_dir) / full_path.replace("/", os.sep))
-    raise FileNotFoundError("container.xml 中未找到 rootfile")
+    raise FileNotFoundError("No rootfile entry found in container.xml")
 
 
 def opf_dir(opf_path: str) -> str:

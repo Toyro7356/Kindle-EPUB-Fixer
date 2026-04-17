@@ -1,6 +1,8 @@
+import io
 import os
 import re
 import shutil
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -10,7 +12,14 @@ from lxml import etree
 
 from .constants import NS_OPF
 from .epub_io import find_opf, opf_dir
+from .text_io import read_text_file, write_text_file
 from .utils import LogCallback, _default_log
+
+
+def _run_fonttools_quietly(fn, *args, **kwargs):
+    sink = io.StringIO()
+    with redirect_stdout(sink), redirect_stderr(sink):
+        return fn(*args, **kwargs)
 
 # ---------------------------------------------------------------------------
 # Kindle built-in fonts (case-insensitive)
@@ -164,7 +173,7 @@ def scan_fonts(temp_dir: str) -> Tuple[Dict[str, Dict], Set[str], list]:
     missing: Set[str] = set()
 
     for css_path in css_files:
-        content = css_path.read_text(encoding="utf-8")
+        content = read_text_file(css_path)
         faces = _parse_css_font_faces(content)
         for face in faces:
             family = face["family"].strip()
@@ -284,7 +293,7 @@ def sanitize_missing_fonts(
     # ---- 1. 从 CSS 中移除缺失的 @font-face ----
     removed_faces = 0
     for css_path in css_files:
-        content = css_path.read_text(encoding="utf-8")
+        content = read_text_file(css_path)
         original = content
         for family in missing:
             pattern = re.compile(
@@ -294,7 +303,7 @@ def sanitize_missing_fonts(
             content, count = pattern.subn("", content)
             removed_faces += count
         if content != original:
-            css_path.write_text(content, encoding="utf-8")
+            write_text_file(css_path, content)
 
     if removed_faces:
         log(f"已移除 {removed_faces} 个缺失字体的 @font-face 声明")
@@ -302,11 +311,11 @@ def sanitize_missing_fonts(
     # ---- 2. 替换 CSS 中的 font-family ----
     replaced_css = 0
     for css_path in css_files:
-        content = css_path.read_text(encoding="utf-8")
+        content = read_text_file(css_path)
         original = content
         content = _sanitize_css_font_family(content, missing, fallback)
         if content != original:
-            css_path.write_text(content, encoding="utf-8")
+            write_text_file(css_path, content)
             replaced_css += 1
 
     if replaced_css:
@@ -388,7 +397,7 @@ def handle_fonts(
             # 更新 CSS 中该 font-family 对应的 @font-face src
             for css_path in css_files:
                 css_rel = os.path.relpath(target_path, css_path.parent).replace(os.sep, "/")
-                css_content = css_path.read_text(encoding="utf-8")
+                css_content = read_text_file(css_path)
                 pattern = re.compile(
                     rf'@font-face\s*\{{[^}}]*font-family\s*:\s*["\']?{re.escape(family)}["\']?\s*;[^}}]*\}}',
                     re.IGNORECASE,
@@ -407,7 +416,7 @@ def handle_fonts(
 
                 new_css, count = pattern.subn(_make_replacer(css_rel), css_content)
                 if count:
-                    css_path.write_text(new_css, encoding="utf-8")
+                    write_text_file(css_path, new_css)
 
             # 添加 OPF manifest 条目
             if manifest is not None:
@@ -478,9 +487,9 @@ def handle_fonts(
 
         if ext in (".woff", ".woff2"):
             try:
-                font = TTFont(str(font_path))
+                font = _run_fonttools_quietly(TTFont, str(font_path))
                 new_path = font_path.with_suffix(".ttf")
-                font.save(str(new_path))
+                _run_fonttools_quietly(font.save, str(new_path))
                 font_path.unlink()
                 font_path = new_path
                 converted = True
@@ -491,15 +500,15 @@ def handle_fonts(
 
         if font_path.exists() and font_path.stat().st_size > 50 * 1024 and text:
             try:
-                font = TTFont(str(font_path))
+                font = _run_fonttools_quietly(TTFont, str(font_path))
                 options = Options()
                 options.hinting = False
                 options.desubroutinize = True
                 subsetter = Subsetter(options=options)
                 subsetter.populate(text=text)
-                subsetter.subset(font)
+                _run_fonttools_quietly(subsetter.subset, font)
                 tmp = font_path.with_suffix(".subset" + font_path.suffix)
-                font.save(str(tmp))
+                _run_fonttools_quietly(font.save, str(tmp))
                 font_path.unlink()
                 tmp.rename(font_path)
                 log(f"字体子集化: {font_path.name}")
@@ -514,7 +523,7 @@ def handle_fonts(
     # ---- 更新 CSS 引用 ----
     if renamed:
         for css_path in css_files:
-            content = css_path.read_text(encoding="utf-8")
+            content = read_text_file(css_path)
             modified = False
             for old_name, new_name in renamed.items():
                 pattern = re.compile(re.escape(old_name) + r'(?=["\'\s)\]])')
@@ -522,7 +531,7 @@ def handle_fonts(
                     content = pattern.sub(new_name, content)
                     modified = True
             if modified:
-                css_path.write_text(content, encoding="utf-8")
+                write_text_file(css_path, content)
 
     # ---- 更新 OPF manifest ----
     if manifest is not None and renamed:

@@ -6,6 +6,7 @@ from lxml import etree
 
 from .constants import NS_OPF, NS_XHTML
 from .epub_io import opf_dir
+from .text_io import read_text_file, write_text_file
 from .utils import write_xhtml_doc
 
 
@@ -43,7 +44,7 @@ def fix_vertical_writing_mode(opf_path: str) -> int:
     css_files = list(base_dir.rglob("*.css"))
     fixed_css = 0
     for css_path in css_files:
-        content = css_path.read_text(encoding="utf-8")
+        content = read_text_file(css_path)
         original = content
         # Replace writing-mode values
         content = re.sub(
@@ -65,7 +66,7 @@ def fix_vertical_writing_mode(opf_path: str) -> int:
             flags=re.IGNORECASE,
         )
         if content != original:
-            css_path.write_text(content, encoding="utf-8")
+            write_text_file(css_path, content)
             fixed_css += 1
 
     # Fix inline styles in xhtml

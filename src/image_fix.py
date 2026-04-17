@@ -7,6 +7,7 @@ from PIL import Image
 
 from .constants import NS_OPF
 from .epub_io import opf_dir
+from .text_io import read_text_file, write_text_file
 
 
 def convert_webp_images(opf_path: str) -> Dict[str, str]:
@@ -68,7 +69,7 @@ def update_html_css_webp_refs(opf_path: str, mapping: Dict[str, str]) -> None:
     for filepath in base_dir.rglob("*"):
         if not filepath.is_file() or filepath.suffix.lower() not in text_exts:
             continue
-        content = filepath.read_text(encoding="utf-8")
+        content = read_text_file(filepath)
         modified = False
         for old_name, new_name in mapping.items():
             pattern = re.compile(re.escape(old_name) + r"(?=[\"'\s)\]])")
@@ -76,4 +77,4 @@ def update_html_css_webp_refs(opf_path: str, mapping: Dict[str, str]) -> None:
                 content = pattern.sub(new_name, content)
                 modified = True
         if modified:
-            filepath.write_text(content, encoding="utf-8")
+            write_text_file(filepath, content)

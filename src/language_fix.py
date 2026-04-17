@@ -7,6 +7,7 @@ from lxml import etree
 
 from .constants import NS_OPF, NS_XHTML
 from .epub_io import opf_dir
+from .text_io import read_text_file
 from .utils import write_xhtml_doc
 
 
@@ -95,7 +96,7 @@ def _get_all_xhtml_text(opf_path: str) -> str:
         except etree.XMLSyntaxError:
             # 若解析失败，回退到正则提取文本
             try:
-                raw = fp.read_text(encoding="utf-8")
+                raw = read_text_file(fp)
                 txt = re.sub(r"<[^>]+>", "", raw)
                 chunks.append(txt)
             except Exception:

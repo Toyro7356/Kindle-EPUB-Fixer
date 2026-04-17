@@ -1,12 +1,38 @@
 import os
 import re
+from html.entities import html5
 from pathlib import Path
 
 from lxml import etree
 
 from .constants import NS_OPF, NS_XHTML
 from .epub_io import opf_dir
+from .text_io import read_text_file, write_text_file
 from .utils import write_xhtml_doc
+
+
+BROKEN_CLOSING_TAG_RE = re.compile(r"(?<!<)/([A-Za-z][A-Za-z0-9:_-]*)>")
+HTML_ENTITY_RE = re.compile(r"&([A-Za-z][A-Za-z0-9]+);")
+BARE_AMP_RE = re.compile(r"&(?!#\d+;|#x[0-9A-Fa-f]+;|[A-Za-z][A-Za-z0-9]+;)")
+
+_XML_PREDEFINED_ENTITIES = {"amp", "lt", "gt", "apos", "quot"}
+
+
+def repair_common_markup_damage(content: str) -> str:
+    content = BROKEN_CLOSING_TAG_RE.sub(r"</\1>", content)
+
+    def _replace_entity(match: re.Match[str]) -> str:
+        name = match.group(1)
+        if name in _XML_PREDEFINED_ENTITIES:
+            return match.group(0)
+        replacement = html5.get(f"{name};")
+        if replacement:
+            return replacement
+        return match.group(0)
+
+    content = HTML_ENTITY_RE.sub(_replace_entity, content)
+    content = BARE_AMP_RE.sub("&amp;", content)
+    return content
 
 
 def fix_html_structure(opf_path: str) -> int:
@@ -25,8 +51,9 @@ def fix_html_structure(opf_path: str) -> int:
         if not file_path.exists():
             continue
 
-        content = file_path.read_text(encoding="utf-8")
+        content = read_text_file(file_path)
         original = content
+        content = repair_common_markup_damage(content)
 
         content = content.lstrip()
         if not content.startswith("<?xml"):
@@ -62,7 +89,7 @@ def fix_html_structure(opf_path: str) -> int:
                     content = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html>\n' + inner
 
         if content != original:
-            file_path.write_text(content, encoding="utf-8")
+            write_text_file(file_path, content)
             fixed += 1
     return fixed
 
@@ -104,8 +131,9 @@ def fix_self_closing_tags(opf_path: str) -> int:
         if not file_path.exists():
             continue
 
-        content = file_path.read_text(encoding="utf-8")
+        content = read_text_file(file_path)
         original = content
+        content = repair_common_markup_damage(content)
 
         def replacer(m):
             tag = m.group(1).lower()
@@ -116,7 +144,7 @@ def fix_self_closing_tags(opf_path: str) -> int:
 
         content = pattern.sub(replacer, content)
         if content != original:
-            file_path.write_text(content, encoding="utf-8")
+            write_text_file(file_path, content)
             fixed += 1
     return fixed
 

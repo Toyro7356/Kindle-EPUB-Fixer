@@ -8,6 +8,7 @@ from PIL import Image
 
 from .constants import NS_OPF, NS_XHTML
 from .epub_io import opf_dir
+from .text_io import read_text_file, write_text_file
 
 
 def _detect_resolution_from_viewport(opf_path: str) -> Optional[Tuple[int, int]]:
@@ -26,7 +27,7 @@ def _detect_resolution_from_viewport(opf_path: str) -> Optional[Tuple[int, int]]
         if not fp.exists():
             continue
         try:
-            content = fp.read_text(encoding="utf-8")
+            content = read_text_file(fp)
         except Exception:
             continue
         # 匹配 <meta name="viewport" content="width=1066, height=1600" />
@@ -195,7 +196,7 @@ def ensure_comic_viewport(opf_path: str) -> int:
         if not fp.exists():
             continue
         try:
-            content = fp.read_text(encoding="utf-8")
+            content = read_text_file(fp)
         except Exception:
             continue
         m = re.search(
@@ -228,7 +229,7 @@ def ensure_comic_viewport(opf_path: str) -> int:
         if not fp.exists():
             continue
         try:
-            content = fp.read_text(encoding="utf-8")
+            content = read_text_file(fp)
         except Exception:
             continue
         if "viewport" in content.lower():
@@ -249,7 +250,7 @@ def ensure_comic_viewport(opf_path: str) -> int:
                 content,
                 flags=re.IGNORECASE,
             )
-        fp.write_text(content, encoding="utf-8")
+        write_text_file(fp, content)
         fixed += 1
 
     return fixed

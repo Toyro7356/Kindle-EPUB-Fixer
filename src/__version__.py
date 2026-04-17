@@ -1,5 +1,5 @@
-"""版本信息"""
+"""Version metadata."""
 
-__version__ = "1.3.0-beta"
+__version__ = "1.3.0-beta.1"
 __title__ = "Kindle EPUB Fixer"
-__description__ = "智能修复 EPUB 文件，提升 Amazon Kindle / Send to Kindle 兼容性"
+__description__ = "Repair EPUB files for better Kindle and Send to Kindle compatibility."

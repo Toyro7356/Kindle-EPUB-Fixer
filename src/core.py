@@ -1,44 +1,139 @@
 """
-Kindle EPUB Fixer — Core Engine
+Kindle EPUB Fixer - Core Engine
 
-智能修复 EPUB 文件以提升 Amazon Kindle / Send to Kindle 兼容性。
-支持漫画(comic)与小说(novel)的自动识别与差异化处理。
+Conservative EPUB repair focused on preserving the author's intended layout.
 """
 
 import os
 import tempfile
+from pathlib import Path
 from typing import Dict, Optional
 
+from .book_profile import detect_book_profile
 from .book_type import detect_book_type
+from .comic_fix import sanitize_comic_for_kindle
+from .css_sanitize import downgrade_risky_css_for_kindle
 from .epub_io import find_opf, repack_epub, unpack_epub
-from .font_handler import handle_fonts, scan_fonts
+from .epub_validator import validate_epub
+from .font_handler import handle_fonts
 from .footnote_fix import fix_footnotes_for_kindle
 from .html_fix import clean_html_meta, fix_html_structure, fix_self_closing_tags
 from .image_fix import convert_webp_images, update_html_css_webp_refs, update_opf_webp_refs
 from .language_fix import fix_language_tags
+from .ncx_fix import fix_ncx_parent_navpoints
 from .opf_sanitize import fix_spine_direction_for_novel, sanitize_opf_for_kindle
-from .comic_fix import sanitize_comic_for_kindle
-from .epub_validator import validate_epub
-from .script_remove import remove_scripts_from_book
+from .script_remove import remove_known_helper_scripts, remove_scripts_from_book
 from .svg_fix import convert_svg_pages_to_img, remove_stale_svg_properties
 from .utils import LogCallback, _default_log
 from .vertical_fix import fix_vertical_writing_mode
 
 
-def _is_kobo_book(temp_dir: str) -> bool:
-    """通过 Adept DRM 特征识别 Kobo 购买的书籍。"""
-    for root, _, files in os.walk(temp_dir):
-        for name in files:
-            if name.endswith((".html", ".xhtml", ".htm", ".opf")):
-                path = os.path.join(root, name)
-                try:
-                    with open(path, "r", encoding="utf-8", errors="ignore") as fh:
-                        chunk = fh.read(8192)
-                        if "Adept.expected.resource" in chunk:
-                            return True
-                except Exception:
-                    continue
-    return False
+def resolve_output_path(epub_path: str, output_path: Optional[str] = None) -> str:
+    if output_path:
+        candidate = Path(output_path)
+        if candidate.exists() and candidate.is_dir():
+            return str((candidate / Path(epub_path).name).resolve())
+        return str(candidate.resolve())
+
+    input_path = Path(epub_path).resolve()
+    output_dir = input_path.parent / "转换后"
+    output_dir.mkdir(exist_ok=True)
+    return str((output_dir / input_path.name).resolve())
+
+
+def _apply_safe_repairs(
+    opf_path: str,
+    book_type: str,
+    preserve_layout: bool,
+    log: LogCallback,
+) -> None:
+    mapping = convert_webp_images(opf_path)
+    if mapping:
+        log(f"Converted {len(mapping)} WebP images")
+        update_opf_webp_refs(opf_path, mapping)
+        update_html_css_webp_refs(opf_path, mapping)
+
+    helper_cleanup = remove_known_helper_scripts(opf_path)
+    if helper_cleanup:
+        log(f"Removed {helper_cleanup} known helper script artifacts")
+
+    fixed_count = fix_html_structure(opf_path)
+    if fixed_count:
+        log(f"Fixed HTML structure in {fixed_count} documents")
+
+    sc_fixed = fix_self_closing_tags(opf_path)
+    if sc_fixed:
+        log(f"Fixed self-closing tags in {sc_fixed} documents")
+
+    clean_html_meta(opf_path)
+
+    ncx_fixed = fix_ncx_parent_navpoints(opf_path)
+    if ncx_fixed:
+        log(f"Fixed {ncx_fixed} NCX parent navPoints for Kindle navigation")
+
+    if book_type == "comic" and preserve_layout:
+        log("Detected comic-like layout; preserving existing comic metadata without forced expansion")
+    elif book_type == "comic":
+        comic_fixed = sanitize_comic_for_kindle(opf_path)
+        if comic_fixed:
+            log(f"Applied {comic_fixed} comic compatibility adjustments")
+
+    sanitize_opf_for_kindle(opf_path, book_type, preserve_layout=preserve_layout)
+    log("Sanitized OPF metadata conservatively")
+
+
+def _apply_reflow_repairs(
+    temp_dir: str,
+    opf_path: str,
+    book_type: str,
+    profile_preserve_layout: bool,
+    log: LogCallback,
+    imported_fonts: Optional[Dict[str, str]],
+) -> None:
+    if profile_preserve_layout:
+        return
+
+    if fix_language_tags(opf_path):
+        log("Updated language metadata from book content")
+
+    handle_fonts(temp_dir, log, imported_fonts)
+
+    css_sanitized = downgrade_risky_css_for_kindle(opf_path)
+    if css_sanitized:
+        log(f"Downgraded risky CSS transforms in {css_sanitized} documents")
+
+    svg_converted = convert_svg_pages_to_img(opf_path)
+    if svg_converted:
+        log(f"Converted {svg_converted} SVG image pages to img")
+
+    ff_fixed = fix_footnotes_for_kindle(opf_path)
+    if ff_fixed:
+        log(f"Normalized footnotes in {ff_fixed} documents")
+
+    if book_type == "novel" and fix_spine_direction_for_novel(opf_path):
+        log("Adjusted non-Japanese spine progression from rtl to ltr")
+
+    wm_fixed = fix_vertical_writing_mode(opf_path)
+    if wm_fixed:
+        log(f"Downgraded vertical writing in {wm_fixed} locations")
+
+    stale_removed = remove_stale_svg_properties(opf_path)
+    if stale_removed:
+        log(f"Removed {stale_removed} stale svg manifest properties")
+
+
+def _apply_source_specific_cleanup(
+    opf_path: str,
+    has_kobo_markers: bool,
+    preserve_layout: bool,
+    log: LogCallback,
+) -> None:
+    if not has_kobo_markers or preserve_layout:
+        return
+
+    script_removed = remove_scripts_from_book(opf_path)
+    if script_removed:
+        log(f"Removed script markup from {script_removed} documents")
 
 
 def process_files(
@@ -46,90 +141,37 @@ def process_files(
     log: LogCallback = _default_log,
     imported_fonts: Optional[Dict[str, str]] = None,
 ) -> str:
-    """对解压后的 EPUB 临时目录执行修复，返回检测到的书籍类型。"""
     try:
         opf_path = find_opf(temp_dir)
-    except FileNotFoundError as e:
-        log(f"[Warning] 无法定位 OPF: {e}")
+    except FileNotFoundError as exc:
+        log(f"[Warning] Unable to locate OPF: {exc}")
         return "unknown"
 
-    is_kobo = _is_kobo_book(temp_dir)
-    if is_kobo:
-        log("检测到 Kobo 书籍，执行完整修复流程")
-    else:
-        log("检测到非 Kobo 书籍，仅执行图片格式转换")
-
-    # 无论是否 Kobo 书籍，都先检测类型用于后续校验
     book_type = detect_book_type(opf_path)
+    profile = detect_book_profile(opf_path)
 
-    if not is_kobo:
-        # 非 Kobo 书籍：仅转换不支持的图片格式
-        mapping = convert_webp_images(opf_path)
-        if mapping:
-            log(f"转换了 {len(mapping)} 张 webp 图片")
-            update_opf_webp_refs(opf_path, mapping)
-            update_html_css_webp_refs(opf_path, mapping)
-        return book_type
+    log(f"Detected book type: {book_type}")
+    log(f"Detected layout mode: {profile.layout_mode}")
+    if profile.preserve_layout:
+        log("Layout-sensitive structure detected; using preserve-layout repair mode")
+    if profile.has_kobo_adobe_markers:
+        log("Adobe Adept / Kobo markers detected")
 
-    # Kobo 书籍：执行 1.1.0 完整处理流程
-    log(f"检测到书籍类型: {book_type}")
-
-    if fix_language_tags(opf_path):
-        log("已根据正文内容修正语言标签")
-
-    handle_fonts(temp_dir, log, imported_fonts)
-
-    mapping = convert_webp_images(opf_path)
-    if mapping:
-        log(f"转换了 {len(mapping)} 张 webp 图片")
-        update_opf_webp_refs(opf_path, mapping)
-        update_html_css_webp_refs(opf_path, mapping)
-
-    # 对小说和漫画都执行 SVG 图片页面转换，以提升 Kindle 兼容性
-    svg_converted = convert_svg_pages_to_img(opf_path)
-    if svg_converted:
-        log(f"转换了 {svg_converted} 个 SVG 图片页面为 <img>")
-
-    if book_type == "comic":
-        comic_fixed = sanitize_comic_for_kindle(opf_path)
-        if comic_fixed:
-            log(f"已应用 {comic_fixed} 项漫画 Kindle 兼容性修复")
-
-    # 所有书籍类型都移除脚本（Kobo 脚本对 Kindle 无意义且可能触发崩溃）
-    script_removed = remove_scripts_from_book(opf_path)
-    if script_removed:
-        log(f"已移除 {script_removed} 个页面中的脚本")
-
-    if book_type == "novel":
-        if fix_spine_direction_for_novel(opf_path):
-            log("已将非日文小说的 page-progression-direction 从 rtl 修正为 ltr")
-
-    # 修复竖排（Kindle 对非日文不支持 vertical-rl）
-    wm_fixed = fix_vertical_writing_mode(opf_path)
-    if wm_fixed:
-        log(f"已修复 {wm_fixed} 处竖排设置为横排")
-
-    clean_html_meta(opf_path)
-
-    ff_fixed = fix_footnotes_for_kindle(opf_path)
-    if ff_fixed:
-        log(f"修复了 {ff_fixed} 个文件的脚注结构以支持 Kindle Pop-up")
-
-    fixed_count = fix_html_structure(opf_path)
-    if fixed_count:
-        log(f"已修复 {fixed_count} 个 HTML 文件的 DOCTYPE/结构")
-
-    sc_fixed = fix_self_closing_tags(opf_path)
-    if sc_fixed:
-        log(f"已修复 {sc_fixed} 个 HTML 文件中的自闭合标签")
-
-    sanitize_opf_for_kindle(opf_path, book_type)
-    log(f"已根据 {book_type} 类型清理 OPF 不兼容元数据")
-
-    # 小说 SVG 转 img 后，清理已无 svg 内容但 manifest 仍声明 svg 的条目
-    stale_removed = remove_stale_svg_properties(opf_path)
-    if stale_removed:
-        log(f"已清理 {stale_removed} 个过时的 svg manifest 声明")
+    _apply_safe_repairs(opf_path, book_type, profile.preserve_layout, log)
+    _apply_reflow_repairs(
+        temp_dir,
+        opf_path,
+        book_type,
+        profile.preserve_layout,
+        log,
+        imported_fonts,
+    )
+    _apply_source_specific_cleanup(
+        opf_path,
+        profile.has_kobo_adobe_markers,
+        profile.preserve_layout,
+        log,
+    )
 
     return book_type
 
@@ -140,29 +182,23 @@ def process_epub(
     log: LogCallback = _default_log,
     imported_fonts: Optional[Dict[str, str]] = None,
 ) -> str:
-    """处理单个 EPUB 文件并返回输出路径。"""
-    if output_path is None:
-        base, ext = os.path.splitext(epub_path)
-        output_path = f"{base}.processed{ext}"
-
     epub_path = os.path.abspath(epub_path)
-    output_path = os.path.abspath(output_path)
+    resolved_output_path = resolve_output_path(epub_path, output_path)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         unpack_epub(epub_path, temp_dir)
         book_type = process_files(temp_dir, log, imported_fonts)
-        repack_epub(temp_dir, output_path)
+        repack_epub(temp_dir, resolved_output_path)
 
-    # 独立校验输出文件
     try:
-        issues = validate_epub(output_path, book_type)
+        issues = validate_epub(resolved_output_path, book_type)
         if issues:
-            log("[Validation Warning] 输出 EPUB 存在以下问题:")
+            log("[Validation Warning] Output EPUB has issues:")
             for issue in issues:
                 log(f"  - {issue}")
         else:
-            log("输出 EPUB 校验通过")
-    except Exception as e:
-        log(f"[Validation Error] 校验过程异常: {e}")
+            log("Output EPUB validation passed")
+    except Exception as exc:
+        log(f"[Validation Error] Validation raised an exception: {exc}")
 
-    return output_path
+    return resolved_output_path

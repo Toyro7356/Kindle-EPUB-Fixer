@@ -3,115 +3,81 @@
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-智能修复 EPUB 文件，提升 Amazon Kindle / Send to Kindle 兼容性。
+面向 Kindle / Send to Kindle 的 EPUB 修复工具。
 
----
+这个项目的目标不是“把所有 EPUB 统一改成某种模板”，而是在尽可能保留作者原始排版意图的前提下，修复 Kindle 明显不兼容、容易白屏、图片丢失、Previewer 内部错误或结构损坏的问题。
 
-## 功能特性
+## 设计原则
 
-- **漫画 & 小说自动识别**
-  - 漫画：保留 SVG 页面、Fixed-Layout、Panel View、双页展开
-  - 小说：启用 Enhanced Typesetting（字体调整、布局调整、Pop-up 脚注）
+- 优先保留原书语义和布局意图
+- 只修复 Kindle 明显不兼容或 EPUB 结构本身有问题的部分
+- 对可重排小说和布局敏感书籍采用不同强度的处理
+- 不依赖书籍来源硬编码，尽量通过内容特征自动识别
+- 如果是 Kindle 先天不支持的能力，不强行伪造
 
-- **WebP 转 Kindle 兼容格式**
-  - 自动将 `.webp` 转为 `.jpg/.png`
-  - 同步更新 OPF、HTML、CSS 中的所有引用
+## 主要能力
 
-- **修复 HTML 结构缺陷**
-  - 补全 `<!DOCTYPE html>`
-  - 修复非法自闭合标签（`<p/>`、`<div/>` 等）
-  - 解决 Kindle Previewer `internal error`
+- 自动识别书籍轮廓
+  - 判断是否为可重排、固定版式、漫画倾向、SVG 页面、视口页面、竖排或高图片占比内容
+- 图片兼容修复
+  - 将 Kindle 不支持的 WebP 转换为 JPG/PNG
+  - 同步更新 OPF / HTML / CSS 中的引用
+- HTML / XHTML 结构修复
+  - 修复非法自闭合标签
+  - 修复损坏的闭合标签
+  - 清理不安全命名实体与裸 `&`
+- CSS 风险降级
+  - 仅对可重排内容降级 Kindle Previewer 明显容易失败的高风险变换
+  - 当前包括 `matrix/skew/3d` 以及高风险 `rotate(90deg/270deg)`
+- SVG 插图页兼容修复
+  - 将 SVG 包裹的插图页转换为标准 `<img>`
+- 字体兼容处理
+  - 检测缺失字体
+  - 支持用户补充本地字体
+  - 处理字体格式兼容与缺失回退
+- Kindle 友好清理
+  - 移除已知会干扰 Kindle 的脚本残留
+  - 清理过期 SVG 标记
+  - 修复 NCX 导航层级
+- 结构校验
+  - 检查处理后 EPUB 中的 XHTML 是否仍然可被正常解析
 
-- **SVG 插图页安全转换（仅小说）**
-  - 将 SVG 包装的图片页转为标准 `<img>`
-  - 自动清理 manifest 中过时的 `properties="svg"` 声明
-  - 避免 Kindle ET 因声明与实际内容不一致而崩溃
+## 1.3 预发布改进
 
-- **恢复 Kindle Pop-up 脚注**
-  - 将多看/自制 EPUB 的 `ol/li` 脚注结构转为 Kindle 原生弹窗注释
+- 引入 `book_profile` 自动分析书籍结构，替代简单来源分类
+- 重构主处理流程，先做结构层修复，再决定是否进入重排兼容修复
+- 新增 `text_io`，提升非 UTF-8 EPUB 的读取稳定性
+- 新增 `css_sanitize`，把 Kindle Previewer 明显容易报错的变换抽成通用修复
+- 修复 `OVERLOAD 05` 这类带四分之一旋转排版的精排小说
+- 保持对 `义妹生活 03`、`葬送的芙莉蓮 07` 等样本的兼容结果
+- GUI 默认输出到输入目录下的 `转换后`
+- 去掉输出文件名中的 `.processed` 后缀
 
-- **字体兼容性处理**
-  - 检测缺失字体并与 Kindle 内置字体白名单比对
-  - 支持用户导入缺失字体
-  - 自动将 WOFF/WOFF2 转为 TTF/OTF
-  - 对大于 50KB 的字体进行子集化，仅保留实际使用的字符
+## 使用方法
 
-- **竖排兼容修正（非日文）**
-  - 将 CSS 和 XHTML 中的 `vertical-rl` 降级为 `horizontal-lr`
-  - 对非日文小说，将 `page-progression-direction="rtl"` 修正为 `"ltr"`
-
----
-
-## 使用方式
-
-### GUI 模式（推荐）
-
-双击 `Kindle EPUB Fixer.exe`，或通过 Python 启动：
+### GUI
 
 ```bash
 python main_gui.py
 ```
 
-界面支持：
-- **多文件批量处理**
-- **拖拽导入**：直接将 EPUB 文件拖入文件列表区域
-- **缺失字体提示**：自动检测并询问是否导入本地字体
-- **实时日志**：处理过程实时显示，支持复制
+支持：
 
-操作步骤：
-1. 点击 **添加 EPUB 文件** 或将文件拖入列表（支持多选）。
-2. （可选）指定 **输出目录**，默认与输入文件同目录。
-3. 点击 **开始处理**。
+- 批量添加 EPUB
+- 拖拽导入
+- 统一指定输出目录
+- 实时查看处理日志
 
-### 命令行模式
+### 命令行
 
 ```bash
 python main.py "input.epub"
-# 默认生成 input.processed.epub
-
 python main.py "input.epub" "output.epub"
 ```
 
----
+如果不指定输出路径，默认输出到输入文件同目录下的 `转换后` 文件夹。
 
-## 项目结构
-
-```
-.
-├── src/
-│   ├── __init__.py          # 包入口
-│   ├── __version__.py       # 版本信息
-│   ├── gui.py               # Tkinter GUI（HiDPI / 拖拽 / Win11 风格 / 取消任务）
-│   ├── core.py              # 主调度入口
-│   ├── epub_io.py           # EPUB 解包/打包/OPF 定位
-│   ├── book_type.py         # 漫画/小说自动识别
-│   ├── image_fix.py         # WebP 转换
-│   ├── svg_fix.py           # SVG 插图页处理
-│   ├── html_fix.py          # HTML 结构修复
-│   ├── footnote_fix.py      # Pop-up 脚注转换
-│   ├── opf_sanitize.py      # OPF 元数据清理
-│   ├── font_handler.py      # 字体检测/导入/转换/子集化/回退
-│   ├── vertical_fix.py      # 竖排降级处理
-│   ├── script_remove.py     # 脚本清理
-│   ├── language_fix.py      # 自动语言检测与修正
-│   ├── comic_fix.py         # 漫画固定布局元数据注入
-│   ├── epub_validator.py    # 后处理结构验证
-│   ├── constants.py         # XML 命名空间常量
-│   └── utils.py             # 通用工具函数
-├── tools/
-│   └── diff_epub.py         # 原始 vs 处理后 EPUB 差异审计
-├── main.py                  # CLI 入口
-├── main_gui.py              # GUI 入口
-├── build_exe.py             # PyInstaller 打包脚本
-├── requirements.txt
-├── CHANGELOG.md
-├── README.md
-└── LICENSE
-```
-
----
-
-## 打包 EXE
+## 开发与验证
 
 安装依赖：
 
@@ -119,43 +85,49 @@ python main.py "input.epub" "output.epub"
 pip install -r requirements.txt
 ```
 
-运行打包脚本：
+样本批量审计：
+
+```bash
+python tools/audit_samples.py --clean-output
+```
+
+Kindle Previewer 对比验证：
+
+```bash
+python tools/previewer_compare.py "测试文件\\自制epub\\OVERLOAD 05.epub" --keep-workdir build\\previewer-debug
+```
+
+## 打包 EXE
 
 ```bash
 python build_exe.py
 ```
 
-打包完成后，`dist/Kindle EPUB Fixer.exe` 即为单文件可执行程序。
+默认输出：
 
----
+```text
+dist/Kindle EPUB Fixer.exe
+```
 
-## 常见问题（FAQ）
+## 项目结构
 
-### Q: 为什么处理后排版从竖排变成了横排？
-A: Kindle 对非日文书籍不支持 `vertical-rl`。程序会自动将竖排降级为横排，否则 Kindle Previewer 会直接报错拒绝转换。
-
-### Q: 为什么小说里的彩色插图页被转换了？
-A: 某些小说的插图页使用 `<svg>` 包装图片。Kindle 的 Enhanced Typesetting（ET）在 reflowable 模式下对 SVG 支持有限，容易导致白屏或崩溃。程序会将这些页面安全地转换为 `<img>`，同时清理 manifest 中的过时声明。
-
-### Q: Publisher Font / Page Flip 动画失效了怎么办？
-A: 请确保原始 EPUB 中包含 `ibooks:specified-fonts=true` 元数据，并且没有被误识别为漫画。如果问题持续，请检查 Previewer 是否缓存了旧结果（建议重命名文件后再次测试）。
-
-### Q: 漫画翻页不显示图片？
-A: 如果原始漫画文件缺少 `rendition:layout=pre-paginated` 等 fixed-layout 元数据，Kindle 可能无法正确渲染。本程序**不会**自动补全这些元数据（因为贸然添加可能导致 rigid 模式分页错误），建议确认原始文件本身在 Kindle 上的兼容性。
-
----
-
-## 依赖
-
-- Python >= 3.10
-- [Pillow](https://python-pillow.org/)
-- [lxml](https://lxml.de/)
-- [fonttools](https://fonttools.readthedocs.io/)
-- [tkinterdnd2](https://github.com/pmgagne/tkinterdnd2)（GUI 拖拽支持）
-- [PyInstaller](https://pyinstaller.org/)（仅打包时需要）
-
----
-
-## License
-
-[MIT](LICENSE)
+```text
+.
+├─ src/
+│  ├─ core.py
+│  ├─ gui.py
+│  ├─ book_profile.py
+│  ├─ css_sanitize.py
+│  ├─ text_io.py
+│  ├─ epub_validator.py
+│  └─ ...
+├─ tools/
+│  ├─ audit_samples.py
+│  └─ previewer_compare.py
+├─ 测试文件/
+├─ main.py
+├─ main_gui.py
+├─ build_exe.py
+├─ README.md
+└─ CHANGELOG.md
+```

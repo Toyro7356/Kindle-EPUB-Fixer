@@ -3,7 +3,7 @@ from lxml import etree
 from .constants import NS_OPF
 
 
-def sanitize_opf_for_kindle(opf_path: str, book_type: str) -> None:
+def sanitize_opf_for_kindle(opf_path: str, book_type: str, preserve_layout: bool = False) -> None:
     tree = etree.parse(opf_path)
     root = tree.getroot()
 
@@ -15,7 +15,7 @@ def sanitize_opf_for_kindle(opf_path: str, book_type: str) -> None:
             if name == "Adept.expected.resource":
                 metadata.remove(meta)
                 continue
-            if book_type == "novel" and prop.startswith("rendition:"):
+            if not preserve_layout and book_type == "novel" and prop.startswith("rendition:"):
                 metadata.remove(meta)
                 continue
 
@@ -34,8 +34,7 @@ def sanitize_opf_for_kindle(opf_path: str, book_type: str) -> None:
                     else:
                         item.attrib.pop("properties", None)
                 continue
-            else:
-                # novel: 保留 nav / svg / cover-image，其余清除
+            if not preserve_layout:
                 new_parts = [p for p in parts if p in ("nav", "svg", "cover-image")]
                 if new_parts:
                     item.set("properties", " ".join(new_parts))
@@ -45,7 +44,7 @@ def sanitize_opf_for_kindle(opf_path: str, book_type: str) -> None:
     spine = root.find(f"{{{NS_OPF}}}spine")
     if spine is not None:
         for itemref in spine.findall(f"{{{NS_OPF}}}itemref"):
-            if book_type == "novel":
+            if not preserve_layout:
                 itemref.attrib.pop("properties", None)
         if "toc" not in spine.attrib and manifest is not None:
             ncx_id = None
@@ -56,14 +55,12 @@ def sanitize_opf_for_kindle(opf_path: str, book_type: str) -> None:
             if ncx_id:
                 spine.set("toc", ncx_id)
 
+    _ensure_guide_references(root)
+
     tree.write(opf_path, encoding="utf-8", xml_declaration=True)
 
 
 def fix_spine_direction_for_novel(opf_path: str) -> bool:
-    """
-    对非日文小说，若 spine 使用 page-progression-direction=rtl，
-    Kindle 可能将其误判为竖排，因此改为 ltr 以提升兼容性。
-    """
     tree = etree.parse(opf_path)
     root = tree.getroot()
     metadata = root.find(f"{{{NS_OPF}}}metadata")
@@ -73,7 +70,6 @@ def fix_spine_direction_for_novel(opf_path: str) -> bool:
             if dc_lang.text:
                 language = dc_lang.text.strip().lower()
                 break
-    # 如果语言为空，尝试从 dc:language (无命名空间) 获取
     if not language and metadata is not None:
         for dc_lang in metadata:
             if dc_lang.tag == "language" or dc_lang.tag.endswith("}language"):
@@ -81,7 +77,6 @@ def fix_spine_direction_for_novel(opf_path: str) -> bool:
                     language = dc_lang.text.strip().lower()
                     break
 
-    # 日语保留 rtl，其他语言改为 ltr
     if language.startswith("ja"):
         return False
 
@@ -91,3 +86,48 @@ def fix_spine_direction_for_novel(opf_path: str) -> bool:
         tree.write(opf_path, encoding="utf-8", xml_declaration=True)
         return True
     return False
+
+
+def _ensure_guide_references(root: etree._Element) -> None:
+    manifest = root.find(f"{{{NS_OPF}}}manifest")
+    guide = root.find(f"{{{NS_OPF}}}guide")
+    if manifest is None:
+        return
+
+    cover_href = None
+    toc_href = None
+    nav_href = None
+
+    for item in manifest.findall(f"{{{NS_OPF}}}item"):
+        href = item.get("href")
+        if not href:
+            continue
+        props = (item.get("properties") or "").split()
+        media_type = item.get("media-type") or ""
+        if "cover-image" in props and cover_href is None:
+            cover_href = href
+        if "nav" in props and nav_href is None:
+            nav_href = href
+        if media_type == "application/x-dtbncx+xml" and toc_href is None:
+            toc_href = href
+
+    toc_target = nav_href or toc_href
+    if not cover_href and not toc_target:
+        return
+
+    if guide is None:
+        guide = etree.SubElement(root, f"{{{NS_OPF}}}guide")
+
+    existing_types = {ref.get("type"): ref for ref in guide.findall(f"{{{NS_OPF}}}reference")}
+
+    if cover_href and "cover" not in existing_types:
+        ref = etree.SubElement(guide, f"{{{NS_OPF}}}reference")
+        ref.set("type", "cover")
+        ref.set("title", "Cover")
+        ref.set("href", cover_href)
+
+    if toc_target and "toc" not in existing_types:
+        ref = etree.SubElement(guide, f"{{{NS_OPF}}}reference")
+        ref.set("type", "toc")
+        ref.set("title", "Table of Contents")
+        ref.set("href", toc_target)
