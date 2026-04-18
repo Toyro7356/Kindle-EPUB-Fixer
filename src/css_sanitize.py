@@ -11,11 +11,13 @@ from .utils import write_xhtml_doc
 
 
 _RISKY_TRANSFORM_VALUE_RE = re.compile(
-    r"(matrix|matrix3d|skew|skewx|skewy|perspective|rotate3d|translate3d|scale3d)\s*\(",
+    r"(matrix|matrix3d|skew|skewx|skewy|perspective|rotate|rotatex|rotatey|rotatez|rotate3d|translate3d|scale3d)\s*\(",
     re.IGNORECASE,
 )
-_TRANSFORM_DECL_RE = re.compile(r"(?P<prop>-webkit-transform|transform)\s*:\s*(?P<value>[^;]+);", re.IGNORECASE)
-_TRANSFORM_ORIGIN_RE = re.compile(r"(?P<prop>-webkit-transform-origin|transform-origin)\s*:\s*[^;]+;", re.IGNORECASE)
+_TRANSFORM_DECL_RE = re.compile(
+    r"(?P<prop>-webkit-transform|-ms-transform|-moz-transform|-o-transform|transform)\s*:\s*(?P<value>[^;]+);",
+    re.IGNORECASE,
+)
 _QUARTER_TURN_ROTATE_RE = re.compile(
     r"rotate(?:z)?\(\s*(?P<angle>[+-]?(?:\d+(?:\.\d+)?|\.\d+))\s*(?P<unit>deg|turn|rad)\s*\)",
     re.IGNORECASE,
@@ -46,7 +48,10 @@ def _sanitize_style_text(style_text: str) -> tuple[str, bool]:
 
     def _replace_transform(match: re.Match[str]) -> str:
         nonlocal changed
-        value = match.group("value")
+        value = (match.group("value") or "").strip()
+        normalized = value.lower()
+        if normalized == "none":
+            return match.group(0)
         if _RISKY_TRANSFORM_VALUE_RE.search(value) or _is_risky_rotate_value(value):
             changed = True
             return f"{match.group('prop')}: none;"
@@ -54,7 +59,6 @@ def _sanitize_style_text(style_text: str) -> tuple[str, bool]:
 
     updated = _TRANSFORM_DECL_RE.sub(_replace_transform, style_text)
     if changed:
-        updated = _TRANSFORM_ORIGIN_RE.sub("", updated)
         updated = re.sub(r";{2,}", ";", updated)
     return updated, changed
 

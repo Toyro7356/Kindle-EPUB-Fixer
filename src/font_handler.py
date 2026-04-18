@@ -4,7 +4,7 @@ import re
 import shutil
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, NamedTuple, Optional, Set, Tuple
 
 from fontTools.subset import Options, Subsetter
 from fontTools.ttLib import TTFont
@@ -12,6 +12,7 @@ from lxml import etree
 
 from .constants import NS_OPF
 from .epub_io import find_opf, opf_dir
+from .opf_metadata import get_effective_book_language
 from .text_io import read_text_file, write_text_file
 from .utils import LogCallback, _default_log
 
@@ -20,6 +21,12 @@ def _run_fonttools_quietly(fn, *args, **kwargs):
     sink = io.StringIO()
     with redirect_stdout(sink), redirect_stderr(sink):
         return fn(*args, **kwargs)
+
+
+class FontScanResult(NamedTuple):
+    embedded: Dict[str, Dict]
+    missing: Set[str]
+    css_files: List[Path]
 
 # ---------------------------------------------------------------------------
 # Kindle built-in fonts (case-insensitive)
@@ -161,7 +168,7 @@ def _parse_css_font_faces(css_content: str):
     return faces
 
 
-def scan_fonts(temp_dir: str) -> Tuple[Dict[str, Dict], Set[str], list]:
+def scan_fonts(temp_dir: str) -> FontScanResult:
     """
     扫描 EPUB 中的字体引用。
     返回 (embedded: {family_lower: info}, missing: set(family_lower), css_files: [Path])
@@ -215,25 +222,7 @@ def scan_fonts(temp_dir: str) -> Tuple[Dict[str, Dict], Set[str], list]:
             else:
                 if family not in KINDLE_BUILTIN_FONTS:
                     missing.add(family)
-    return embedded, missing, css_files
-
-
-def _get_book_language(opf_path: str) -> str:
-    tree = etree.parse(opf_path)
-    root = tree.getroot()
-    metadata = root.find(f"{{{NS_OPF}}}metadata")
-    if metadata is not None:
-        for lang in metadata.findall(f"{{{NS_OPF}}}language"):
-            text = (lang.text or "").strip().lower()
-            if text:
-                return text
-        for child in metadata:
-            if child.tag == "language" or child.tag.endswith("}language"):
-                text = (child.text or "").strip().lower()
-                if text:
-                    return text
-    return ""
-
+    return FontScanResult(embedded=embedded, missing=missing, css_files=css_files)
 
 def _fallback_font_family(language: str) -> str:
     if language.startswith("zh"):
@@ -274,6 +263,7 @@ def sanitize_missing_fonts(
     temp_dir: str,
     missing: Set[str],
     log: LogCallback = _default_log,
+    font_scan: Optional[FontScanResult] = None,
 ) -> None:
     """
     清理缺失的外部字体引用：
@@ -285,10 +275,10 @@ def sanitize_missing_fonts(
 
     opf_path = find_opf(temp_dir)
     base_dir = Path(opf_dir(opf_path))
-    language = _get_book_language(opf_path)
+    language = get_effective_book_language(opf_path)
     fallback = _fallback_font_family(language)
 
-    _, _, css_files = scan_fonts(temp_dir)
+    css_files = list(font_scan.css_files) if font_scan is not None else list(scan_fonts(temp_dir).css_files)
 
     # ---- 1. 从 CSS 中移除缺失的 @font-face ----
     removed_faces = 0
@@ -362,6 +352,7 @@ def handle_fonts(
     temp_dir: str,
     log: LogCallback = _default_log,
     imported_fonts: Optional[Dict[str, str]] = None,
+    font_scan: Optional[FontScanResult] = None,
 ) -> None:
     """
     处理 EPUB 中的字体：导入缺失字体、转换不支持格式、子集化以减小体积。
@@ -373,7 +364,10 @@ def handle_fonts(
     tree = etree.parse(opf_path)
     manifest = tree.getroot().find(f"{{{NS_OPF}}}manifest")
 
-    embedded, missing, css_files = scan_fonts(temp_dir)
+    scan = font_scan if font_scan is not None else scan_fonts(temp_dir)
+    embedded = dict(scan.embedded)
+    missing = set(scan.missing)
+    css_files = list(scan.css_files)
 
     # ---- 导入用户提供的缺失字体 ----
     if imported_fonts and missing:
@@ -449,7 +443,7 @@ def handle_fonts(
 
     # ---- 清理仍缺失的字体引用 ----
     if missing:
-        sanitize_missing_fonts(temp_dir, missing, log)
+        sanitize_missing_fonts(temp_dir, missing, log, font_scan=scan)
         # 清理完成后，将 missing 置空，避免继续报警
         missing.clear()
 

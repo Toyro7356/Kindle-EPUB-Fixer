@@ -16,7 +16,12 @@ from src.core import process_epub
 DEFAULT_PREVIEWER = Path.home() / "AppData" / "Local" / "Amazon" / "Kindle Previewer 3" / "Kindle Previewer 3.exe"
 
 
-def run_previewer(previewer: Path, input_path: Path, output_dir: Path) -> dict:
+def run_previewer(
+    previewer: Path,
+    input_path: Path,
+    output_dir: Path,
+    timeout_seconds: int = 0,
+) -> dict:
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -31,7 +36,25 @@ def run_previewer(previewer: Path, input_path: Path, output_dir: Path) -> dict:
         "-locale",
         "en",
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore")
+    timed_out = False
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            timeout=(timeout_seconds or None),
+        )
+        returncode = proc.returncode
+        stdout = proc.stdout[-4000:]
+        stderr = proc.stderr[-4000:]
+    except subprocess.TimeoutExpired as exc:
+        timed_out = True
+        returncode = 124
+        stdout = (exc.stdout or "")[-4000:]
+        stderr = ((exc.stderr or "") + f"\nTimed out after {timeout_seconds}s")[-4000:]
+
     summary_path = output_dir / "Summary_Log.csv"
     summary_rows = []
     if summary_path.exists():
@@ -40,20 +63,36 @@ def run_previewer(previewer: Path, input_path: Path, output_dir: Path) -> dict:
 
     return {
         "command": cmd,
-        "returncode": proc.returncode,
-        "stdout": proc.stdout[-4000:],
-        "stderr": proc.stderr[-4000:],
+        "returncode": returncode,
+        "stdout": stdout,
+        "stderr": stderr,
         "summary": summary_rows,
+        "timed_out": timed_out,
     }
 
 
-def compare_one(previewer: Path, epub_path: Path, work_dir: Path) -> dict:
+def compare_one(
+    previewer: Path,
+    epub_path: Path,
+    work_dir: Path,
+    timeout_seconds: int = 0,
+) -> dict:
     processed_dir = work_dir / "processed"
     processed_dir.mkdir(parents=True, exist_ok=True)
     processed_path = Path(process_epub(str(epub_path), str(processed_dir / epub_path.name), log=lambda _msg: None))
 
-    original_result = run_previewer(previewer, epub_path, work_dir / "preview-original")
-    processed_result = run_previewer(previewer, processed_path, work_dir / "preview-processed")
+    original_result = run_previewer(
+        previewer,
+        epub_path,
+        work_dir / "preview-original",
+        timeout_seconds=timeout_seconds,
+    )
+    processed_result = run_previewer(
+        previewer,
+        processed_path,
+        work_dir / "preview-processed",
+        timeout_seconds=timeout_seconds,
+    )
 
     return {
         "input": str(epub_path),
@@ -68,6 +107,12 @@ def main() -> int:
     parser.add_argument("files", nargs="+", help="EPUB files to compare")
     parser.add_argument("--previewer", default=str(DEFAULT_PREVIEWER), help="Path to Kindle Previewer executable")
     parser.add_argument("--report", default="build/previewer-compare.json", help="JSON report path")
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=0,
+        help="Per Previewer invocation timeout in seconds; 0 disables timeout",
+    )
     parser.add_argument(
         "--keep-workdir",
         default="",
@@ -89,7 +134,14 @@ def main() -> int:
             case_dir = root / f"case-{index}-{epub_path.stem}"
             case_dir.mkdir(parents=True, exist_ok=True)
             print(f"[{index}/{len(args.files)}] {epub_path.name}")
-            results.append(compare_one(previewer, epub_path, case_dir))
+            results.append(
+                compare_one(
+                    previewer,
+                    epub_path,
+                    case_dir,
+                    timeout_seconds=args.timeout_seconds,
+                )
+            )
     else:
         with tempfile.TemporaryDirectory() as temp_root:
             root = Path(temp_root)
@@ -98,7 +150,14 @@ def main() -> int:
                 case_dir = root / f"case-{index}"
                 case_dir.mkdir(parents=True, exist_ok=True)
                 print(f"[{index}/{len(args.files)}] {epub_path.name}")
-                results.append(compare_one(previewer, epub_path, case_dir))
+                results.append(
+                    compare_one(
+                        previewer,
+                        epub_path,
+                        case_dir,
+                        timeout_seconds=args.timeout_seconds,
+                    )
+                )
 
     report_path = Path(args.report)
     report_path.parent.mkdir(parents=True, exist_ok=True)

@@ -192,9 +192,9 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
                 errors.append(f"Found {len(script_items)} JavaScript files: {script_items[:3]}")
 
             if book_type == "comic":
-                required_amazon_meta = ["fixed-layout", "original-resolution", "book-type"]
+                explicit_layout_metas = ["fixed-layout", "book-type"]
                 has_explicit_comic_layout = rendition_layout == "pre-paginated" or any(
-                    name in amazon_meta for name in required_amazon_meta
+                    name in amazon_meta for name in explicit_layout_metas
                 )
                 meaningful_missing_viewport = [
                     href

@@ -1,13 +1,9 @@
-import os
-import re
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from lxml import etree
 
-from .constants import NS_OPF, NS_SVG, NS_XHTML
-from .epub_io import opf_dir
-from .text_io import read_text_file
+from .constants import NS_OPF
+from .content_analysis import ContentAnalysis, analyze_content
 
 
 @dataclass
@@ -40,34 +36,32 @@ class BookProfile:
         )
 
 
-def detect_book_profile(opf_path: str) -> BookProfile:
+def detect_book_profile(opf_path: str, content_analysis: ContentAnalysis | None = None) -> BookProfile:
     tree = etree.parse(opf_path)
     root = tree.getroot()
     profile = BookProfile()
     metadata = root.find(f"{{{NS_OPF}}}metadata")
     manifest = root.find(f"{{{NS_OPF}}}manifest")
     spine = root.find(f"{{{NS_OPF}}}spine")
-    ns = {"opf": NS_OPF}
+    analysis = content_analysis or analyze_content(opf_path)
 
     if metadata is not None:
         for meta in metadata.findall(f"{{{NS_OPF}}}meta"):
             prop = (meta.get("property") or "").strip().lower()
             name = (meta.get("name") or "").strip().lower()
             text = (meta.text or "").strip().lower()
-            content = (meta.get("content") or "").strip().lower()
+            meta_content = (meta.get("content") or "").strip().lower()
 
             if prop == "rendition:layout" and text == "pre-paginated":
                 profile.layout_mode = "pre-paginated"
                 profile.has_fixed_layout_metadata = True
-            if prop.startswith("rendition:"):
-                profile.has_fixed_layout_metadata = True
-            if name == "fixed-layout" and content == "true":
+            if name == "fixed-layout" and meta_content == "true":
                 profile.layout_mode = "pre-paginated"
                 profile.has_fixed_layout_metadata = True
             if name == "adept.expected.resource":
                 profile.has_kobo_adobe_markers = True
             if "writing-mode" in prop or "writing-mode" in name:
-                if "vertical" in text or "vertical" in content:
+                if "vertical" in text or "vertical" in meta_content:
                     profile.has_vertical_writing = True
 
     if spine is not None:
@@ -77,74 +71,15 @@ def detect_book_profile(opf_path: str) -> BookProfile:
     if manifest is None:
         return profile
 
-    items = manifest.xpath(
-        "//opf:manifest/opf:item[@media-type='application/xhtml+xml']",
-        namespaces=ns,
-    )
-    base_dir = Path(opf_dir(opf_path))
-    viewport_pages = 0
-    svg_pages = 0
-    image_like_pages = 0
-    js_refs = 0
-
-    for item in items:
-        href = item.get("href")
-        if not href:
-            continue
-        file_path = base_dir / href.replace("/", os.sep)
-        if not file_path.exists():
-            continue
-        profile.page_count += 1
-
-        try:
-            raw = read_text_file(file_path)
-        except OSError:
-            continue
-
-        lowered = raw.lower()
-        if "adept.expected.resource" in lowered:
-            profile.has_kobo_adobe_markers = True
-        if "<script" in lowered or re.search(r"\son[a-z]+\s*=", lowered):
-            profile.has_javascript = True
-        if "name=\"viewport\"" in lowered or "name='viewport'" in lowered:
-            viewport_pages += 1
-        if "writing-mode" in lowered and "vertical" in lowered:
-            profile.has_vertical_writing = True
-
-        try:
-            doc = etree.parse(str(file_path))
-        except etree.XMLSyntaxError:
-            continue
-
-        root_elem = doc.getroot()
-        body = root_elem.find(f".//{{{NS_XHTML}}}body")
-        text_len = len("".join(body.itertext()).strip()) if body is not None else 0
-        img_count = len(root_elem.findall(f".//{{{NS_XHTML}}}img"))
-        object_count = len(root_elem.findall(f".//{{{NS_XHTML}}}object"))
-        svg_image_count = 0
-        for svg in root_elem.iter(f"{{{NS_SVG}}}svg"):
-            if list(svg.iter(f"{{{NS_SVG}}}image")):
-                svg_image_count += 1
-
-        if svg_image_count:
-            svg_pages += 1
-        if text_len < 80 and (img_count or object_count or svg_image_count):
-            image_like_pages += 1
-
-    for item in manifest.findall(f"{{{NS_OPF}}}item"):
-        href = (item.get("href") or "").lower()
-        media_type = (item.get("media-type") or "").lower()
-        if "javascript" in media_type or href.endswith(".js"):
-            js_refs += 1
-
-    if profile.page_count:
-        profile.viewport_page_ratio = viewport_pages / profile.page_count
-        profile.svg_page_ratio = svg_pages / profile.page_count
-        profile.image_like_page_ratio = image_like_pages / profile.page_count
-
-    profile.has_viewport_pages = viewport_pages > 0
-    profile.has_svg_pages = svg_pages > 0
-    profile.has_javascript = profile.has_javascript or js_refs > 0
+    profile.page_count = analysis.page_count
+    profile.viewport_page_ratio = analysis.viewport_page_ratio
+    profile.svg_page_ratio = analysis.svg_page_ratio
+    profile.image_like_page_ratio = analysis.image_like_page_ratio
+    profile.has_viewport_pages = analysis.viewport_pages > 0
+    profile.has_svg_pages = analysis.svg_pages > 0
+    profile.has_javascript = profile.has_javascript or analysis.has_javascript_markup or analysis.js_manifest_refs > 0
+    profile.has_vertical_writing = profile.has_vertical_writing or analysis.has_vertical_writing
+    profile.has_kobo_adobe_markers = profile.has_kobo_adobe_markers or analysis.has_kobo_marker_text
 
     if profile.layout_mode != "pre-paginated":
         if profile.viewport_page_ratio >= 0.8:

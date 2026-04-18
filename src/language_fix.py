@@ -104,12 +104,16 @@ def _get_all_xhtml_text(opf_path: str) -> str:
     return "\n".join(chunks)
 
 
+def detect_language_from_book(opf_path: str) -> Optional[str]:
+    return _detect_language(_get_all_xhtml_text(opf_path))
+
+
 def fix_language_tags(opf_path: str) -> bool:
     """
     检测全书实际语言，并修正 OPF 中的 dc:language 以及所有 XHTML 中的 xml:lang/lang。
     返回是否进行了修改。
     """
-    detected = _detect_language(_get_all_xhtml_text(opf_path))
+    detected = detect_language_from_book(opf_path)
     if not detected:
         return False
 

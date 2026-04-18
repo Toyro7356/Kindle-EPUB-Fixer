@@ -1,5 +1,6 @@
 import os
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -11,14 +12,15 @@ from .epub_io import opf_dir
 from .text_io import read_text_file, write_text_file
 
 
-def _detect_resolution_from_viewport(opf_path: str) -> Optional[Tuple[int, int]]:
-    """从第一个包含 viewport 的 XHTML 页面中解析分辨率。"""
+def _collect_viewport_resolutions(opf_path: str) -> list[Tuple[int, int]]:
+    """收集 XHTML 页面中声明的 viewport 尺寸。"""
     base_dir = Path(opf_dir(opf_path))
     tree = etree.parse(opf_path)
     items = tree.xpath(
         "//opf:manifest/opf:item[@media-type='application/xhtml+xml']",
         namespaces={"opf": NS_OPF},
     )
+    resolutions: list[Tuple[int, int]] = []
     for item in items:
         href = item.get("href")
         if not href:
@@ -37,7 +39,8 @@ def _detect_resolution_from_viewport(opf_path: str) -> Optional[Tuple[int, int]]
             re.IGNORECASE,
         )
         if m:
-            return int(m.group(1)), int(m.group(2))
+            resolutions.append((int(m.group(1)), int(m.group(2))))
+            continue
         # 反向匹配 content 在前 name 在后
         m2 = re.search(
             r'<meta[^>]+content=["\']width=(\d+),\s*height=(\d+)["\'][^>]+name=["\']viewport["\']',
@@ -45,18 +48,31 @@ def _detect_resolution_from_viewport(opf_path: str) -> Optional[Tuple[int, int]]
             re.IGNORECASE,
         )
         if m2:
-            return int(m2.group(1)), int(m2.group(2))
-    return None
+            resolutions.append((int(m2.group(1)), int(m2.group(2))))
+    return resolutions
+
+
+def _dominant_resolution(resolutions: list[Tuple[int, int]]) -> Optional[Tuple[int, int]]:
+    if not resolutions:
+        return None
+    counts = Counter(resolutions)
+    return max(counts.items(), key=lambda item: (item[1], item[0][0] * item[0][1]))[0]
+
+
+def _detect_resolution_from_viewport(opf_path: str) -> Optional[Tuple[int, int]]:
+    """从全书 viewport 中挑选最常见的尺寸。"""
+    return _dominant_resolution(_collect_viewport_resolutions(opf_path))
 
 
 def _detect_resolution_from_images(opf_path: str) -> Optional[Tuple[int, int]]:
-    """从 manifest 中第一个图片文件解析分辨率。"""
+    """从图片资源中挑选最常见的分辨率。"""
     base_dir = Path(opf_dir(opf_path))
     tree = etree.parse(opf_path)
     items = tree.xpath(
         "//opf:manifest/opf:item[starts-with(@media-type,'image/')]",
         namespaces={"opf": NS_OPF},
     )
+    resolutions: list[Tuple[int, int]] = []
     for item in items:
         href = item.get("href")
         if not href:
@@ -66,10 +82,10 @@ def _detect_resolution_from_images(opf_path: str) -> Optional[Tuple[int, int]]:
             continue
         try:
             with Image.open(str(fp)) as img:
-                return img.size
+                resolutions.append(img.size)
         except Exception:
             continue
-    return None
+    return _dominant_resolution(resolutions)
 
 
 def _get_spine_ppd(opf_path: str) -> str:
@@ -81,7 +97,7 @@ def _get_spine_ppd(opf_path: str) -> str:
     return "ltr"
 
 
-def ensure_comic_rendition(opf_path: str) -> bool:
+def ensure_comic_rendition(opf_path: str, add_spread: bool = True) -> bool:
     """
     确保漫画 OPF 中包含 rendition:layout=pre-paginated。
     若缺失，则同时添加 rendition:spread=landscape。
@@ -109,7 +125,7 @@ def ensure_comic_rendition(opf_path: str) -> bool:
         m.set("property", "rendition:layout")
         m.text = "pre-paginated"
         modified = True
-    if not has_spread:
+    if add_spread and not has_spread:
         m = etree.SubElement(metadata, f"{{{NS_OPF}}}meta")
         m.set("property", "rendition:spread")
         m.text = "landscape"
@@ -166,6 +182,51 @@ def add_kindle_comic_meta(opf_path: str) -> bool:
         m = etree.SubElement(metadata, f"{{{NS_OPF}}}meta")
         m.set("name", name)
         m.set("content", content)
+        modified = True
+
+    if modified:
+        tree.write(opf_path, encoding="utf-8", xml_declaration=True)
+    return modified
+
+
+def ensure_original_resolution_meta(opf_path: str) -> bool:
+    """
+    为固定版式页面补齐或修正 original-resolution。
+    这一步比整套 Kindle comic metadata 更克制，只修复 Previewer 会明确报错的尺寸元数据。
+    """
+    resolution = _detect_resolution_from_viewport(opf_path)
+    if resolution is None:
+        resolution = _detect_resolution_from_images(opf_path)
+    if resolution is None:
+        return False
+
+    expected = f"{resolution[0]}x{resolution[1]}"
+    tree = etree.parse(opf_path)
+    root = tree.getroot()
+    metadata = root.find(f"{{{NS_OPF}}}metadata")
+    if metadata is None:
+        return False
+
+    modified = False
+    existing_meta = None
+    for meta in metadata.findall(f"{{{NS_OPF}}}meta"):
+        name = (meta.get("name") or "").strip().lower()
+        if name != "original-resolution":
+            continue
+        existing_meta = meta
+        current = (meta.get("content") or "").strip()
+        if re.fullmatch(r"\d+\s*x\s*\d+", current, re.IGNORECASE):
+            normalized = current.lower().replace(" ", "")
+            if normalized == expected:
+                return False
+        meta.set("content", expected)
+        modified = True
+        break
+
+    if existing_meta is None:
+        meta = etree.SubElement(metadata, f"{{{NS_OPF}}}meta")
+        meta.set("name", "original-resolution")
+        meta.set("content", expected)
         modified = True
 
     if modified:
@@ -256,13 +317,17 @@ def ensure_comic_viewport(opf_path: str) -> int:
     return fixed
 
 
-def sanitize_comic_for_kindle(opf_path: str) -> int:
+def sanitize_comic_for_kindle(opf_path: str, preserve_layout: bool = False) -> int:
     """对漫画执行全套 Kindle 兼容性修复，返回修改标志数。"""
     changes = 0
-    if ensure_comic_rendition(opf_path):
-        changes += 1
-    if add_kindle_comic_meta(opf_path):
-        changes += 1
+    if not preserve_layout:
+        if ensure_comic_rendition(opf_path, add_spread=True):
+            changes += 1
+        if add_kindle_comic_meta(opf_path):
+            changes += 1
+    else:
+        if ensure_original_resolution_meta(opf_path):
+            changes += 1
     vp_fixed = ensure_comic_viewport(opf_path)
     if vp_fixed:
         changes += 1

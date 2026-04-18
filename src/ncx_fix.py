@@ -52,8 +52,8 @@ def fix_ncx_parent_navpoints(opf_path: str) -> int:
         child_file = child_src.split("#")[0]
 
         # 若父 src 含锚点，且与第一个子节点指向同一文件，则把父改为无锚点
-        if "#" in parent_src and parent_file == child_file:
-            content_elems[0].set("src", child_file)
+        if parent_file == child_file and parent_src != child_src:
+            content_elems[0].set("src", child_src)
             fixed += 1
 
     if fixed:

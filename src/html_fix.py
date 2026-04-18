@@ -178,3 +178,64 @@ def clean_html_meta(opf_path: str) -> None:
                 modified = True
         if modified:
             write_xhtml_doc(doc, file_path)
+
+
+def fix_cover_image_references(opf_path: str) -> int:
+    base_dir = Path(opf_dir(opf_path))
+    tree = etree.parse(opf_path)
+    manifest = tree.getroot().find(f"{{{NS_OPF}}}manifest")
+    if manifest is None:
+        return 0
+
+    cover_href = None
+    cover_id = None
+    metadata = tree.getroot().find(f"{{{NS_OPF}}}metadata")
+    if metadata is not None:
+        for meta in metadata.findall(f"{{{NS_OPF}}}meta"):
+            if meta.get("name") == "cover" and meta.get("content"):
+                cover_id = meta.get("content")
+                break
+
+    for item in manifest.findall(f"{{{NS_OPF}}}item"):
+        if cover_id and item.get("id") == cover_id:
+            cover_href = item.get("href")
+            break
+        if "cover-image" in (item.get("properties") or "").split():
+            cover_href = item.get("href")
+            break
+
+    if not cover_href:
+        return 0
+
+    fixed = 0
+    for item in manifest.findall(f"{{{NS_OPF}}}item"):
+        if item.get("media-type") != "application/xhtml+xml":
+            continue
+        href = item.get("href") or ""
+        if "cover" not in Path(href).name.lower():
+            continue
+        file_path = base_dir / href.replace("/", os.sep)
+        if not file_path.exists():
+            continue
+        try:
+            doc = etree.parse(str(file_path))
+        except etree.XMLSyntaxError:
+            continue
+
+        modified = False
+        for img in doc.getroot().iter(f"{{{NS_XHTML}}}img"):
+            src = img.get("src") or ""
+            if not src:
+                continue
+            target = (file_path.parent / src.replace("/", os.sep)).resolve()
+            if target.exists():
+                continue
+            relative_cover = os.path.relpath((base_dir / cover_href.replace("/", os.sep)).resolve(), file_path.parent.resolve())
+            img.set("src", relative_cover.replace(os.sep, "/"))
+            modified = True
+
+        if modified:
+            write_xhtml_doc(doc, file_path)
+            fixed += 1
+
+    return fixed

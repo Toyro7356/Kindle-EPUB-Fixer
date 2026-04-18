@@ -1,6 +1,11 @@
+import os
+from pathlib import Path
+
 from lxml import etree
 
 from .constants import NS_OPF
+from .epub_io import opf_dir
+from .opf_metadata import get_effective_book_language
 
 
 def sanitize_opf_for_kindle(opf_path: str, book_type: str, preserve_layout: bool = False) -> None:
@@ -55,7 +60,7 @@ def sanitize_opf_for_kindle(opf_path: str, book_type: str, preserve_layout: bool
             if ncx_id:
                 spine.set("toc", ncx_id)
 
-    _ensure_guide_references(root)
+    _ensure_guide_references(root, opf_path)
 
     tree.write(opf_path, encoding="utf-8", xml_declaration=True)
 
@@ -63,19 +68,7 @@ def sanitize_opf_for_kindle(opf_path: str, book_type: str, preserve_layout: bool
 def fix_spine_direction_for_novel(opf_path: str) -> bool:
     tree = etree.parse(opf_path)
     root = tree.getroot()
-    metadata = root.find(f"{{{NS_OPF}}}metadata")
-    language = ""
-    if metadata is not None:
-        for dc_lang in metadata.findall(f"{{{NS_OPF}}}language"):
-            if dc_lang.text:
-                language = dc_lang.text.strip().lower()
-                break
-    if not language and metadata is not None:
-        for dc_lang in metadata:
-            if dc_lang.tag == "language" or dc_lang.tag.endswith("}language"):
-                if dc_lang.text:
-                    language = dc_lang.text.strip().lower()
-                    break
+    language = get_effective_book_language(opf_path, root=root)
 
     if language.startswith("ja"):
         return False
@@ -88,15 +81,15 @@ def fix_spine_direction_for_novel(opf_path: str) -> bool:
     return False
 
 
-def _ensure_guide_references(root: etree._Element) -> None:
+def _ensure_guide_references(root: etree._Element, opf_path: str) -> None:
     manifest = root.find(f"{{{NS_OPF}}}manifest")
     guide = root.find(f"{{{NS_OPF}}}guide")
     if manifest is None:
         return
 
     cover_href = None
-    toc_href = None
     nav_href = None
+    ncx_href = None
 
     for item in manifest.findall(f"{{{NS_OPF}}}item"):
         href = item.get("href")
@@ -108,10 +101,10 @@ def _ensure_guide_references(root: etree._Element) -> None:
             cover_href = href
         if "nav" in props and nav_href is None:
             nav_href = href
-        if media_type == "application/x-dtbncx+xml" and toc_href is None:
-            toc_href = href
+        if media_type == "application/x-dtbncx+xml" and ncx_href is None:
+            ncx_href = href
 
-    toc_target = nav_href or toc_href
+    toc_target = nav_href or _resolve_ncx_toc_target(opf_path, ncx_href)
     if not cover_href and not toc_target:
         return
 
@@ -131,3 +124,25 @@ def _ensure_guide_references(root: etree._Element) -> None:
         ref.set("type", "toc")
         ref.set("title", "Table of Contents")
         ref.set("href", toc_target)
+
+
+def _resolve_ncx_toc_target(opf_path: str, ncx_href: str | None) -> str | None:
+    if not ncx_href:
+        return None
+
+    base_dir = Path(opf_dir(opf_path))
+    ncx_path = base_dir / ncx_href.replace("/", os.sep)
+    if not ncx_path.exists():
+        return None
+
+    try:
+        tree = etree.parse(str(ncx_path))
+    except Exception:
+        return None
+
+    ns = {"ncx": "http://www.daisy.org/z3986/2005/ncx/"}
+    for content in tree.xpath("//ncx:navMap//ncx:content", namespaces=ns):
+        src = (content.get("src") or "").strip()
+        if src and not src.lower().endswith(".ncx"):
+            return src
+    return None

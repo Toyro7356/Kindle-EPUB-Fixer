@@ -6,6 +6,7 @@ from lxml import etree
 
 from .constants import NS_OPF, NS_XHTML
 from .epub_io import opf_dir
+from .opf_metadata import get_effective_book_language
 from .text_io import read_text_file, write_text_file
 from .utils import write_xhtml_doc
 
@@ -18,6 +19,9 @@ def fix_vertical_writing_mode(opf_path: str) -> int:
     base_dir = Path(opf_dir(opf_path))
     tree = etree.parse(opf_path)
     root = tree.getroot()
+    language = get_effective_book_language(opf_path, root=root)
+    if language.startswith("ja"):
+        return 0
     modified_opf = False
 
     # Remove primary-writing-mode meta in OPF

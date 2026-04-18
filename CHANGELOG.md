@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.0-beta.2] - 2026-04-18
+
+### Added
+- Added `tools/previewer_audit.py` for resumable full-sample Kindle Previewer auditing.
+- Added `src/content_analysis.py` and `src/opf_metadata.py` to centralize content heuristics and metadata inference.
+- Added `docs/PROCESS_FLOW.md` documenting the repair pipeline, branch rules, and conservative boundaries.
+
+### Changed
+- Narrowed SVG page conversion so only simple single-image SVG wrapper pages are converted to `<img>`.
+- Refined CSS transform sanitization to target high-risk Kindle-breaking transforms in reflow mode instead of broadly stripping all transforms.
+- Made guide `toc` references resolve to readable content targets instead of blindly pointing at `toc.ncx`.
+- Moved `analyze_epubs_v2.py` report output into `build/` and removed obsolete one-off debug scripts and checked-in generated reports from `tools/`.
+
+### Fixed
+- Fixed `吹响吧！上低音号 12` by downgrading Kindle-breaking rotate transforms on the reflow path without touching preserve-layout books.
+- Fixed `葬送的芙莉蓮 11` by conservatively repairing invalid or missing `original-resolution` metadata for preserve-layout comics.
+- Fixed footnote normalization edge cases caused by nested backlink wrappers and Duokan-style note containers.
+- Fixed a Previewer regression source where preserve-layout comics could lose ET support after over-eager metadata injection.
+- Verified a clean full-sample run: 69/69 processed EPUBs succeed in Kindle Previewer, with 0 regressions and 0 processed errors.
+
 ## [1.3.0-beta.1] - 2026-04-17
 
 ### Added

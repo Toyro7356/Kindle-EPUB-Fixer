@@ -10,10 +10,11 @@ from typing import Dict, List, Optional
 
 from .__version__ import __title__, __version__
 from .book_profile import detect_book_profile
+from .content_analysis import ContentAnalysis, analyze_content
 from .core import process_files, resolve_output_path
 from .epub_io import find_opf, repack_epub, unpack_epub
 from .epub_validator import validate_epub
-from .font_handler import scan_fonts
+from .font_handler import FontScanResult, scan_fonts
 
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -359,21 +360,31 @@ class KindleEpubFixerGUI(_BaseTk):
         with tempfile.TemporaryDirectory() as temp_dir:
             unpack_epub(epub_path, temp_dir)
             opf_path = find_opf(temp_dir)
-            profile = detect_book_profile(opf_path)
+            content_analysis = analyze_content(opf_path)
+            profile = detect_book_profile(opf_path, content_analysis)
             self._log(
                 f"  -> 书籍轮廓: mode={profile.layout_mode}, preserve={profile.preserve_layout}, svg={profile.has_svg_pages}, js={profile.has_javascript}"
             )
 
             imported_fonts: Dict[str, str] = {}
+            font_scan: Optional[FontScanResult] = None
             if not profile.preserve_layout:
-                _, missing, _ = scan_fonts(temp_dir)
+                font_scan = scan_fonts(temp_dir)
+                missing = set(font_scan.missing)
                 if missing:
                     self._log(f"  -> 检测到缺失字体: {', '.join(sorted(missing))}", "warn")
                     imported_fonts = self._request_fonts_for_book(missing, book_name)
                 if self._cancelled:
                     raise RuntimeError("任务已取消")
 
-            book_type = process_files(temp_dir, log=lambda msg: self._log(f"  -> {msg}"), imported_fonts=imported_fonts)
+            book_type = process_files(
+                temp_dir,
+                log=lambda msg: self._log(f"  -> {msg}"),
+                imported_fonts=imported_fonts,
+                profile=profile,
+                font_scan=font_scan,
+                content_analysis=content_analysis,
+            )
             repack_epub(temp_dir, output_target)
             issues = validate_epub(output_target, book_type)
             return output_target, issues

@@ -327,7 +327,8 @@ def main():
     for k, v in sorted(summary.items(), key=lambda x: -x[1]):
         print(f"  {k}: {v}/{len(epubs)}")
 
-    out_path = "tools/epub_analysis_report_v2.json"
+    Path("build").mkdir(exist_ok=True)
+    out_path = "build/epub_analysis_report_v2.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump({"summary": dict(summary), "details": results}, f, ensure_ascii=False, indent=2)
     print(f"\nDetailed report saved to: {out_path}")

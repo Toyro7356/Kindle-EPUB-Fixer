@@ -2,6 +2,10 @@
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+处理流程、分支判断依据与当前设计边界见 [docs/PROCESS_FLOW.md](docs/PROCESS_FLOW.md)。
+当前样本验证结果：
+- 内部结构审计 `69/69` 通过
+- Kindle Previewer 全量样本 `69/69` 处理成功，`0` 回归，`0` 处理后错误
 
 面向 Kindle / Send to Kindle 的 EPUB 修复工具。
 
@@ -28,9 +32,10 @@
   - 清理不安全命名实体与裸 `&`
 - CSS 风险降级
   - 仅对可重排内容降级 Kindle Previewer 明显容易失败的高风险变换
-  - 当前包括 `matrix/skew/3d` 以及高风险 `rotate(90deg/270deg)`
+  - 当前主要处理 `rotate`、`matrix`、`skew`、`perspective` 和 3D transform，不碰 preserve-layout 书籍
 - SVG 插图页兼容修复
-  - 将 SVG 包裹的插图页转换为标准 `<img>`
+  - 只将“单图壳子”式 SVG 页面转换为标准 `<img>`
+  - 不主动改写复杂 SVG、文字叠层或版式型 SVG 页面
 - 字体兼容处理
   - 检测缺失字体
   - 支持用户补充本地字体
@@ -47,9 +52,11 @@
 - 引入 `book_profile` 自动分析书籍结构，替代简单来源分类
 - 重构主处理流程，先做结构层修复，再决定是否进入重排兼容修复
 - 新增 `text_io`，提升非 UTF-8 EPUB 的读取稳定性
-- 新增 `css_sanitize`，把 Kindle Previewer 明显容易报错的变换抽成通用修复
-- 修复 `OVERLOAD 05` 这类带四分之一旋转排版的精排小说
-- 保持对 `义妹生活 03`、`葬送的芙莉蓮 07` 等样本的兼容结果
+- 新增 `css_sanitize`，把 Kindle Previewer 明显容易报错的高风险变换抽成通用修复
+- 新增 `previewer_audit`，支持可恢复的全量 Previewer 审计
+- 修复 `OVERLOAD 05`、`吹响吧！上低音号 12` 这类因旋转排版触发 Previewer 错误的样本
+- 修复 `葬送的芙莉蓮 11` 这类 preserve-layout 漫画缺失 `original-resolution` 的问题
+- 保持对 `义妹生活 03`、`葬送的芙莉蓮 07-14` 等样本的兼容结果
 - GUI 默认输出到输入目录下的 `转换后`
 - 去掉输出文件名中的 `.processed` 后缀
 
@@ -88,13 +95,19 @@ pip install -r requirements.txt
 样本批量审计：
 
 ```bash
-python tools/audit_samples.py --clean-output
+python tools/audit_samples.py --report build/audit-report.json --output-dir build/audit-output
 ```
 
 Kindle Previewer 对比验证：
 
 ```bash
 python tools/previewer_compare.py "测试文件\\自制epub\\OVERLOAD 05.epub" --keep-workdir build\\previewer-debug
+```
+
+Kindle Previewer 全量审计：
+
+```bash
+python tools/previewer_audit.py --report build/previewer-audit.json --workdir build/previewer-audit --timeout-seconds 1200
 ```
 
 ## 打包 EXE
@@ -123,8 +136,11 @@ dist/Kindle EPUB Fixer.exe
 │  └─ ...
 ├─ tools/
 │  ├─ audit_samples.py
-│  └─ previewer_compare.py
+│  ├─ previewer_compare.py
+│  ├─ previewer_audit.py
+│  └─ analyze_epubs_v2.py
 ├─ 测试文件/
+├─ docs/
 ├─ main.py
 ├─ main_gui.py
 ├─ build_exe.py

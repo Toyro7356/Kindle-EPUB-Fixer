@@ -5,12 +5,14 @@ import shutil
 import sys
 import tempfile
 import time
+import traceback
 from pathlib import Path
 
 sys.path.insert(0, os.getcwd())
 
 from src.book_profile import detect_book_profile
 from src.book_type import detect_book_type
+from src.content_analysis import analyze_content
 from src.core import process_epub
 from src.epub_io import find_opf, unpack_epub
 from src.epub_validator import validate_epub
@@ -24,8 +26,9 @@ def analyze_input(epub_path: Path) -> dict:
     with tempfile.TemporaryDirectory() as temp_dir:
         unpack_epub(str(epub_path), temp_dir)
         opf_path = find_opf(temp_dir)
-        profile = detect_book_profile(opf_path)
-        book_type = detect_book_type(opf_path)
+        content = analyze_content(opf_path)
+        profile = detect_book_profile(opf_path, content)
+        book_type = detect_book_type(opf_path, content)
         return {
             "book_type": book_type,
             "layout_mode": profile.layout_mode,
@@ -57,6 +60,7 @@ def audit_one(epub_path: Path, output_dir: Path) -> dict:
         "seconds": 0.0,
         "issues": [],
         "log_tail": [],
+        "traceback": "",
     }
 
     try:
@@ -66,6 +70,7 @@ def audit_one(epub_path: Path, output_dir: Path) -> dict:
         result["issues"] = issues
     except Exception as exc:
         result["issues"] = [f"exception: {exc}"]
+        result["traceback"] = traceback.format_exc()
     finally:
         result["seconds"] = round(time.perf_counter() - started, 3)
         result["log_tail"] = logs[-20:]
