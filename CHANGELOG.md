@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-04-19
+
+### Added
+- Added `docs/PROCESS_FLOW.md` to document the repair pipeline, branch heuristics, and conservative boundaries.
+- Added `src/content_analysis.py` and `src/opf_metadata.py` to centralize content heuristics and metadata inference.
+- Added `tools/previewer_audit.py` for resumable full-sample Kindle Previewer auditing.
+
+### Changed
+- Reworked the repair pipeline around `BookProfile + ProcessingPlan` so the tool decides repair strength from content structure instead of source-only branching.
+- Narrowed SVG page conversion so only simple single-image SVG wrapper pages are converted to `<img>`.
+- Refined CSS transform sanitization to target only high-risk Kindle-breaking transforms on the reflow path.
+- Changed footnote handling to be conservative by default: already-standard `noteref -> footnote` structures are left untouched, and only clearly non-standard structures are normalized.
+- Removed the old `.processed`-style output suffix and kept the default GUI/CLI output under `转换后`.
+
+### Fixed
+- Fixed Kobo novel white-screen cases by keeping novel compatibility repairs active even when books are layout-sensitive.
+- Fixed Previewer-breaking transform cases such as `吹响吧！上低音号 12` without disturbing preserve-layout books.
+- Fixed preserve-layout comic metadata edge cases such as missing or invalid `original-resolution`.
+- Fixed over-eager footnote rewriting that could introduce empty popup content, duplicate return marks, or visible inline note regressions on already-valid books.
+- Fixed guide `toc` references so they point to readable targets instead of blindly targeting `toc.ncx`.
+
+### Verified
+- Verified internal structure auditing on the current sample set: `77/77` passed with `0` validation issues.
+- Verified the full Kindle Previewer baseline on the core sample set: `69/69` processed successfully, `0` regressions, `0` processed errors.
+- Verified the footnote-focused Previewer set after the conservative footnote fix: `4/4` processed successfully.
+
 ## [1.3.0-beta.2] - 2026-04-18
 
 ### Added
@@ -20,7 +46,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - Fixed `吹响吧！上低音号 12` by downgrading Kindle-breaking rotate transforms on the reflow path without touching preserve-layout books.
-- Fixed `葬送的芙莉蓮 11` by conservatively repairing invalid or missing `original-resolution` metadata for preserve-layout comics.
+- Fixed `葬送的芙莉莲 11` by conservatively repairing invalid or missing `original-resolution` metadata for preserve-layout comics.
 - Fixed footnote normalization edge cases caused by nested backlink wrappers and Duokan-style note containers.
 - Fixed a Previewer regression source where preserve-layout comics could lose ET support after over-eager metadata injection.
 - Verified a clean full-sample run: 69/69 processed EPUBs succeed in Kindle Previewer, with 0 regressions and 0 processed errors.
@@ -46,7 +72,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Fixed text decoding issues on non-UTF-8 EPUB resources.
 - Fixed a class of Kindle Previewer internal errors caused by risky CSS transforms in reflowable books.
 - Verified `OVERLOAD 05` now converts from `Not Supported + Error` to `Supported + Success` in Kindle Previewer after processing.
-- Preserved successful processing for validated samples including `义妹生活 03` and `葬送的芙莉蓮 07`.
+- Preserved successful processing for validated samples including `义妹生活 03` and `葬送的芙莉莲 07`.
 
 ## [1.1.0] - 2026-04-15
 

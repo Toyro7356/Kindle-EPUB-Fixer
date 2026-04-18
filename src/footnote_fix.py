@@ -17,26 +17,23 @@ def _footnote_block_candidates(elem: etree._Element) -> list[etree._Element]:
     ]
 
 
-def _preferred_backlink_container(elem: etree._Element) -> etree._Element:
-    for node in elem.iter():
-        if not isinstance(node.tag, str):
+def _has_standard_kindle_footnotes(root: etree._Element) -> bool:
+    footnote_ids = {
+        (elem.get("id") or "").strip()
+        for elem in root.iter()
+        if elem.get(f"{{{NS_EPUB}}}type") == "footnote" and (elem.get("id") or "").strip()
+    }
+    if not footnote_ids:
+        return False
+
+    for a_tag in root.iter(f"{{{NS_XHTML}}}a"):
+        if a_tag.get(f"{{{NS_EPUB}}}type") != "noteref":
             continue
-        if etree.QName(node).localname.lower() != "div":
+        href = (a_tag.get("href") or "").strip()
+        if not href.startswith("#"):
             continue
-        classes = (node.get("class") or "").split()
-        if "footnote-content" in classes:
-            return node
-
-    block_candidates = _footnote_block_candidates(elem)
-    return block_candidates[-1] if block_candidates else elem
-
-
-def _is_descendant(ancestor: etree._Element, node: etree._Element) -> bool:
-    current = node.getparent()
-    while current is not None:
-        if current is ancestor:
+        if href[1:] in footnote_ids:
             return True
-        current = current.getparent()
     return False
 
 
@@ -67,54 +64,6 @@ def _unwrap_element_preserving_children(elem: etree._Element) -> bool:
 
     parent.remove(elem)
     return True
-
-
-def _ensure_backlink_shape(
-    elem: etree._Element,
-    href: str,
-    preferred_container: etree._Element,
-) -> bool:
-    modified = False
-    backlinks = [
-        a_tag
-        for a_tag in elem.iter(f"{{{NS_XHTML}}}a")
-        if (a_tag.get("href") or "") == href
-    ]
-
-    if backlinks:
-        backlink = backlinks[0]
-        for extra in backlinks[1:]:
-            extra_parent = extra.getparent()
-            if extra_parent is not None:
-                extra_parent.remove(extra)
-                modified = True
-    else:
-        backlink = etree.Element(f"{{{NS_XHTML}}}a")
-        backlink.set("href", href)
-        modified = True
-
-    if backlink.get("class") != "footnote-backref":
-        backlink.set("class", "footnote-backref")
-        modified = True
-
-    has_visible_content = bool((backlink.text or "").strip()) or len(backlink) > 0
-    if not has_visible_content:
-        backlink.text = "\u21A9"
-        modified = True
-
-    current_parent = backlink.getparent()
-    if current_parent is not None and _is_descendant(backlink, preferred_container):
-        if _unwrap_element_preserving_children(backlink):
-            modified = True
-        current_parent = backlink.getparent()
-
-    if current_parent is not preferred_container:
-        if current_parent is not None:
-            current_parent.remove(backlink)
-        preferred_container.insert(0, backlink)
-        modified = True
-
-    return modified
 
 
 def _unwrap_nested_note(elem: etree._Element) -> bool:
@@ -187,28 +136,16 @@ def fix_footnotes_for_kindle(opf_path: str) -> int:
 
         root = doc.getroot()
         modified = False
-        note_targets: dict[str, str] = {}
+
+        # Leave already-standard noteref -> footnote pairs untouched.
+        # Kindle popup behavior is sensitive here, and adding synthetic backrefs
+        # can regress books whose note structure already works.
+        if _has_standard_kindle_footnotes(root):
+            continue
 
         for elem in list(root.iter()):
             if _unwrap_nested_note(elem):
                 modified = True
-
-        for a_tag in root.iter(f"{{{NS_XHTML}}}a"):
-            if a_tag.get(f"{{{NS_EPUB}}}type") != "noteref":
-                continue
-
-            href_val = a_tag.get("href") or ""
-            if not href_val.startswith("#"):
-                continue
-
-            note_id = href_val[1:]
-            ref_id = a_tag.get("id") or ""
-            if not ref_id:
-                ref_id = f"note_ref_auto_{len(note_targets) + 1}"
-                a_tag.set("id", ref_id)
-                modified = True
-
-            note_targets.setdefault(note_id, ref_id)
 
         footnote_elems = [
             elem for elem in root.iter()
@@ -217,15 +154,6 @@ def fix_footnotes_for_kindle(opf_path: str) -> int:
 
         for elem in footnote_elems:
             if _normalize_duokan_footnote_lists(elem):
-                modified = True
-
-            footnote_id = elem.get("id") or ""
-            backref_id = note_targets.get(footnote_id)
-            if not backref_id:
-                continue
-
-            target = _preferred_backlink_container(elem)
-            if _ensure_backlink_shape(elem, f"#{backref_id}", target):
                 modified = True
 
         if modified:

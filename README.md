@@ -2,14 +2,17 @@
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-处理流程、分支判断依据与当前设计边界见 [docs/PROCESS_FLOW.md](docs/PROCESS_FLOW.md)。
-当前样本验证结果：
-- 内部结构审计 `69/69` 通过
-- Kindle Previewer 全量样本 `69/69` 处理成功，`0` 回归，`0` 处理后错误
 
 面向 Kindle / Send to Kindle 的 EPUB 修复工具。
 
-这个项目的目标不是“把所有 EPUB 统一改成某种模板”，而是在尽可能保留作者原始排版意图的前提下，修复 Kindle 明显不兼容、容易白屏、图片丢失、Previewer 内部错误或结构损坏的问题。
+这个项目的目标不是把所有 EPUB 强行改成统一模板，而是在尽可能保留作者原始排版、字体和结构意图的前提下，修复 Kindle 明显不兼容、容易白屏、图片丢失、Previewer 报错或 EPUB 结构损坏的问题。
+
+处理流程、分支判断依据与设计边界见 [docs/PROCESS_FLOW.md](docs/PROCESS_FLOW.md)。
+
+当前验证结果：
+- 内部结构审计 `77/77` 通过，`0` 校验问题
+- Kindle Previewer 核心样本全量验证 `69/69` 处理成功，`0` 回归，`0` 处理后错误
+- 角注专项 Previewer 验证 `4/4` 处理成功
 
 ## 设计原则
 
@@ -32,7 +35,7 @@
   - 清理不安全命名实体与裸 `&`
 - CSS 风险降级
   - 仅对可重排内容降级 Kindle Previewer 明显容易失败的高风险变换
-  - 当前主要处理 `rotate`、`matrix`、`skew`、`perspective` 和 3D transform，不碰 preserve-layout 书籍
+  - 当前主要处理 `rotate`、`matrix`、`skew`、`perspective` 和 3D transform，不碰 `preserve-layout` 书籍
 - SVG 插图页兼容修复
   - 只将“单图壳子”式 SVG 页面转换为标准 `<img>`
   - 不主动改写复杂 SVG、文字叠层或版式型 SVG 页面
@@ -40,25 +43,27 @@
   - 检测缺失字体
   - 支持用户补充本地字体
   - 处理字体格式兼容与缺失回退
+- 脚注/角注保守修复
+  - 已经符合标准 `noteref -> footnote` 结构的脚注默认不改写
+  - 只对明显非标准、嵌套异常或 Duokan 风格容器做保守归一
 - Kindle 友好清理
   - 移除已知会干扰 Kindle 的脚本残留
   - 清理过期 SVG 标记
   - 修复 NCX 导航层级
-- 结构校验
-  - 检查处理后 EPUB 中的 XHTML 是否仍然可被正常解析
+- 输出结构校验
+  - 检查处理后 EPUB 中的 XHTML、manifest、spine、图片引用和基础元数据是否仍然有效
 
-## 1.3 预发布改进
+## 1.3 正式版重点
 
-- 引入 `book_profile` 自动分析书籍结构，替代简单来源分类
-- 重构主处理流程，先做结构层修复，再决定是否进入重排兼容修复
+- 引入 `BookProfile + ProcessingPlan` 自动分支，替代来源硬编码
+- 主处理流程重构为“先结构修复，再按内容类型选择修复强度”
 - 新增 `text_io`，提升非 UTF-8 EPUB 的读取稳定性
-- 新增 `css_sanitize`，把 Kindle Previewer 明显容易报错的高风险变换抽成通用修复
+- 新增 `css_sanitize`，把 Previewer 高风险 transform 收敛为通用修复
 - 新增 `previewer_audit`，支持可恢复的全量 Previewer 审计
-- 修复 `OVERLOAD 05`、`吹响吧！上低音号 12` 这类因旋转排版触发 Previewer 错误的样本
-- 修复 `葬送的芙莉蓮 11` 这类 preserve-layout 漫画缺失 `original-resolution` 的问题
-- 保持对 `义妹生活 03`、`葬送的芙莉蓮 07-14` 等样本的兼容结果
-- GUI 默认输出到输入目录下的 `转换后`
+- 修复 `吹响吧！上低音号 12` 这类由旋转排版触发的 Previewer 错误
+- 修复 preserve-layout 漫画缺失 `original-resolution` 时的转换失败
 - 去掉输出文件名中的 `.processed` 后缀
+- 脚注策略改为“标准结构不动、异常结构再修”，避免空弹窗、额外回链和正文注入回归
 
 ## 使用方法
 
@@ -69,7 +74,6 @@ python main_gui.py
 ```
 
 支持：
-
 - 批量添加 EPUB
 - 拖拽导入
 - 统一指定输出目录
@@ -92,7 +96,7 @@ python main.py "input.epub" "output.epub"
 pip install -r requirements.txt
 ```
 
-样本批量审计：
+批量结构审计：
 
 ```bash
 python tools/audit_samples.py --report build/audit-report.json --output-dir build/audit-output
