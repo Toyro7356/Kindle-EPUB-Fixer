@@ -1,0 +1,26 @@
+{
+  "_notes": [
+    "当前仅保留 Kindle 字体优先策略。",
+    "程序会优先把缺失字体回退到 Kindle 可识别的内置字体族名或通用字体族。",
+    "只有在没有合适 Kindle 回退时，才会自动导入系统字体或预置字体。"
+  ],
+  "family_aliases": {
+  },
+  "_examples": {
+    "title": [
+      "common/title.ttf",
+      "Amazon Ember",
+      "Futura"
+    ],
+    "dk-songti": [
+      "common/dk-songti.ttf",
+      "Source Han Serif SC",
+      "宋体"
+    ],
+    "serif-ja": [
+      "common/serif-ja.ttf",
+      "Yu Mincho",
+      "游明朝"
+    ]
+  }
+}

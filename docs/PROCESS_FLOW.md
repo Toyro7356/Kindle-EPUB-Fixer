@@ -20,10 +20,11 @@
 5. 基于 `book_type + BookProfile` 构建 `ProcessingPlan`。
 6. 执行始终安全的结构修复。
 7. 如果是小说，执行小说兼容修复。
-8. 如果不是 `preserve-layout`，执行可重排增强修复。
-9. 如果检测到 Kobo / Adobe 标记且不是 `preserve-layout`，执行来源相关清理。
-10. 重新打包 EPUB。
-11. 对输出结果做结构校验。
+8. 执行字体兼容修复。
+9. 如果不是 `preserve-layout`，执行可重排增强修复。
+10. 如果检测到 Kobo / Adobe 标记且不是 `preserve-layout`，执行来源相关清理。
+11. 重新打包 EPUB。
+12. 对输出结果做结构校验。
 
 ## 一、书籍类型识别
 
@@ -124,10 +125,14 @@
 - HTML 结构修复
 - 自闭合标签修复
 - HTML 头部脏元数据清理
+- 语言标签修复
 - 封面页图片引用修复
 - NCX 父级 `navPoint` 修复
 - OPF 保守清理
 - 漫画的 Kindle 兼容增强
+
+这里的语言标签修复会根据正文实际内容修正 OPF 中的 `dc:language`，以及 XHTML 根节点上的 `lang/xml:lang`。
+这样即使是 `preserve-layout` 书籍，也不会因为错误的语言元数据而落到错误的 Kindle 字体桶。
 
 ### 漫画增强的保守模式
 
@@ -163,7 +168,26 @@
 
 原因是这两类问题已经被样本和 Previewer 证明会直接导致 Kobo 小说白屏或无法打开。
 
-## 六、可重排增强修复
+## 六、字体兼容修复
+
+实现位置：
+- [src/core.py](/C:/Users/auror/Documents/code/epub/src/core.py:147)
+- [src/font_handler.py](/C:/Users/auror/Documents/code/epub/src/font_handler.py:1)
+
+当前字体策略只保留一套 Kindle 优先回退方案：
+- 优先使用 Kindle 可识别的内置字体族名或通用族名
+- 无法稳定表达时，再导入预置字体或系统字体
+- 对 preserve-layout 书籍也会执行字体导入，但不会激进清洗剩余字体引用
+
+当前默认内置：
+- `朱雀仿宋 v0.212`
+  - 用作 `fangsong / dk-fangsong / 华文仿宋 / 方正仿宋` 等仿宋类别名的优先开源回退
+
+设计边界：
+- Kindle 先天没有可靠等价物的装饰字，仍允许导入系统字体
+- 对 preserve-layout 书籍，默认不主动重写剩余字体引用为泛型，避免多余扰动
+
+## 七、可重排增强修复
 
 实现位置：
 - [src/core.py](/C:/Users/auror/Documents/code/epub/src/core.py:89)
@@ -171,8 +195,6 @@
 只在 `preserve_layout=False` 时执行。
 
 包括：
-- 语言标签修复
-- 字体处理
 - 高风险 CSS transform 降级
 - 简单 SVG 包图页转 `<img>`
 - 脚注结构保守归一

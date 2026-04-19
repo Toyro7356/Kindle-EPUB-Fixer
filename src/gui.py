@@ -14,7 +14,7 @@ from .content_analysis import ContentAnalysis, analyze_content
 from .core import process_files, resolve_output_path
 from .epub_io import find_opf, repack_epub, unpack_epub
 from .epub_validator import validate_epub
-from .font_handler import FontScanResult, scan_fonts
+from .font_handler import FontScanResult, ImportedFontSpec, resolve_missing_font_plan, scan_fonts
 
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -49,10 +49,10 @@ class KindleEpubFixerGUI(_BaseTk):
         self._log_queue: List[tuple[str, str]] = []
         self._log_lock = threading.Lock()
         self._font_event = threading.Event()
-        self._font_result: Optional[Dict[str, str]] = None
+        self._font_result: Optional[Dict[str, ImportedFontSpec]] = None
         self._cancelled = False
         self._is_running = False
-        self._font_cache: Dict[str, str] = {}
+        self._font_cache: Dict[str, ImportedFontSpec] = {}
 
         self._setup_theme()
         self._build_ui()
@@ -282,7 +282,7 @@ class KindleEpubFixerGUI(_BaseTk):
 
     def _prompt_font_import(self, missing_families: set[str], book_name: str) -> None:
         needed = [family for family in sorted(missing_families) if family not in self._font_cache]
-        imported: Dict[str, str] = {}
+        imported: Dict[str, ImportedFontSpec] = {}
 
         if not needed:
             self._font_result = imported
@@ -291,7 +291,11 @@ class KindleEpubFixerGUI(_BaseTk):
 
         answer = messagebox.askyesnocancel(
             "缺失字体",
-            f"{book_name} 检测到缺失字体：\n{', '.join(needed)}\n\n是否现在选择本地字体文件进行补全？",
+            (
+                f"{book_name} 仍有缺失字体未能自动匹配：\n{', '.join(needed)}\n\n"
+                "是否现在选择本地字体文件继续补全？\n"
+                "选择“否”将跳过这些字体，程序会改用 Kindle 可兼容的回退字体。"
+            ),
         )
 
         if answer is None:
@@ -300,18 +304,19 @@ class KindleEpubFixerGUI(_BaseTk):
             for family in needed:
                 file_path = filedialog.askopenfilename(
                     title=f"选择字体文件：{family}",
-                    filetypes=[("Font files", "*.ttf *.otf *.woff *.woff2"), ("All files", "*.*")],
+                    filetypes=[("Font files", "*.ttf *.otf *.ttc *.otc *.woff *.woff2"), ("All files", "*.*")],
                 )
                 if not file_path:
                     continue
-                self._font_cache[family] = file_path
-                imported[family] = file_path
+                spec = ImportedFontSpec(path=file_path, source="manual")
+                self._font_cache[family] = spec
+                imported[family] = spec
                 self._log(f"用户导入字体: {family} -> {file_path}")
 
         self._font_result = imported
         self._font_event.set()
 
-    def _request_fonts_for_book(self, missing_families: set[str], book_name: str) -> Dict[str, str]:
+    def _request_fonts_for_book(self, missing_families: set[str], book_name: str) -> Dict[str, ImportedFontSpec]:
         cached = {family: self._font_cache[family] for family in missing_families if family in self._font_cache}
         if self._cancelled:
             return cached
@@ -366,16 +371,36 @@ class KindleEpubFixerGUI(_BaseTk):
                 f"  -> 书籍轮廓: mode={profile.layout_mode}, preserve={profile.preserve_layout}, svg={profile.has_svg_pages}, js={profile.has_javascript}"
             )
 
-            imported_fonts: Dict[str, str] = {}
+            imported_fonts: Dict[str, ImportedFontSpec] = {}
             font_scan: Optional[FontScanResult] = None
-            if not profile.preserve_layout:
-                font_scan = scan_fonts(temp_dir)
-                missing = set(font_scan.missing)
-                if missing:
-                    self._log(f"  -> 检测到缺失字体: {', '.join(sorted(missing))}", "warn")
-                    imported_fonts = self._request_fonts_for_book(missing, book_name)
-                if self._cancelled:
-                    raise RuntimeError("任务已取消")
+            font_scan = scan_fonts(temp_dir)
+            missing = set(font_scan.missing)
+            if missing:
+                self._log(f"  -> 检测到缺失字体: {', '.join(sorted(missing))}", "warn")
+                auto_plan = resolve_missing_font_plan(missing)
+                if auto_plan.imported:
+                    for family, spec in auto_plan.imported.items():
+                        self._font_cache.setdefault(family, spec)
+                    self._log(
+                        "  -> 已自动匹配可导入字体: "
+                        + ", ".join(f"{family} -> {Path(spec.path).name}" for family, spec in sorted(auto_plan.imported.items())),
+                        "info",
+                    )
+                    imported_fonts.update(auto_plan.imported)
+                if auto_plan.builtin_fallbacks:
+                    self._log(
+                        "  -> 将使用 Kindle 回落字体: "
+                        + ", ".join(
+                            f"{family} -> {', '.join(families[:2])}"
+                            for family, families in sorted(auto_plan.builtin_fallbacks.items())
+                        ),
+                        "info",
+                    )
+                if auto_plan.unresolved:
+                    self._log(f"  -> 仍未自动匹配的字体: {', '.join(sorted(auto_plan.unresolved))}", "warn")
+                    imported_fonts.update(self._request_fonts_for_book(auto_plan.unresolved, book_name))
+            if self._cancelled:
+                raise RuntimeError("任务已取消")
 
             book_type = process_files(
                 temp_dir,

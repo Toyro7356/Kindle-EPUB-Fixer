@@ -8,7 +8,7 @@ import os
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from .book_profile import BookProfile, detect_book_profile
 from .book_type import detect_book_type
@@ -17,7 +17,7 @@ from .content_analysis import ContentAnalysis, analyze_content
 from .css_sanitize import downgrade_risky_css_for_kindle
 from .epub_io import find_opf, repack_epub, unpack_epub
 from .epub_validator import validate_epub
-from .font_handler import FontScanResult, handle_fonts
+from .font_handler import FontScanResult, ImportedFontSpec, handle_fonts
 from .footnote_fix import fix_footnotes_for_kindle
 from .html_fix import clean_html_meta, fix_cover_image_references, fix_html_structure, fix_self_closing_tags
 from .image_fix import convert_webp_images, update_html_css_webp_refs, update_opf_webp_refs
@@ -79,6 +79,12 @@ def _apply_safe_repairs(
 
     clean_html_meta(opf_path)
 
+    # Kindle chooses its CJK/Latin font set from language metadata.
+    # Keep this repair in the always-safe stage so preserve-layout books
+    # do not accidentally stay on the wrong font family bucket.
+    if fix_language_tags(opf_path):
+        log("Updated language metadata from book content")
+
     cover_fixed = fix_cover_image_references(opf_path)
     if cover_fixed:
         log(f"Fixed broken cover image references in {cover_fixed} documents")
@@ -103,16 +109,9 @@ def _apply_reflow_repairs(
     opf_path: str,
     profile_preserve_layout: bool,
     log: LogCallback,
-    imported_fonts: Optional[Dict[str, str]],
-    font_scan: Optional[FontScanResult],
 ) -> None:
     if profile_preserve_layout:
         return
-
-    if fix_language_tags(opf_path):
-        log("Updated language metadata from book content")
-
-    handle_fonts(temp_dir, log, imported_fonts, font_scan=font_scan)
 
     css_sanitized = downgrade_risky_css_for_kindle(opf_path)
     if css_sanitized:
@@ -145,6 +144,22 @@ def _apply_novel_compat_repairs(opf_path: str, book_type: str, log: LogCallback)
         log(f"Downgraded vertical writing in {wm_fixed} locations")
 
 
+def _apply_font_repairs(
+    temp_dir: str,
+    preserve_layout: bool,
+    log: LogCallback,
+    imported_fonts: Optional[Dict[str, Union[str, ImportedFontSpec]]],
+    font_scan: Optional[FontScanResult],
+) -> None:
+    handle_fonts(
+        temp_dir,
+        log,
+        imported_fonts,
+        font_scan=font_scan,
+        sanitize_missing=(not preserve_layout),
+    )
+
+
 def _apply_source_specific_cleanup(
     opf_path: str,
     has_kobo_markers: bool,
@@ -173,7 +188,7 @@ def _build_processing_plan(book_type: str, profile: BookProfile) -> ProcessingPl
 def process_files(
     temp_dir: str,
     log: LogCallback = _default_log,
-    imported_fonts: Optional[Dict[str, str]] = None,
+    imported_fonts: Optional[Dict[str, Union[str, ImportedFontSpec]]] = None,
     profile: Optional[BookProfile] = None,
     font_scan: Optional[FontScanResult] = None,
     content_analysis: Optional[ContentAnalysis] = None,
@@ -199,14 +214,19 @@ def process_files(
     _apply_safe_repairs(opf_path, plan.book_type, plan.preserve_layout, log)
     if plan.run_novel_compat_repairs:
         _apply_novel_compat_repairs(opf_path, plan.book_type, log)
+    _apply_font_repairs(
+        temp_dir,
+        plan.preserve_layout,
+        log,
+        imported_fonts,
+        font_scan,
+    )
     if plan.run_reflow_repairs:
         _apply_reflow_repairs(
             temp_dir,
             opf_path,
             plan.preserve_layout,
             log,
-            imported_fonts,
-            font_scan,
         )
     if plan.run_source_specific_cleanup:
         _apply_source_specific_cleanup(
@@ -223,7 +243,7 @@ def process_epub(
     epub_path: str,
     output_path: Optional[str] = None,
     log: LogCallback = _default_log,
-    imported_fonts: Optional[Dict[str, str]] = None,
+    imported_fonts: Optional[Dict[str, Union[str, ImportedFontSpec]]] = None,
 ) -> str:
     epub_path = os.path.abspath(epub_path)
     resolved_output_path = resolve_output_path(epub_path, output_path)

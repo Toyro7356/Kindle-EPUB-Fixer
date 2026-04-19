@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.1-beta.1] - 2026-04-19
+
+### Added
+- Added bundled `Zhuque Fangsong v0.212` under `fonts/common/` as the default open-source fallback for Fangsong-style aliases.
+- Added bundled font licensing notes for Zhuque under `fonts/common/LICENSE.zhuque.txt`.
+
+### Changed
+- Simplified font handling to a single Kindle-first fallback strategy instead of maintaining multiple profile modes.
+- Changed Fangsong-style aliases such as `fangsong`, `fang-song`, `dk-fangsong`, `华文仿宋`, and `方正仿宋` to prefer the bundled Zhuque fallback before system fonts.
+- Changed `dk-xiaobiaosong` to resolve as a Song/serif-style fallback instead of importing a system decorative Song variant.
+- Changed `youyuan`, `kai`, and `dfkai-sb` handling to prefer Kindle-style `STYuan` / `STKai` chains where possible.
+- Moved language metadata repair into the always-safe repair stage so preserve-layout books also get corrected `dc:language` and XHTML `lang/xml:lang`.
+- Tightened Kindle builtin font recognition so Windows/system CJK font names are no longer treated as guaranteed Kindle builtins.
+
+### Fixed
+- Fixed a fallback ordering issue where bundled Zhuque Fangsong could be skipped by earlier system font matches.
+- Fixed the preserve-layout path so books no longer miss language-based Kindle font bucket correction.
+- Fixed `ssa` and `sthupo` resolution to import their concrete system fonts deterministically instead of relying on fuzzy matching.
+
+### Verified
+- Verified Python compile checks for `main.py`, `main_gui.py`, and the updated `src` modules.
+- Verified the current sample set font plan after the Kindle-first refactor: `58` builtin/generic fallbacks, `5` imported fonts, `0` unresolved.
+- Verified key mappings on the sample set, including `dk-xiaobiaosong -> serif/STSong`, `youyuan -> STYuan`, `dfkai-sb -> STKai`, and Fangsong aliases importing bundled Zhuque.
+
 ## [1.3.0] - 2026-04-19
 
 ### Added
