@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.1-beta.2] - 2026-04-19
+
+### Changed
+- Changed the single-file Windows build to bundle the whole `fonts/` directory into the EXE.
+- Changed frozen runtime asset lookup so the app now reads bundled fonts and font settings from PyInstaller's extracted resource directory, while still allowing external `fonts/` files next to the EXE to override them.
+
+### Fixed
+- Fixed the previous `1.3.1-beta.1` packaging gap where bundled `朱雀仿宋` existed in source form but was not actually available inside the one-file EXE.
+
+### Verified
+- Verified frozen-mode asset lookup with a simulated `_MEIPASS` runtime path.
+- Rebuilt `dist/Kindle EPUB Fixer.exe` as `1.3.1-beta.2`.
+
 ## [1.3.1-beta.1] - 2026-04-19
 
 ### Added

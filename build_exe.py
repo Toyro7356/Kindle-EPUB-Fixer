@@ -11,6 +11,7 @@ from src import __version__
 
 
 def build() -> None:
+    project_root = os.path.dirname(os.path.abspath(__file__))
     cmd = [
         sys.executable,
         "-m",
@@ -29,6 +30,12 @@ def build() -> None:
         cmd.extend(["--add-data", f"{tkdnd_dir};tkinterdnd2\\tkdnd"])
     else:
         print("Warning: tkinterdnd2 tkdnd directory not found, drag-and-drop may not work in the bundled exe.")
+
+    fonts_dir = os.path.join(project_root, "fonts")
+    if os.path.isdir(fonts_dir):
+        cmd.extend(["--add-data", f"{fonts_dir};fonts"])
+    else:
+        print("Warning: fonts directory not found, bundled font assets will be unavailable in the exe.")
 
     print("Running:", " ".join(cmd))
     subprocess.check_call(cmd)

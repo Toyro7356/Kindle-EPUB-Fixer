@@ -240,7 +240,11 @@ def _normalize_font_name(value: str) -> str:
 
 
 def _font_settings_path() -> Path:
-    return _application_root() / "fonts" / "font-settings.json"
+    for fonts_root in _font_roots():
+        candidate = fonts_root / "font-settings.json"
+        if candidate.exists():
+            return candidate
+    return _font_roots()[0] / "font-settings.json"
 
 
 @lru_cache(maxsize=1)
@@ -742,14 +746,38 @@ def _application_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def _resource_roots() -> List[Path]:
+    roots: List[Path] = []
+    seen: Set[str] = set()
+
+    def _push(path: Path) -> None:
+        resolved = path.resolve()
+        key = str(resolved).lower()
+        if key in seen:
+            return
+        seen.add(key)
+        roots.append(resolved)
+
+    if getattr(sys, "frozen", False):
+        _push(Path(sys.executable).resolve().parent)
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            _push(Path(meipass))
+    else:
+        _push(Path(__file__).resolve().parent.parent)
+
+    return roots
+
+
+def _font_roots() -> List[Path]:
+    return [root / "fonts" for root in _resource_roots()]
+
+
 def _iter_bundled_font_paths() -> Iterable[Path]:
     seen: Set[str] = set()
-    root = _application_root()
-    candidates = [
-        root / "fonts",
-        root / "fonts" / "common",
-        root / "fonts" / "user",
-    ]
+    candidates: List[Path] = []
+    for fonts_root in _font_roots():
+        candidates.extend([fonts_root, fonts_root / "common", fonts_root / "user"])
 
     for directory in candidates:
         if not directory.exists():
@@ -765,12 +793,13 @@ def _iter_bundled_font_paths() -> Iterable[Path]:
 
 def _detect_font_source(path: str) -> str:
     resolved = Path(path).resolve()
-    fonts_root = (_application_root() / "fonts").resolve()
-    try:
-        resolved.relative_to(fonts_root)
-        return "bundled"
-    except ValueError:
-        return "system"
+    for fonts_root in _font_roots():
+        try:
+            resolved.relative_to(fonts_root.resolve())
+            return "bundled"
+        except ValueError:
+            continue
+    return "system"
 
 
 def _looks_like_font_path(value: str) -> bool:
@@ -783,14 +812,15 @@ def _resolve_configured_font_path(value: str) -> Optional[Path]:
     if candidate.is_absolute():
         return candidate.resolve() if candidate.exists() else None
 
-    fonts_root = (_application_root() / "fonts").resolve()
-    relative_candidate = (fonts_root / candidate).resolve()
-    try:
-        relative_candidate.relative_to(fonts_root)
-    except ValueError:
-        return None
-    if relative_candidate.exists():
-        return relative_candidate
+    for fonts_root in _font_roots():
+        resolved_root = fonts_root.resolve()
+        relative_candidate = (resolved_root / candidate).resolve()
+        try:
+            relative_candidate.relative_to(resolved_root)
+        except ValueError:
+            continue
+        if relative_candidate.exists():
+            return relative_candidate
     return None
 
 

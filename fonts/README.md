@@ -16,6 +16,9 @@
   - 授权：`SIL Open Font License 1.1`
   - 许可证副本：`fonts/common/LICENSE.zhuque.txt`
 
+单文件 Windows EXE 会把整个 `fonts/` 目录一起打包进去。
+运行时会优先读取 EXE 同目录下的外部 `fonts/` 覆盖；如果没有外部覆盖，则自动回落到 EXE 内置资源。
+
 支持的字体格式：
 
 - `.ttf`
