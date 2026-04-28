@@ -44,9 +44,9 @@
   - 支持用户补充本地字体
   - 优先回退到 Kindle 可识别字体，再在必要时导入字体
   - 处理字体格式兼容与缺失回退
-  - 支持通过 `fonts/font-settings.json` 配置私有字体别名
+  - 支持通过设置页配置私有字体别名，用户字体保存在 `%LocalAppData%\KindleEpubFixer\fonts`
   - 默认内置 `朱雀仿宋 v0.212` 作为仿宋类字体优先回退
-  - 单文件 Windows EXE 现已内置 `fonts/` 资源，无需额外复制字体目录
+  - Windows 安装器内置 `fonts/` 资源，无需额外复制字体目录
 - 脚注/角注保守修复
   - 已经符合标准 `noteref -> footnote` 结构的脚注默认不改写
   - 只对明显非标准、嵌套异常或 Duokan 风格容器做保守归一
@@ -56,6 +56,14 @@
   - 修复 NCX 导航层级
 - 输出结构校验
   - 检查处理后 EPUB 中的 XHTML、manifest、spine、图片引用和基础元数据是否仍然有效
+
+## 1.4.0-beta.1 重点
+
+- 原生 WinUI 3 / Windows App SDK 前端替代旧 Python GUI
+- 新增安装器 `KindleEpubFixer.Setup.exe`，支持自定义目录、覆盖更新和完整卸载
+- 新增设置页、关于页、默认输出目录、用户字体导入与字体回落别名编辑
+- 任务列表改为表格/队列式交互，支持选择、删除、单本状态和悬停日志
+- 内置字体库随安装器分发，后端同时扫描用户字体目录和内置字体目录
 
 ## 1.3 正式版重点
 
@@ -71,17 +79,36 @@
 
 ## 使用方法
 
-### GUI
+### Native WinUI 3 GUI
 
 ```bash
-python main_gui.py
+powershell -ExecutionPolicy Bypass -File build_winui.ps1
 ```
+
+构建后会生成：
+
+```text
+dist/KindleEpubFixer.Setup.exe
+dist/KindleEpubFixer-<version>-Setup.exe
+dist/KindleEpubFixer.Portable.zip
+dist/KindleEpubFixer-<version>-Portable.zip
+```
+
+如果本机没有 .NET SDK，先安装到项目本地：
+
+```bash
+powershell -ExecutionPolicy Bypass -File tools/install_dotnet_sdk.ps1
+```
+
+GUI 现已改为原生 WinUI 3 / Windows App SDK 前端；Python 只作为 EPUB 修复后端。
 
 支持：
 - 批量添加 EPUB
-- 拖拽导入
-- 统一指定输出目录
-- 实时查看处理日志
+- PowerToys / Windows 11 风格的 `NavigationView` 页面结构
+- 卡片式任务队列、单本选择、单本进度与单本日志
+- 设置默认输出目录
+- 管理字体库与字体回落别名
+- 查看版本、内置字体与项目说明
 
 ### 命令行
 
@@ -118,25 +145,34 @@ Kindle Previewer 全量审计：
 python tools/previewer_audit.py --report build/previewer-audit.json --workdir build/previewer-audit --timeout-seconds 1200
 ```
 
-## 打包 EXE
+## Native WinUI 打包
 
 ```bash
-python build_exe.py
+powershell -ExecutionPolicy Bypass -File build_winui.ps1
 ```
 
 默认输出：
 
 ```text
-dist/Kindle EPUB Fixer.exe
+dist/KindleEpubFixer.Setup.exe
+dist/KindleEpubFixer.Portable.zip
 ```
+
+安装器说明见 [docs/INSTALLER.md](docs/INSTALLER.md)。
 
 ## 项目结构
 
 ```text
 .
+├─ native/
+│  └─ KindleEpubFixer.WinUI/
+│     ├─ MainWindow.xaml
+│     ├─ Views/
+│     ├─ Models/
+│     └─ Services/
 ├─ src/
 │  ├─ core.py
-│  ├─ gui.py
+│  ├─ backend_cli.py
 │  ├─ book_profile.py
 │  ├─ css_sanitize.py
 │  ├─ text_io.py
@@ -146,12 +182,13 @@ dist/Kindle EPUB Fixer.exe
 │  ├─ audit_samples.py
 │  ├─ previewer_compare.py
 │  ├─ previewer_audit.py
-│  └─ analyze_epubs_v2.py
+│  └─ install_dotnet_sdk.ps1
 ├─ 测试文件/
 ├─ docs/
 ├─ main.py
-├─ main_gui.py
-├─ build_exe.py
+├─ main_backend.py
+├─ build_backend.py
+├─ build_winui.ps1
 ├─ README.md
 └─ CHANGELOG.md
 ```

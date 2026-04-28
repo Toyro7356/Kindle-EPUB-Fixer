@@ -9,14 +9,18 @@ __pycache__/
 .venv/
 env/
 venv/
+.dotnet/
 
 # Build / Distribution
 build/
 dist/
 *.spec
+native/**/bin/
+native/**/obj/
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.iml
 

@@ -34,8 +34,8 @@
 - 测试版从 `beta` 打 tag
 
 推荐版本格式：
-- Beta：`v1.3.1-beta.1`
-- 正式版：`v1.3.1`
+- Beta：`v1.4.0-beta.1`
+- 正式版：`v1.4.0`
 
 ## 开发流程
 
@@ -56,10 +56,10 @@
 pip install -r requirements.txt
 ```
 
-启动 GUI：
+构建并启动原生 GUI：
 
 ```bash
-python main_gui.py
+powershell -ExecutionPolicy Bypass -File build_winui.ps1
 ```
 
 命令行处理：
@@ -69,10 +69,10 @@ python main.py "input.epub"
 python main.py "input.epub" "output.epub"
 ```
 
-打包 EXE：
+打包安装器：
 
 ```bash
-python build_exe.py
+powershell -ExecutionPolicy Bypass -File build_winui.ps1
 ```
 
 ## 验证要求
@@ -101,7 +101,7 @@ python tools/previewer_audit.py --report build/previewer-audit.json --workdir bu
 - `footnote_fix.py`：角注/脚注专项样本
 - `comic_fix.py` / `svg_fix.py`：漫画、固定版式、SVG 页样本
 - `css_sanitize.py` / `vertical_fix.py`：Kobo 小说和精排敏感样本
-- `font_handler.py`：自制 EPUB 和缺字库样本
+- `font_handler.py`：自制 EPUB、缺字库样本、安装器内置字体与用户字体目录
 
 ## 代码修改建议
 
@@ -117,7 +117,7 @@ python tools/previewer_audit.py --report build/previewer-audit.json --workdir bu
 - `fix(footnote): avoid rewriting already-valid noteref structures`
 - `fix(css): narrow risky transform downgrades`
 - `docs: document beta/main release workflow`
-- `release: ship v1.3.1`
+- `release: ship v1.4.0-beta.1`
 
 如果一次改动同时涉及逻辑、文档和发布文件，优先保证提交信息能表达“这次改动的核心目的”。
 
@@ -133,7 +133,7 @@ python tools/previewer_audit.py --report build/previewer-audit.json --workdir bu
 推荐正式发布步骤：
 1. 在 `beta` 完成修复并验证。
 2. 更新 `README.md`、`CHANGELOG.md`、`docs/PROCESS_FLOW.md` 和版本号。
-3. 重新打包 EXE。
+3. 重新打包安装器。
 4. 将 `beta` 合并到 `main`。
 5. 在 `main` 上打正式 tag。
 6. 发布 GitHub Release，并上传 EXE。
@@ -141,7 +141,7 @@ python tools/previewer_audit.py --report build/previewer-audit.json --workdir bu
 推荐测试发布步骤：
 1. 在 `beta` 完成一轮阶段性修复。
 2. 更新 beta 版本号和变更说明。
-3. 打包 EXE。
+3. 打包安装器。
 4. 在 `beta` 上打 `-beta.x` tag。
 5. 发布 prerelease。
 

@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [1.4.0-beta.1] - 2026-04-28
+
+### Changed
+- Rebuilt the GUI as a native WinUI 3 / Windows App SDK frontend instead of a Python GUI.
+- Reworked the GUI toward a PowerToys-like layout with `NavigationView`, Mica backdrop, Home / Settings / About pages, rounded cards, and modern command bars.
+- Upgraded the native frontend target framework to `.NET 10`.
+- Made the WinUI root and NavigationView backgrounds transparent enough for the Mica backdrop to show through.
+- Reworked EPUB import into a table-style task queue with selectable rows, compact columns, per-book status, and hover log access.
+- Replaced the global inline log panel with per-book log flyouts opened near the book title.
+- Switched GUI text to `Microsoft YaHei UI` for better Chinese rendering.
+- Replaced the previous self-extracting single EXE experiment with a proper installer.
+- Removed the old Python GUI entry point and legacy Python GUI packaging path.
+
+### Added
+- Added a Settings page for default output directory, user font import, and editable font fallback aliases.
+- Added an About page with version, purpose, and bundled font information.
+- Added a JSON-lines Python backend entry point for native UI progress and log integration.
+- Added native WinUI build scripts and a local .NET SDK installer script.
+- Added a Windows installer that supports custom install directories, overwrite updates, Start menu/Desktop shortcuts, and complete uninstall.
+- Added versioned release artifacts for the installer and portable ZIP.
+- Added installer documentation in `docs/INSTALLER.md`.
+
+### Fixed
+- Fixed overlapping command buttons in the Home toolbar.
+- Fixed selected-count drift by explicitly syncing task checkbox state before refreshing the summary.
+- Fixed WinUI NavigationView pane background/corner artifacts around the Mica layout.
+- Fixed log access becoming hard to click by keeping the hover log button hit-testable.
+- Fixed backend font discovery so the native GUI can pass both user font directories and bundled font directories to the Python repair backend.
+- Fixed installer packaging so app XBF/PRI resources are included alongside the self-contained WinUI publish output.
+
+### Verified
+- Verified Python compile checks for the current `src` backend.
+- Verified WinUI Release build.
+- Verified installer smoke flow: install, overwrite update, bundled backend/font presence, uninstall directory cleanup, and uninstall registry cleanup.
+
 ## [1.3.1-beta.2] - 2026-04-19
 
 ### Changed

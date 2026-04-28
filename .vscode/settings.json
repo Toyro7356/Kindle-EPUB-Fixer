@@ -1,0 +1,22 @@
+{
+  "dotnet.defaultSolution": "epub.sln",
+  "dotnetAcquisitionExtension.allowInvalidPaths": true,
+  "dotnetAcquisitionExtension.cacheTimeToLiveMultiplier": 0,
+  "dotnetAcquisitionExtension.sharedExistingDotnetPath": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet\\dotnet.exe",
+  "dotnetAcquisitionExtension.existingDotnetPath": [
+    {
+      "extensionId": "ms-dotnettools.csharp",
+      "path": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet\\dotnet.exe"
+    },
+    {
+      "extensionId": "ms-dotnettools.csdevkit",
+      "path": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet\\dotnet.exe"
+    }
+  ],
+  "omnisharp.dotnetPath": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet",
+  "omnisharp.sdkPath": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet\\sdk\\10.0.203",
+  "terminal.integrated.env.windows": {
+    "DOTNET_ROOT": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet",
+    "PATH": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet;${env:PATH}"
+  }
+}

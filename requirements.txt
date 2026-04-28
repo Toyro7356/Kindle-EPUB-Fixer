@@ -3,4 +3,3 @@ lxml>=5.0
 fonttools>=4.40.0
 brotli>=1.0.0
 pyinstaller>=6.0
-tkinterdnd2>=0.4.0

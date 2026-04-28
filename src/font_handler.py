@@ -247,6 +247,19 @@ def _font_settings_path() -> Path:
     return _font_roots()[0] / "font-settings.json"
 
 
+def writable_font_settings_path() -> Path:
+    return _font_roots()[0] / "font-settings.json"
+
+
+def user_font_dir() -> Path:
+    return _font_roots()[0] / "user"
+
+
+def clear_font_caches() -> None:
+    _load_font_settings.cache_clear()
+    _load_system_font_index.cache_clear()
+
+
 @lru_cache(maxsize=1)
 def _load_font_settings() -> Dict[str, object]:
     default_settings: Dict[str, object] = {
@@ -770,7 +783,29 @@ def _resource_roots() -> List[Path]:
 
 
 def _font_roots() -> List[Path]:
-    return [root / "fonts" for root in _resource_roots()]
+    roots: List[Path] = []
+    seen: Set[str] = set()
+
+    def _push(path: Path) -> None:
+        try:
+            resolved = path.resolve()
+        except OSError:
+            return
+        key = str(resolved).lower()
+        if key in seen:
+            return
+        seen.add(key)
+        roots.append(resolved)
+
+    for value in os.environ.get("KINDLE_EPUB_FIXER_FONT_DIRS", "").split(os.pathsep):
+        value = value.strip()
+        if value:
+            _push(Path(value))
+
+    for root in _resource_roots():
+        _push(root / "fonts")
+
+    return roots
 
 
 def _iter_bundled_font_paths() -> Iterable[Path]:

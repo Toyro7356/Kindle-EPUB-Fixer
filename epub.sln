@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "native", "native", "{2F2BA0B1-8447-348E-8DA4-622F0257D38B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KindleEpubFixer.WinUI", "native\KindleEpubFixer.WinUI\KindleEpubFixer.WinUI.csproj", "{C8ECC892-673C-A040-2FF7-1AB832525564}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C8ECC892-673C-A040-2FF7-1AB832525564}.Debug|x64.ActiveCfg = Debug|x64
+		{C8ECC892-673C-A040-2FF7-1AB832525564}.Debug|x64.Build.0 = Debug|x64
+		{C8ECC892-673C-A040-2FF7-1AB832525564}.Release|x64.ActiveCfg = Release|x64
+		{C8ECC892-673C-A040-2FF7-1AB832525564}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C8ECC892-673C-A040-2FF7-1AB832525564} = {2F2BA0B1-8447-348E-8DA4-622F0257D38B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4DFD273A-1DF2-4BD0-99E2-3705BA3AE2A4}
+	EndGlobalSection
+EndGlobal

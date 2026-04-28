@@ -2,7 +2,7 @@
 
 这个目录用于放置可被程序自动扫描的预置字体，以及字体回落配置。
 
-程序会自动扫描以下位置中的字体文件：
+源码和命令行模式会自动扫描以下位置中的字体文件：
 
 - `fonts/`
 - `fonts/common/`
@@ -16,8 +16,13 @@
   - 授权：`SIL Open Font License 1.1`
   - 许可证副本：`fonts/common/LICENSE.zhuque.txt`
 
-单文件 Windows EXE 会把整个 `fonts/` 目录一起打包进去。
-运行时会优先读取 EXE 同目录下的外部 `fonts/` 覆盖；如果没有外部覆盖，则自动回落到 EXE 内置资源。
+Windows 安装器会把整个 `fonts/` 目录一起打包进去。
+原生 GUI 运行时会同时扫描：
+
+- 安装目录下的内置 `fonts/`
+- `%LocalAppData%\KindleEpubFixer\fonts`
+
+设置页添加的用户字体会保存到 `%LocalAppData%\KindleEpubFixer\fonts\user`，后端处理 EPUB 时会优先把这个目录和安装器内置字体一起纳入匹配。
 
 支持的字体格式：
 
@@ -30,7 +35,8 @@
 
 ## 配置文件
 
-默认配置文件是 [font-settings.json](C:/Users/auror/Documents/code/epub/fonts/font-settings.json)。
+源码默认配置文件是 [font-settings.json](C:/Users/auror/Documents/code/epub/fonts/font-settings.json)。
+安装器版本的用户配置会保存在 `%LocalAppData%\KindleEpubFixer\fonts\font-settings.json`。
 
 它现在主要控制一件事：
 
