@@ -4,5 +4,117 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Kindle EPUB Fixer">
 
-    <Grid x:Name="RootGrid" Background="Transparent" />
+    <Grid x:Name="RootGrid" Background="{StaticResource AppBackdropTintBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid
+            x:Name="AppTitleBar"
+            Padding="14,0,150,0"
+            Background="{StaticResource AppBackdropTintBrush}">
+            <StackPanel
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="10">
+                <FontIcon
+                    FontSize="18"
+                    Glyph="&#xE8A5;" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="13"
+                    Text="Kindle EPUB Fixer"
+                    TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </Grid>
+
+        <NavigationView
+            x:Name="RootNav"
+            Grid.Row="1"
+            AlwaysShowHeader="False"
+            Background="{StaticResource AppBackdropTintBrush}"
+            CompactPaneLength="56"
+            IsBackButtonVisible="Collapsed"
+            IsPaneOpen="False"
+            IsPaneToggleButtonVisible="False"
+            IsSettingsVisible="False"
+            OpenPaneLength="56"
+            PaneDisplayMode="LeftCompact"
+            SelectionChanged="RootNav_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Name="HomeItem" Height="56" Content="主页" Tag="Home">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Home" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Height="56" Content="设置" Tag="Settings">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Setting" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Height="56" Content="关于" Tag="About">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Help" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+
+            <Grid
+                Padding="28,20,32,22"
+                Background="{StaticResource AppBackdropTintBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel MinWidth="0" Spacing="4">
+                        <TextBlock
+                            FontSize="30"
+                            FontWeight="SemiBold"
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            Text="Kindle EPUB Fixer"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            Foreground="{StaticResource MutedTextBrush}"
+                            Text="Kindle / Send to Kindle EPUB 修复工具。"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="4">
+                        <TextBlock
+                            HorizontalAlignment="Right"
+                            Foreground="{StaticResource MutedTextBrush}"
+                            Text="v1.4.0-beta.2" />
+                        <TextBlock
+                            x:Name="StatusText"
+                            HorizontalAlignment="Right"
+                            Foreground="{StaticResource MutedTextBrush}"
+                            Text="准备就绪" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid x:Name="ContentHost" Grid.Row="1" />
+            </Grid>
+        </NavigationView>
+
+        <InfoBar
+            x:Name="NotificationBar"
+            Grid.RowSpan="2"
+            Width="340"
+            Margin="0,58,24,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            IsClosable="True"
+            IsOpen="False"
+            MaxWidth="420"
+            Severity="Informational" />
+    </Grid>
 </Window>

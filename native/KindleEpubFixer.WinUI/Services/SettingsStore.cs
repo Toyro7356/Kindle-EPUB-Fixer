@@ -37,15 +37,23 @@ public sealed class SettingsStore
 
     public void LoadAppSettings()
     {
+        DefaultOutputDirectory = string.Empty;
         if (!File.Exists(AppPaths.AppSettingsPath))
         {
             return;
         }
 
-        using var doc = JsonDocument.Parse(File.ReadAllText(AppPaths.AppSettingsPath));
-        if (doc.RootElement.TryGetProperty("default_output_dir", out var output))
+        try
         {
-            DefaultOutputDirectory = output.GetString() ?? string.Empty;
+            using var doc = JsonDocument.Parse(File.ReadAllText(AppPaths.AppSettingsPath));
+            if (doc.RootElement.TryGetProperty("default_output_dir", out var output))
+            {
+                DefaultOutputDirectory = output.GetString() ?? string.Empty;
+            }
+        }
+        catch (JsonException)
+        {
+            DefaultOutputDirectory = string.Empty;
         }
     }
 

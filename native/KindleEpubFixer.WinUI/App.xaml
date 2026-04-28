@@ -7,19 +7,18 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
-            <FontFamily x:Key="AppFontFamily">Microsoft YaHei UI</FontFamily>
             <SolidColorBrush x:Key="CardBackgroundBrush" Color="#B8FFFFFF" />
             <SolidColorBrush x:Key="SubtleBorderBrush" Color="#BFD0D7DE" />
             <SolidColorBrush x:Key="MutedTextBrush" Color="#5F6872" />
-            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#D6F4F7F5" />
-            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#D6F4F7F5" />
-            <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#D6F4F7F5" />
             <SolidColorBrush x:Key="TableHeaderBrush" Color="#44FFFFFF" />
-            <SolidColorBrush x:Key="TableRowHoverBrush" Color="#55FFFFFF" />
+            <SolidColorBrush x:Key="AppBackdropTintBrush" Color="#D8F3F5F1" />
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#D8F3F5F1" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#D8F3F5F1" />
+            <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#D8F3F5F1" />
             <SolidColorBrush x:Key="ColumnDividerBrush" Color="#667B8490" />
             <SolidColorBrush x:Key="ColumnDividerHoverBrush" Color="#8A5F6872" />
             <Style x:Key="ColumnResizeThumbStyle" TargetType="Thumb">
-                <Setter Property="Width" Value="8" />
+                <Setter Property="Width" Value="12" />
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Template">
                     <Setter.Value>
@@ -31,18 +30,25 @@
                                         <VisualState x:Name="PointerOver">
                                             <VisualState.Setters>
                                                 <Setter Target="Line.Fill" Value="{StaticResource ColumnDividerHoverBrush}" />
-                                                <Setter Target="Line.Opacity" Value="0.72" />
+                                                <Setter Target="Line.Opacity" Value="0.75" />
+                                                <Setter Target="Line.Width" Value="2" />
                                             </VisualState.Setters>
                                         </VisualState>
                                         <VisualState x:Name="Pressed">
                                             <VisualState.Setters>
                                                 <Setter Target="Line.Fill" Value="{StaticResource ColumnDividerHoverBrush}" />
                                                 <Setter Target="Line.Opacity" Value="0.95" />
+                                                <Setter Target="Line.Width" Value="2" />
                                             </VisualState.Setters>
                                         </VisualState>
                                     </VisualStateGroup>
                                 </VisualStateManager.VisualStateGroups>
-                                <Rectangle x:Name="Line" Width="1" Fill="{StaticResource ColumnDividerBrush}" HorizontalAlignment="Center" Opacity="0.18" />
+                                <Rectangle
+                                    x:Name="Line"
+                                    Width="1"
+                                    HorizontalAlignment="Center"
+                                    Fill="{StaticResource ColumnDividerBrush}"
+                                    Opacity="0.24" />
                             </Grid>
                         </ControlTemplate>
                     </Setter.Value>

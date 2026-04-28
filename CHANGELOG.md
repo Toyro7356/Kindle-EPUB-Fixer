@@ -7,6 +7,36 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.0-beta.2] - 2026-04-29
+
+### Changed
+- Refined the WinUI shell to use a native `NavigationView` compact rail without the earlier custom expandable sidebar patches.
+- Unified the title bar, navigation rail, and content surface around the same Mica tint so the window no longer shows mismatched bands of color.
+- Moved the Home page layout to XAML and split task list state into `HomePageViewModel`, reducing the old programmatic UI code.
+- Changed informational app dialogs into compact non-blocking WinUI notifications with automatic dismissal and a close button.
+- Removed double-click log access and simplified per-book log access to a compact icon button.
+- Removed portable package generation and kept the Windows release output focused on normal installer artifacts only.
+
+### Added
+- Added resizable book list columns with pointer feedback and smaller minimum column widths.
+- Added a fixed right-side action column for the per-book log button so resizing other columns no longer gets blocked by the action area.
+- Added persistent default output directory handling that survives app restart and refreshes the Home page after Settings changes.
+- Added a dedicated installer manifest with `asInvoker` execution level and `PerMonitorV2` DPI awareness.
+- Added installer file version metadata, product metadata, description, company, and informational version details.
+- Added `docs/GUI_REFACTOR_PLAN.md` to document the Windows native GUI boundary and the future macOS frontend boundary.
+
+### Fixed
+- Fixed several narrow-window layout issues by enforcing the intended minimum window size and letting the task list area shrink instead of the entire page.
+- Fixed column resize edge cases around the status column.
+- Fixed the default output directory not being remembered after closing and reopening the app.
+- Fixed Windows installer UAC prompts caused by installer detection by explicitly declaring `asInvoker`.
+- Fixed installer UI scaling metadata for HiDPI displays.
+
+### Verified
+- Verified WinUI Release build.
+- Verified installer package manifest strings include `asInvoker`, `requestedExecutionLevel`, `PerMonitorV2`, and `dpiAwareness`.
+- Verified installer smoke flow: install, required runtime/XBF/PRI payload presence, app launch, quiet uninstall, and install directory cleanup.
+
 ## [1.4.0-beta.1] - 2026-04-28
 
 ### Changed

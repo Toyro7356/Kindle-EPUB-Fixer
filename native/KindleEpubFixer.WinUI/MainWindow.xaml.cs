@@ -1,26 +1,24 @@
+using System.Runtime.InteropServices;
+using KindleEpubFixer.WinUI.Views;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System.Runtime.InteropServices;
+using Microsoft.UI.Xaml.Media;
 using Windows.Graphics;
 using WinRT.Interop;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Composition.SystemBackdrops;
-using KindleEpubFixer.WinUI.Views;
 
 namespace KindleEpubFixer.WinUI;
 
 public sealed partial class MainWindow : Window
 {
-    private const int MinWindowWidth = 1040;
-    private const int MinWindowHeight = 640;
+    private const int MinWindowWidth = 1080;
+    private const int MinWindowHeight = 760;
     private const int GwlpWndProc = -4;
     private const int WmGetMinMaxInfo = 0x0024;
+
     private readonly WndProcDelegate _wndProc;
+    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _notificationTimer;
     private nint _oldWndProc;
-    private NavigationView RootNav = null!;
-    private NavigationViewItem HomeItem = null!;
-    private Grid ContentHost = null!;
-    private TextBlock StatusText = null!;
     private HomePage? _homePage;
     private SettingsPage? _settingsPage;
     private AboutPage? _aboutPage;
@@ -28,121 +26,63 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ConfigureTitleBar();
         TrySetBackdrop();
-        BuildShell();
+        _notificationTimer = DispatcherQueue.CreateTimer();
+        _notificationTimer.Interval = TimeSpan.FromSeconds(3);
+        _notificationTimer.Tick += (_, _) =>
+        {
+            _notificationTimer.Stop();
+            NotificationBar.IsOpen = false;
+        };
+
         _wndProc = WndProc;
         InstallMinSizeHook();
         SetWindowIcon();
         AppWindow.Resize(new SizeInt32(1180, 760));
+
         RootNav.SizeChanged += (_, _) => EnforceMinimumWindowSize();
-        RootNav.Loaded += (_, _) => ApplyNavigationPaneBackground();
-        RootNav.PaneOpened += (_, _) => ApplyNavigationPaneBackground();
         RootNav.SelectedItem = HomeItem;
         ShowPage("Home");
     }
 
-    private void BuildShell()
+    public void ShowNotification(string title, string? message = null, InfoBarSeverity severity = InfoBarSeverity.Informational)
     {
-        RootNav = new NavigationView
-        {
-            AlwaysShowHeader = false,
-            IsBackButtonVisible = NavigationViewBackButtonVisible.Collapsed,
-            IsSettingsVisible = false,
-            IsPaneOpen = false,
-            OpenPaneLength = 240,
-            CompactPaneLength = 56,
-            PaneDisplayMode = NavigationViewPaneDisplayMode.LeftCompact,
-            PaneTitle = "Kindle EPUB Fixer",
-            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
-        };
-        RootNav.SelectionChanged += RootNav_SelectionChanged;
+        NotificationBar.Title = title;
+        NotificationBar.Message = CompactNotificationMessage(message);
+        NotificationBar.Severity = severity;
+        NotificationBar.IsOpen = true;
 
-        HomeItem = CreateNavigationItem("主页", Symbol.Home, "Home");
-        RootNav.MenuItems.Add(HomeItem);
-        RootNav.MenuItems.Add(CreateNavigationItem("设置", Symbol.Setting, "Settings"));
-        RootNav.MenuItems.Add(CreateNavigationItem("关于", Symbol.Help, "About"));
-
-        var scrollViewer = new ScrollViewer
-        {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollMode = ScrollMode.Enabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            VerticalScrollMode = ScrollMode.Enabled,
-        };
-
-        var pageGrid = new Grid
-        {
-            Padding = new Thickness(24, 18, 24, 22),
-            MinWidth = 980,
-            MinHeight = 560,
-            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
-        };
-        pageGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        pageGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-
-        pageGrid.Children.Add(BuildTitleBar());
-        ContentHost = new Grid();
-        Grid.SetRow(ContentHost, 1);
-        pageGrid.Children.Add(ContentHost);
-        scrollViewer.Content = pageGrid;
-        RootNav.Content = scrollViewer;
-        RootGrid.Children.Add(RootNav);
+        _notificationTimer.Stop();
+        _notificationTimer.Start();
     }
 
-    private static NavigationViewItem CreateNavigationItem(string content, Symbol symbol, string tag)
+    private static string CompactNotificationMessage(string? message)
     {
-        return new NavigationViewItem
+        if (string.IsNullOrWhiteSpace(message))
         {
-            Content = content,
-            Tag = tag,
-            Icon = new SymbolIcon(symbol),
-        };
+            return string.Empty;
+        }
+
+        const int maxLength = 42;
+        var trimmed = message.Trim();
+        return trimmed.Length <= maxLength ? trimmed : trimmed[..maxLength] + "...";
     }
 
-    private Grid BuildTitleBar()
+    private void ConfigureTitleBar()
     {
-        var titleBar = new Grid { Margin = new Thickness(0, 0, 0, 20) };
-        titleBar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        titleBar.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
 
-        var titleStack = new StackPanel { Spacing = 4, MinWidth = 0 };
-        titleStack.Children.Add(new TextBlock
-        {
-            Text = "Kindle EPUB Fixer",
-            Style = (Style)Application.Current.Resources["TitleTextBlockStyle"],
-            FontSize = 30,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        });
-        titleStack.Children.Add(new TextBlock
-        {
-            Text = "Kindle / Send to Kindle EPUB 修复工具，尽量保留原书排版语义。",
-            Foreground = (Brush)Application.Current.Resources["MutedTextBrush"],
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        });
-        titleBar.Children.Add(titleStack);
-
-        var statusStack = new StackPanel
-        {
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 4,
-        };
-        statusStack.Children.Add(new TextBlock
-        {
-            Text = "v1.4.0-beta.1",
-            Foreground = (Brush)Application.Current.Resources["MutedTextBrush"],
-            HorizontalAlignment = HorizontalAlignment.Right,
-        });
-        StatusText = new TextBlock
-        {
-            Text = "准备就绪",
-            Foreground = (Brush)Application.Current.Resources["MutedTextBrush"],
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-        statusStack.Children.Add(StatusText);
-        Grid.SetColumn(statusStack, 1);
-        titleBar.Children.Add(statusStack);
-        return titleBar;
+        var titleBar = AppWindow.TitleBar;
+        titleBar.BackgroundColor = Microsoft.UI.Colors.Transparent;
+        titleBar.InactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        titleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
+        titleBar.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(32, 0, 0, 0);
+        titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(48, 0, 0, 0);
+        titleBar.ButtonForegroundColor = Microsoft.UI.Colors.Black;
+        titleBar.ButtonInactiveForegroundColor = Microsoft.UI.Colors.Gray;
     }
 
     private void TrySetBackdrop()
@@ -159,12 +99,10 @@ public sealed partial class MainWindow : Window
 
     private void RootNav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
-        if (args.SelectedItem is not NavigationViewItem item || item.Tag is not string tag)
+        if (args.SelectedItem is NavigationViewItem { Tag: string tag })
         {
-            return;
+            ShowPage(tag);
         }
-
-        ShowPage(tag);
     }
 
     private void ShowPage(string tag)
@@ -173,7 +111,7 @@ public sealed partial class MainWindow : Window
         switch (tag)
         {
             case "Settings":
-                _settingsPage ??= new SettingsPage();
+                _settingsPage ??= CreateSettingsPage();
                 ContentHost.Children.Add(_settingsPage);
                 break;
             case "About":
@@ -182,6 +120,7 @@ public sealed partial class MainWindow : Window
                 break;
             default:
                 _homePage ??= CreateHomePage();
+                _homePage.RefreshSettings();
                 ContentHost.Children.Add(_homePage);
                 break;
         }
@@ -190,13 +129,15 @@ public sealed partial class MainWindow : Window
     private HomePage CreateHomePage()
     {
         var page = new HomePage();
-        page.StatusChanged += HomePage_StatusChanged;
+        page.StatusChanged += (_, status) => StatusText.Text = status;
         return page;
     }
 
-    private void HomePage_StatusChanged(object? sender, string status)
+    private SettingsPage CreateSettingsPage()
     {
-        StatusText.Text = status;
+        var page = new SettingsPage();
+        page.SettingsSaved += (_, _) => _homePage?.RefreshSettings();
+        return page;
     }
 
     private void InstallMinSizeHook()
@@ -223,67 +164,6 @@ public sealed partial class MainWindow : Window
         {
             AppWindow.Resize(new SizeInt32(width, height));
         }
-    }
-
-    private void ApplyNavigationPaneBackground()
-    {
-        var paneBrush = new AcrylicBrush
-        {
-            TintColor = Microsoft.UI.ColorHelper.FromArgb(255, 244, 247, 245),
-            TintOpacity = 0.72,
-            TintLuminosityOpacity = 0.86,
-        };
-        if (FindVisualChild<SplitView>(RootNav) is { } splitView)
-        {
-            splitView.PaneBackground = paneBrush;
-            splitView.BorderThickness = new Thickness(0);
-            splitView.BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-            splitView.CornerRadius = new CornerRadius(0);
-        }
-
-        if (FindVisualChild<Grid>(RootNav, "PaneContentGrid") is { } paneContent)
-        {
-            paneContent.Background = paneBrush;
-            paneContent.BorderThickness = new Thickness(0);
-            paneContent.BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-        }
-
-        if (FindVisualChild<Grid>(RootNav, "PaneContentGridToggleButtonRow") is { } toggleRow)
-        {
-            toggleRow.Background = paneBrush;
-        }
-
-        if (FindVisualChild<Grid>(RootNav, "PaneRoot") is { } paneRoot)
-        {
-            paneRoot.Background = paneBrush;
-            paneRoot.CornerRadius = new CornerRadius(0);
-        }
-
-        if (FindVisualChild<Grid>(RootNav, "ContentGrid") is { } contentGrid)
-        {
-            contentGrid.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-        }
-    }
-
-    private static T? FindVisualChild<T>(DependencyObject root, string? name = null) where T : FrameworkElement
-    {
-        var count = VisualTreeHelper.GetChildrenCount(root);
-        for (var i = 0; i < count; i++)
-        {
-            var child = VisualTreeHelper.GetChild(root, i);
-            if (child is T typed && (name is null || typed.Name == name))
-            {
-                return typed;
-            }
-
-            var result = FindVisualChild<T>(child, name);
-            if (result is not null)
-            {
-                return result;
-            }
-        }
-
-        return null;
     }
 
     private nint WndProc(nint hwnd, uint msg, nint wParam, nint lParam)

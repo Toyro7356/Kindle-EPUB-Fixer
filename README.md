@@ -57,12 +57,22 @@
 - 输出结构校验
   - 检查处理后 EPUB 中的 XHTML、manifest、spine、图片引用和基础元数据是否仍然有效
 
+## 1.4.0-beta.2 重点
+
+- 继续收敛原生 WinUI 3 / Windows App SDK 前端，恢复到更标准的 `NavigationView` 架构
+- 统一 Mica 背景取色，清理标题栏、导航栏和内容区色块不一致的问题
+- 任务列表支持可调列宽、固定右侧日志操作列和更小的最小列宽
+- 默认保存位置会持久化到 `%LocalAppData%\KindleEpubFixer`，关闭软件再打开仍会记住
+- 普通提示改为右上角小通知，几秒后自动消失，也可手动关闭
+- Windows 安装器只输出正常安装版，支持自定义目录、覆盖更新、完整卸载、HiDPI 和非管理员安装
+- 安装包补全文件详细信息，包含产品名、描述、版本和发布信息
+
 ## 1.4.0-beta.1 重点
 
 - 原生 WinUI 3 / Windows App SDK 前端替代旧 Python GUI
 - 新增安装器 `KindleEpubFixer.Setup.exe`，支持自定义目录、覆盖更新和完整卸载
 - 新增设置页、关于页、默认输出目录、用户字体导入与字体回落别名编辑
-- 任务列表改为表格/队列式交互，支持选择、删除、单本状态和悬停日志
+- 任务列表改为表格/队列式交互，支持选择、删除、单本状态和日志查看
 - 内置字体库随安装器分发，后端同时扫描用户字体目录和内置字体目录
 
 ## 1.3 正式版重点
@@ -90,8 +100,6 @@ powershell -ExecutionPolicy Bypass -File build_winui.ps1
 ```text
 dist/KindleEpubFixer.Setup.exe
 dist/KindleEpubFixer-<version>-Setup.exe
-dist/KindleEpubFixer.Portable.zip
-dist/KindleEpubFixer-<version>-Portable.zip
 ```
 
 如果本机没有 .NET SDK，先安装到项目本地：
@@ -105,7 +113,7 @@ GUI 现已改为原生 WinUI 3 / Windows App SDK 前端；Python 只作为 EPUB 
 支持：
 - 批量添加 EPUB
 - PowerToys / Windows 11 风格的 `NavigationView` 页面结构
-- 卡片式任务队列、单本选择、单本进度与单本日志
+- 表格式任务队列、单本选择、单本进度、可调列宽与单本日志
 - 设置默认输出目录
 - 管理字体库与字体回落别名
 - 查看版本、内置字体与项目说明
@@ -155,7 +163,6 @@ powershell -ExecutionPolicy Bypass -File build_winui.ps1
 
 ```text
 dist/KindleEpubFixer.Setup.exe
-dist/KindleEpubFixer.Portable.zip
 ```
 
 安装器说明见 [docs/INSTALLER.md](docs/INSTALLER.md)。

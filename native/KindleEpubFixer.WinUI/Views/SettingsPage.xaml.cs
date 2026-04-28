@@ -25,6 +25,8 @@ public sealed partial class SettingsPage : UserControl
 
     public ObservableCollection<FontAlias> Aliases { get; } = new();
 
+    public event EventHandler? SettingsSaved;
+
     private async void ChooseOutput_Click(object sender, RoutedEventArgs e)
     {
         var picker = new FolderPicker();
@@ -34,7 +36,21 @@ public sealed partial class SettingsPage : UserControl
         if (folder is not null)
         {
             DefaultOutputBox.Text = folder.Path;
+            SaveDefaultOutput();
         }
+    }
+
+    private async void SaveDefaultOutput_Click(object sender, RoutedEventArgs e)
+    {
+        SaveDefaultOutput();
+        await ShowMessageAsync("默认位置已保存", string.Empty, InfoBarSeverity.Success);
+    }
+
+    private async void ClearDefaultOutput_Click(object sender, RoutedEventArgs e)
+    {
+        DefaultOutputBox.Text = string.Empty;
+        SaveDefaultOutput();
+        await ShowMessageAsync("默认位置已清除", string.Empty, InfoBarSeverity.Informational);
     }
 
     private async void AddFonts_Click(object sender, RoutedEventArgs e)
@@ -55,7 +71,7 @@ public sealed partial class SettingsPage : UserControl
             copied++;
         }
 
-        await ShowMessageAsync("字体已添加", $"已添加 {copied} 个字体到 {AppPaths.UserFontsDirectory}");
+        await ShowMessageAsync("字体已添加", $"{copied} 个字体", InfoBarSeverity.Success);
     }
 
     private async void AddAlias_Click(object sender, RoutedEventArgs e)
@@ -71,7 +87,7 @@ public sealed partial class SettingsPage : UserControl
     {
         if (AliasList.SelectedItem is not FontAlias alias)
         {
-            await ShowMessageAsync("提示", "请先选择一条回落设置。");
+            await ShowMessageAsync("请先选择一条回落", string.Empty, InfoBarSeverity.Warning);
             return;
         }
 
@@ -87,7 +103,7 @@ public sealed partial class SettingsPage : UserControl
     {
         if (AliasList.SelectedItem is not FontAlias alias)
         {
-            await ShowMessageAsync("提示", "请先选择一条回落设置。");
+            await ShowMessageAsync("请先选择一条回落", string.Empty, InfoBarSeverity.Warning);
             return;
         }
 
@@ -96,10 +112,16 @@ public sealed partial class SettingsPage : UserControl
 
     private async void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
+        SaveDefaultOutput();
+        _settings.SaveAliases(Aliases);
+        await ShowMessageAsync("设置已保存", string.Empty, InfoBarSeverity.Success);
+    }
+
+    private void SaveDefaultOutput()
+    {
         _settings.DefaultOutputDirectory = DefaultOutputBox.Text.Trim();
         _settings.SaveAppSettings();
-        _settings.SaveAliases(Aliases);
-        await ShowMessageAsync("设置已保存", "设置已保存，后续处理会使用新的默认值。");
+        SettingsSaved?.Invoke(this, EventArgs.Empty);
     }
 
     private async Task<(string Family, string Fallbacks)?> ShowAliasDialogAsync(string title, string family = "", string fallbacks = "")
@@ -129,22 +151,16 @@ public sealed partial class SettingsPage : UserControl
         var newFallbacks = fallbackBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(newFamily) || string.IsNullOrWhiteSpace(newFallbacks))
         {
-            await ShowMessageAsync("信息不完整", "请填写字体名和回落链。");
+            await ShowMessageAsync("信息不完整", "请填写字体名和回落链。", InfoBarSeverity.Warning);
             return null;
         }
 
         return (newFamily, newFallbacks);
     }
 
-    private async Task ShowMessageAsync(string title, string message)
+    private Task ShowMessageAsync(string title, string message, InfoBarSeverity severity = InfoBarSeverity.Informational)
     {
-        var dialog = new ContentDialog
-        {
-            Title = title,
-            Content = message,
-            CloseButtonText = "确定",
-            XamlRoot = XamlRoot,
-        };
-        await dialog.ShowAsync();
+        App.MainWindowInstance?.ShowNotification(title, message, severity);
+        return Task.CompletedTask;
     }
 }

@@ -17,9 +17,13 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="DefaultOutputBox" PlaceholderText="留空则保存到每本书所在目录下的“转换后”文件夹" />
                     <Button Grid.Column="1" Content="选择目录" Click="ChooseOutput_Click" />
+                    <Button Grid.Column="2" Content="保存" Style="{ThemeResource AccentButtonStyle}" Click="SaveDefaultOutput_Click" />
+                    <Button Grid.Column="3" Content="清除" Click="ClearDefaultOutput_Click" />
                 </Grid>
             </StackPanel>
         </Border>

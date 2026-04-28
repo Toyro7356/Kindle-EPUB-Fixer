@@ -8,13 +8,22 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Windows.Forms;
 
+[assembly: AssemblyTitle("Kindle EPUB Fixer Setup")]
+[assembly: AssemblyDescription("Installer for Kindle EPUB Fixer.")]
+[assembly: AssemblyProduct("Kindle EPUB Fixer")]
+[assembly: AssemblyCompany("Kindle EPUB Fixer")]
+[assembly: AssemblyCopyright("Copyright © 2026 Kindle EPUB Fixer contributors")]
+[assembly: AssemblyVersion("1.4.0.2")]
+[assembly: AssemblyFileVersion("1.4.0.2")]
+[assembly: AssemblyInformationalVersion("1.4.0-beta.2")]
+
 internal static class InstallerProgram
 {
     private const string AppName = "Kindle EPUB Fixer";
     private const string AppExeName = "KindleEpubFixer.WinUI.exe";
     private const string ResourceName = "KindleEpubFixer.Payload.zip";
     private const string UninstallRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\KindleEpubFixer";
-    private const string Version = "1.4.0-beta.1";
+    private const string Version = "1.4.0-beta.2";
 
     [STAThread]
     private static int Main(string[] args)
@@ -446,6 +455,8 @@ internal static class InstallerProgram
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
+            AutoScaleDimensions = new SizeF(96F, 96F);
+            AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(620, 330);
             Font = new Font("Segoe UI", 10F);
 
