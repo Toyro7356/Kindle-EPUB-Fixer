@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from typing import Dict
 
-from lxml import etree
+import lxml.etree as etree
 from PIL import Image
 
 from .constants import NS_OPF

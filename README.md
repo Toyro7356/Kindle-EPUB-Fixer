@@ -57,6 +57,13 @@
 - 输出结构校验
   - 检查处理后 EPUB 中的 XHTML、manifest、spine、图片引用和基础元数据是否仍然有效
 
+## 1.4.0-beta.3 重点
+
+- 修复缺失字体清理逻辑，避免相邻的单行 `@font-face` 被一起删除，保留原 EPUB 自带的标题、目录、制作信息和强调段落字体
+- 兼容 Python 3.14 环境下临时目录不可写的问题，处理 EPUB 时改用项目可控的临时工作目录创建方式
+- 本地构建脚本改为使用仓库内 `.dotnet`、NuGet 缓存和 CLI home，减少对用户目录权限与全局环境的依赖
+- 补齐 VS Code 对项目 `.venv` 与本地 .NET SDK 的默认配置，方便新环境直接打开后识别依赖
+
 ## 1.4.0-beta.2 重点
 
 - 继续收敛原生 WinUI 3 / Windows App SDK 前端，恢复到更标准的 `NavigationView` 架构

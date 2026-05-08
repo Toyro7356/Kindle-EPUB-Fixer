@@ -5,7 +5,10 @@ Conservative EPUB repair focused on preserving the author's intended layout.
 """
 
 import os
+import shutil
 import tempfile
+import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Union
@@ -38,6 +41,27 @@ class ProcessingPlan:
     run_novel_compat_repairs: bool
     run_reflow_repairs: bool
     run_source_specific_cleanup: bool
+
+
+@contextmanager
+def _temporary_work_dir():
+    temp_root = Path(os.environ.get("KINDLE_EPUB_FIXER_TEMP_DIR") or tempfile.gettempdir())
+    temp_root.mkdir(parents=True, exist_ok=True)
+
+    for _ in range(100):
+        temp_dir = temp_root / f"kindle-epub-fixer-{uuid.uuid4().hex}"
+        try:
+            temp_dir.mkdir()
+            break
+        except FileExistsError:
+            continue
+    else:
+        raise RuntimeError("Unable to create a temporary working directory")
+
+    try:
+        yield str(temp_dir)
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def resolve_output_path(epub_path: str, output_path: Optional[str] = None) -> str:
@@ -248,7 +272,7 @@ def process_epub(
     epub_path = os.path.abspath(epub_path)
     resolved_output_path = resolve_output_path(epub_path, output_path)
 
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with _temporary_work_dir() as temp_dir:
         unpack_epub(epub_path, temp_dir)
         book_type = process_files(temp_dir, log, imported_fonts)
         repack_epub(temp_dir, resolved_output_path)

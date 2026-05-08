@@ -1,4 +1,4 @@
-from lxml import etree
+import lxml.etree as etree
 
 from .constants import NS_OPF
 from .content_analysis import ContentAnalysis, analyze_content

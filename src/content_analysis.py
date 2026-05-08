@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from lxml import etree
+import lxml.etree as etree
 
 from .constants import NS_OPF, NS_SVG, NS_XHTML
 from .epub_io import opf_dir

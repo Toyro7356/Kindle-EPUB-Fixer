@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.0-beta.3] - 2026-05-07
+
+### Fixed
+- Fixed missing-font cleanup so adjacent one-line `@font-face` declarations are not removed together, preserving embedded decorative fonts used by titles, credits, contents, and emphasis blocks.
+- Fixed EPUB processing on Python 3.14 environments where `tempfile.TemporaryDirectory` can create unwritable working directories.
+
+### Verified
+- Verified Python dependency imports and backend compile checks in the project `.venv`.
+
 ## [1.4.0-beta.2] - 2026-04-29
 
 ### Changed

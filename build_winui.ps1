@@ -6,6 +6,33 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $localDotnet = Join-Path $root ".dotnet\dotnet.exe"
 $dotnet = if (Test-Path $localDotnet) { $localDotnet } else { "dotnet" }
+$dotnetCliHome = Join-Path $root "build\dotnet-cli-home"
+$nugetPackages = Join-Path $root "build\nuget-packages"
+$appData = Join-Path $root "build\appdata"
+New-Item -ItemType Directory -Path $dotnetCliHome -Force | Out-Null
+New-Item -ItemType Directory -Path $nugetPackages -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $appData "NuGet") -Force | Out-Null
+$env:DOTNET_CLI_HOME = $dotnetCliHome
+$env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
+$env:DOTNET_NOLOGO = "1"
+$env:NUGET_PACKAGES = $nugetPackages
+$env:APPDATA = $appData
+$nugetConfig = Join-Path $appData "NuGet\NuGet.Config"
+if (-not (Test-Path $nugetConfig)) {
+    @"
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+</configuration>
+"@ | Set-Content -LiteralPath $nugetConfig -Encoding UTF8
+}
+if (Test-Path $localDotnet) {
+    $env:DOTNET_ROOT = Split-Path -Parent $localDotnet
+    $env:PATH = "$env:DOTNET_ROOT;$env:PATH"
+}
 $version = (& "$root\.venv\Scripts\python.exe" -c "from src import __version__; print(__version__)").Trim()
 
 $sdkList = & $dotnet --list-sdks 2>$null

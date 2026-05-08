@@ -9,7 +9,7 @@ from collections import defaultdict
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-from lxml import etree
+import lxml.etree as etree
 
 NS_OPF = "http://www.idpf.org/2007/opf"
 NS_DC = "http://purl.org/dc/elements/1.1/"

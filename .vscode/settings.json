@@ -1,22 +1,24 @@
 {
   "dotnet.defaultSolution": "epub.sln",
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
   "dotnetAcquisitionExtension.allowInvalidPaths": true,
   "dotnetAcquisitionExtension.cacheTimeToLiveMultiplier": 0,
-  "dotnetAcquisitionExtension.sharedExistingDotnetPath": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet\\dotnet.exe",
+  "dotnetAcquisitionExtension.sharedExistingDotnetPath": "${workspaceFolder}\\.dotnet\\dotnet.exe",
   "dotnetAcquisitionExtension.existingDotnetPath": [
     {
       "extensionId": "ms-dotnettools.csharp",
-      "path": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet\\dotnet.exe"
+      "path": "${workspaceFolder}\\.dotnet\\dotnet.exe"
     },
     {
       "extensionId": "ms-dotnettools.csdevkit",
-      "path": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet\\dotnet.exe"
+      "path": "${workspaceFolder}\\.dotnet\\dotnet.exe"
     }
   ],
-  "omnisharp.dotnetPath": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet",
-  "omnisharp.sdkPath": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet\\sdk\\10.0.203",
+  "omnisharp.dotnetPath": "${workspaceFolder}\\.dotnet",
+  "omnisharp.sdkPath": "${workspaceFolder}\\.dotnet\\sdk\\10.0.203",
   "terminal.integrated.env.windows": {
-    "DOTNET_ROOT": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet",
-    "PATH": "C:\\Users\\auror\\Documents\\code\\epub\\.dotnet;${env:PATH}"
+    "DOTNET_ROOT": "${workspaceFolder}\\.dotnet",
+    "PATH": "${workspaceFolder}\\.venv\\Scripts;${workspaceFolder}\\.dotnet;${env:PATH}"
   }
 }

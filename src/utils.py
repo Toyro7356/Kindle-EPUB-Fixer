@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Callable
 
-from lxml import etree
+import lxml.etree as etree
 
 LogCallback = Callable[[str], None]
 

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from lxml import etree
+import lxml.etree as etree
 
 from .constants import NS_OPF
 from .epub_io import opf_dir

@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from lxml import etree
+import lxml.etree as etree
 
 from .constants import NS_OPF, NS_XHTML
 from .epub_io import opf_dir

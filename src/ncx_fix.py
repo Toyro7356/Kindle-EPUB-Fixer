@@ -10,7 +10,7 @@ KindleGen / KDP 对 NCX 的约束：
 
 from pathlib import Path
 
-from lxml import etree
+import lxml.etree as etree
 
 from .epub_io import opf_dir
 

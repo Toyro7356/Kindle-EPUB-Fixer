@@ -12,7 +12,7 @@ from typing import Dict, Iterable, List, NamedTuple, Optional, Set, Tuple, Union
 
 from fontTools.subset import Options, Subsetter
 from fontTools.ttLib import TTCollection, TTFont
-from lxml import etree
+import lxml.etree as etree
 
 from .constants import NS_OPF, NS_XHTML
 from .epub_io import find_opf, opf_dir
@@ -656,15 +656,28 @@ def _sanitize_css_font_family(
 
 
 def _remove_font_face_blocks(css_content: str, families: Set[str]) -> Tuple[str, int]:
-    content = css_content
+    normalized_families = {_normalize_font_name(family) for family in families}
     removed = 0
-    for family in sorted(families):
-        pattern = re.compile(
-            rf"@font-face\s*\{{.*?font-family\s*:\s*[\"']?{re.escape(family)}[\"']?\s*;.*?\}}",
-            re.IGNORECASE | re.DOTALL,
+
+    def _replace_face(match: re.Match[str]) -> str:
+        nonlocal removed
+        block = match.group(0)
+        family_match = re.search(
+            r"font-family\s*:\s*[\"']?([^;\"']+)[\"']?\s*;",
+            block,
+            re.IGNORECASE,
         )
-        content, count = pattern.subn("", content)
-        removed += count
+        if family_match and _normalize_font_name(family_match.group(1)) in normalized_families:
+            removed += 1
+            return ""
+        return block
+
+    content = re.sub(
+        r"@font-face\s*\{[^{}]*\}",
+        _replace_face,
+        css_content,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
     return content, removed
 
 

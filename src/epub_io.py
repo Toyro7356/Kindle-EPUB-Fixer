@@ -2,7 +2,7 @@ import os
 import zipfile
 from pathlib import Path
 
-from lxml import etree
+import lxml.etree as etree
 
 from .constants import NSMAP
 
