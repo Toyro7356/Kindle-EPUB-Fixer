@@ -3,6 +3,7 @@ Standalone EPUB validation for processed output.
 """
 
 import os
+import posixpath
 import re
 import zipfile
 from pathlib import Path
@@ -71,6 +72,7 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
             manifest: Dict[str, Dict[str, str]] = {}
             manifest_ids: Set[str] = set()
             xhtml_items: List[Tuple[str, str]] = []
+            css_items: List[Tuple[str, str]] = []
             script_items: List[str] = []
 
             rendition_layout = ""
@@ -91,6 +93,8 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
                     manifest_ids.add(item_id)
                     if href and media_type == "application/xhtml+xml":
                         xhtml_items.append((item_id, href))
+                    elif href and (media_type == "text/css" or href.lower().endswith(".css")):
+                        css_items.append((item_id, href))
                     elif href and ("javascript" in media_type or href.lower().endswith(".js")):
                         script_items.append(href)
                     manifest[item_id] = {"href": href or "", "media-type": media_type}
@@ -134,9 +138,26 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
                         errors.append(f"Spine references missing manifest id: {idref}")
 
             broken_img_refs: List[str] = []
+            broken_font_refs: List[str] = []
             xhtml_without_viewport: List[str] = []
             xhtml_with_script: List[str] = []
             webp_in_zip: List[str] = []
+
+            def _scan_font_refs(owner_href: str, owner_resolved: str, content: str) -> None:
+                font_refs = re.findall(
+                    r'url\(\s*["\']?([^"\')]+)["\']?\s*\)',
+                    content,
+                    re.IGNORECASE,
+                )
+                for font_ref in font_refs:
+                    if font_ref.startswith(("http:", "https:", "data:", "#")):
+                        continue
+                    if not re.search(r"\.(?:otc|otf|ttc|ttf|woff2?)(?:#.*)?$", font_ref, re.IGNORECASE):
+                        continue
+                    font_path = unquote(font_ref.split("#", 1)[0])
+                    font_resolved = posixpath.normpath(posixpath.join(posixpath.dirname(owner_resolved), font_path)).lstrip("/")
+                    if not _zip_path_exists(zf, font_resolved):
+                        broken_font_refs.append(f"{owner_href} -> {font_ref}")
 
             for _, href in xhtml_items:
                 resolved = (Path(opf_dir) / href).as_posix() if opf_dir and opf_dir != "." else href
@@ -160,14 +181,32 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
                 if "<script" in content.lower():
                     xhtml_with_script.append(href)
 
-                imgs = re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', content, re.IGNORECASE)
-                for img in imgs:
-                    raw = (Path(resolved).parent / img).as_posix()
-                    img_resolved = os.path.normpath(raw).replace(os.sep, "/")
-                    if img_resolved.startswith("../"):
-                        img_resolved = img_resolved[3:]
+                _scan_font_refs(href, resolved, content)
+
+                image_refs = re.findall(
+                    r'\b(?:src|href|xlink:href|poster)=["\']([^"\']+)["\']',
+                    content,
+                    re.IGNORECASE,
+                )
+                for img in image_refs:
+                    if img.startswith(("http:", "https:", "data:", "#")):
+                        continue
+                    if not re.search(r"\.(?:gif|jpe?g|png|svg|webp)(?:#.*)?$", img, re.IGNORECASE):
+                        continue
+                    img_path = unquote(img.split("#", 1)[0])
+                    img_resolved = posixpath.normpath(posixpath.join(posixpath.dirname(resolved), img_path)).lstrip("/")
                     if not _zip_path_exists(zf, img_resolved):
                         broken_img_refs.append(f"{href} -> {img}")
+
+            for _, href in css_items:
+                resolved = (Path(opf_dir) / href).as_posix() if opf_dir and opf_dir != "." else href
+                if not _zip_path_exists(zf, resolved):
+                    continue
+                try:
+                    content = zf.read(unquote(resolved) if unquote(resolved) in zf.namelist() else resolved).decode("utf-8")
+                except Exception:
+                    continue
+                _scan_font_refs(href, resolved, content)
 
             for name in zf.namelist():
                 lowered = name.lower()
@@ -186,6 +225,8 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
                 errors.append(f"Found {len(webp_in_zip)} WebP files in ZIP: {webp_in_zip[:3]}")
             if broken_img_refs:
                 errors.append(f"Found {len(broken_img_refs)} broken image references: {broken_img_refs[:3]}")
+            if broken_font_refs:
+                errors.append(f"Found {len(broken_font_refs)} broken font references: {broken_font_refs[:3]}")
             if xhtml_with_script:
                 errors.append(f"Found {len(xhtml_with_script)} XHTML files still containing scripts: {xhtml_with_script[:3]}")
             if script_items:

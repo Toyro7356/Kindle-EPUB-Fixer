@@ -1,6 +1,8 @@
+import posixpath
 import re
 from pathlib import Path
 from typing import Dict
+from urllib.parse import quote, unquote
 
 import lxml.etree as etree
 from PIL import Image
@@ -8,6 +10,27 @@ from PIL import Image
 from .constants import NS_OPF
 from .epub_io import opf_dir
 from .text_io import read_text_file, write_text_file
+
+
+def _relative_to_base(path: Path, base_dir: Path) -> str:
+    return path.relative_to(base_dir).as_posix()
+
+
+def _normalize_href_path(href: str) -> str:
+    return posixpath.normpath(unquote(href).replace("\\", "/")).lstrip("/")
+
+
+def _quote_ref(path: str) -> str:
+    return "/".join(quote(segment, safe="-._~") for segment in path.split("/"))
+
+
+def _reference_variants(path: str) -> set[str]:
+    quoted = _quote_ref(path)
+    variants = {path, quoted}
+    if not path.startswith("."):
+        variants.add(f"./{path}")
+        variants.add(f"./{quoted}")
+    return variants
 
 
 def convert_webp_images(opf_path: str) -> Dict[str, str]:
@@ -35,8 +58,9 @@ def convert_webp_images(opf_path: str) -> Dict[str, str]:
             else:
                 img.save(new_path, "PNG")
 
+            old_rel = _relative_to_base(webp_path, base_dir)
             webp_path.unlink()
-            mapping[webp_path.name] = new_path.name
+            mapping[old_rel] = _relative_to_base(new_path, base_dir)
     return mapping
 
 
@@ -52,12 +76,11 @@ def update_opf_webp_refs(opf_path: str, mapping: Dict[str, str]) -> None:
         href = item.get("href")
         if not href:
             continue
-        old_name = Path(href).name
-        if old_name in mapping:
-            new_name = mapping[old_name]
-            new_href = str(Path(href).parent / new_name).replace("\\", "/")
+        old_rel = _normalize_href_path(href)
+        if old_rel in mapping:
+            new_href = mapping[old_rel]
             item.set("href", new_href)
-            item.set("media-type", "image/png" if new_name.endswith(".png") else "image/jpeg")
+            item.set("media-type", "image/png" if new_href.endswith(".png") else "image/jpeg")
     tree.write(opf_path, encoding="utf-8", xml_declaration=True)
 
 
@@ -70,11 +93,15 @@ def update_html_css_webp_refs(opf_path: str, mapping: Dict[str, str]) -> None:
         if not filepath.is_file() or filepath.suffix.lower() not in text_exts:
             continue
         content = read_text_file(filepath)
-        modified = False
-        for old_name, new_name in mapping.items():
-            pattern = re.compile(re.escape(old_name) + r"(?=[\"'\s)\]])")
-            if pattern.search(content):
-                content = pattern.sub(new_name, content)
-                modified = True
-        if modified:
+        doc_rel = _relative_to_base(filepath, base_dir)
+        doc_dir = posixpath.dirname(doc_rel) or "."
+        updated = content
+        for old_rel, new_rel in mapping.items():
+            old_ref = posixpath.relpath(old_rel, doc_dir)
+            new_ref = posixpath.relpath(new_rel, doc_dir)
+            for old_variant in _reference_variants(old_ref):
+                pattern = re.compile(re.escape(old_variant) + r"(?=[\"'\s)\]#]|$)")
+                updated = pattern.sub(_quote_ref(new_ref), updated)
+        if updated != content:
+            content = updated
             write_text_file(filepath, content)

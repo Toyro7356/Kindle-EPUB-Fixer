@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import posixpath
 import re
 import shutil
 import sys
@@ -9,6 +10,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, List, NamedTuple, Optional, Set, Tuple, Union
+from urllib.parse import quote, unquote
 
 from fontTools.subset import Options, Subsetter
 from fontTools.ttLib import TTCollection, TTFont
@@ -359,6 +361,40 @@ def _safe_font_filename(value: str) -> str:
     return sanitized or "imported-font"
 
 
+def _relative_to_base(path: Path, base_dir: Path) -> str:
+    return path.resolve().relative_to(base_dir.resolve()).as_posix()
+
+
+def _normalize_asset_href(href: str) -> str:
+    return posixpath.normpath(unquote(href.split("#", 1)[0]).replace("\\", "/")).lstrip("/")
+
+
+def _quote_asset_ref(path: str) -> str:
+    return "/".join(quote(segment, safe="-._~") for segment in path.split("/"))
+
+
+def _reference_variants(path: str) -> Set[str]:
+    quoted = _quote_asset_ref(path)
+    variants = {path, quoted}
+    if not path.startswith("."):
+        variants.add(f"./{path}")
+        variants.add(f"./{quoted}")
+    return variants
+
+
+def _unique_path_with_suffix(path: Path, suffix: str) -> Path:
+    candidate = path.with_suffix(suffix)
+    if not candidate.exists() or candidate == path:
+        return candidate
+
+    counter = 2
+    while True:
+        numbered = path.with_name(f"{path.stem}_{counter}{suffix}")
+        if not numbered.exists():
+            return numbered
+        counter += 1
+
+
 def _font_media_type(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".otf":
@@ -495,6 +531,7 @@ def _resolve_font_asset_path(
 ) -> Optional[Path]:
     if src_url.startswith(("http://", "https://", "data:")):
         return None
+    src_url = unquote(src_url.split("#", 1)[0])
     if src_url.startswith("/"):
         resolved = (base_dir / src_url.lstrip("/")).resolve()
     else:
@@ -745,6 +782,46 @@ def sanitize_missing_fonts(
 
     if replaced_html:
         log(f"已在 {replaced_html} 个 HTML 文件中替换缺失字体为回退字体")
+
+
+def _remove_obsolete_font_faces(
+    opf_path: str,
+    families: Set[str],
+    css_files: List[Path],
+    log: LogCallback = _default_log,
+) -> None:
+    if not families:
+        return
+
+    removed_faces = 0
+
+    for css_path in css_files:
+        content = read_text_file(css_path)
+        updated, removed = _remove_font_face_blocks(content, families)
+        if updated != content:
+            write_text_file(css_path, updated)
+            removed_faces += removed
+
+    for xhtml_path in _collect_xhtml_paths(opf_path):
+        try:
+            doc = etree.parse(str(xhtml_path))
+        except etree.XMLSyntaxError:
+            continue
+
+        changed = False
+        for style_elem in doc.findall(f".//{{{NS_XHTML}}}style"):
+            css_text = style_elem.text or ""
+            updated, removed = _remove_font_face_blocks(css_text, families)
+            if updated != css_text:
+                style_elem.text = updated
+                removed_faces += removed
+                changed = True
+
+        if changed:
+            write_xhtml_doc(doc, xhtml_path)
+
+    if removed_faces:
+        log(f"已移除 {removed_faces} 个已补全字体的旧 @font-face 声明")
 
 
 def _iter_system_font_paths() -> Iterable[Path]:
@@ -1245,7 +1322,7 @@ def _ensure_font_stylesheet(
             [
                 "@font-face {",
                 f"  font-family: \"{family}\";",
-                f"  src: url(\"{relative_url}\") format(\"{font_path.suffix.lower().lstrip('.')}\" );",
+                f"  src: url(\"{relative_url}\") format(\"{font_path.suffix.lower().lstrip('.')}\");",
                 "  font-style: normal;",
                 "  font-weight: normal;",
                 "}",
@@ -1286,7 +1363,22 @@ def _ensure_font_stylesheet(
     return stylesheet_path
 
 
-def _rewrite_asset_names_in_xhtml(xhtml_path: Path, renamed: Dict[str, str]) -> bool:
+def _rewrite_asset_paths_in_text(content: str, owner_path: Path, base_dir: Path, renamed: Dict[str, str]) -> str:
+    owner_rel = _relative_to_base(owner_path, base_dir)
+    owner_dir = posixpath.dirname(owner_rel) or "."
+    updated = content
+
+    for old_rel, new_rel in renamed.items():
+        old_ref = posixpath.relpath(old_rel, owner_dir)
+        new_ref = posixpath.relpath(new_rel, owner_dir)
+        for old_variant in _reference_variants(old_ref):
+            pattern = re.compile(re.escape(old_variant) + r'(?=["\'\s)\]#]|$)')
+            updated = pattern.sub(_quote_asset_ref(new_ref), updated)
+
+    return updated
+
+
+def _rewrite_asset_paths_in_xhtml(xhtml_path: Path, base_dir: Path, renamed: Dict[str, str]) -> bool:
     try:
         doc = etree.parse(str(xhtml_path))
     except etree.XMLSyntaxError:
@@ -1296,18 +1388,14 @@ def _rewrite_asset_names_in_xhtml(xhtml_path: Path, renamed: Dict[str, str]) -> 
 
     for style_elem in doc.findall(f".//{{{NS_XHTML}}}style"):
         text = style_elem.text or ""
-        updated = text
-        for old_name, new_name in renamed.items():
-            updated = re.sub(re.escape(old_name) + r'(?=["\'\s)\]])', new_name, updated)
+        updated = _rewrite_asset_paths_in_text(text, xhtml_path, base_dir, renamed)
         if updated != text:
             style_elem.text = updated
             changed = True
 
     for elem in doc.xpath("//*[@style]"):
         style = elem.get("style") or ""
-        updated = style
-        for old_name, new_name in renamed.items():
-            updated = re.sub(re.escape(old_name) + r'(?=["\'\s)\]])', new_name, updated)
+        updated = _rewrite_asset_paths_in_text(style, xhtml_path, base_dir, renamed)
         if updated != style:
             elem.set("style", updated)
             changed = True
@@ -1402,6 +1490,7 @@ def handle_fonts(
             log(f"已导入缺失字体 {family} -> {target_path.name} ({source_label})")
 
     if imported_assets:
+        _remove_obsolete_font_faces(opf_path, set(imported_assets), css_files, log)
         stylesheet_path = _ensure_font_stylesheet(opf_path, imported_assets)
         if stylesheet_path not in css_files:
             css_files.append(stylesheet_path)
@@ -1421,13 +1510,14 @@ def handle_fonts(
             continue
 
         original_name = font_path.name
+        original_rel = _relative_to_base(font_path, base_dir)
         ext = font_path.suffix.lower()
         converted = False
 
         if ext in {".woff", ".woff2"}:
             try:
                 font = _run_fonttools_quietly(TTFont, str(font_path))
-                new_path = font_path.with_suffix(".ttf")
+                new_path = _unique_path_with_suffix(font_path, ".ttf")
                 _run_fonttools_quietly(font.save, str(new_path))
                 font_path.unlink()
                 font_path = new_path
@@ -1455,33 +1545,30 @@ def handle_fonts(
                 log(f"[Warning] 字体子集化失败 {font_path.name}: {exc}")
 
         if converted:
-            renamed[original_name] = font_path.name
+            renamed[original_rel] = _relative_to_base(font_path, base_dir)
             embedded[family]["path"] = font_path
             embedded[family]["format"] = font_path.suffix.lower().lstrip(".")
 
     if renamed:
         for css_path in css_files:
             content = read_text_file(css_path)
-            updated = content
-            for old_name, new_name in renamed.items():
-                updated = re.sub(re.escape(old_name) + r'(?=["\'\s)\]])', new_name, updated)
+            updated = _rewrite_asset_paths_in_text(content, css_path, base_dir, renamed)
             if updated != content:
                 write_text_file(css_path, updated)
 
         for xhtml_path in _collect_xhtml_paths(opf_path):
-            _rewrite_asset_names_in_xhtml(xhtml_path, renamed)
+            _rewrite_asset_paths_in_xhtml(xhtml_path, base_dir, renamed)
 
         if manifest is not None:
             for item in manifest.findall(f"{{{NS_OPF}}}item"):
                 href = item.get("href")
                 if not href:
                     continue
-                old_name = Path(href).name
-                if old_name in renamed:
-                    new_name = renamed[old_name]
-                    new_href = str(Path(href).parent / new_name).replace("\\", "/")
+                old_rel = _normalize_asset_href(href)
+                if old_rel in renamed:
+                    new_href = renamed[old_rel]
                     item.set("href", new_href)
-                    item.set("media-type", _font_media_type(Path(new_name)))
+                    item.set("media-type", _font_media_type(Path(new_href)))
 
     tree = etree.parse(opf_path)
     tree.write(opf_path, encoding="utf-8", xml_declaration=True)

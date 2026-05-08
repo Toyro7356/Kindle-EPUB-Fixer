@@ -9,6 +9,7 @@ KindleGen / KDP 对 NCX 的约束：
 """
 
 from pathlib import Path
+from typing import Optional
 
 import lxml.etree as etree
 
@@ -25,7 +26,7 @@ def fix_ncx_parent_navpoints(opf_path: str) -> int:
     """
     base_dir = Path(opf_dir(opf_path))
     ncx_path = _find_ncx_path(base_dir, opf_path)
-    if not ncx_path or not ncx_path.exists():
+    if ncx_path is None or not ncx_path.exists():
         return 0
 
     tree = etree.parse(str(ncx_path))
@@ -61,7 +62,7 @@ def fix_ncx_parent_navpoints(opf_path: str) -> int:
     return fixed
 
 
-def _find_ncx_path(base_dir: Path, opf_path: str) -> Path:
+def _find_ncx_path(base_dir: Path, opf_path: str) -> Optional[Path]:
     """根据 OPF 中的 NCX 引用找到 NCX 实际路径。"""
     tree = etree.parse(opf_path)
     ns = {"opf": "http://www.idpf.org/2007/opf"}
@@ -70,8 +71,8 @@ def _find_ncx_path(base_dir: Path, opf_path: str) -> Path:
         namespaces=ns,
     )
     if not items:
-        return Path()
+        return None
     href = items[0].get("href")
     if not href:
-        return Path()
+        return None
     return base_dir / href.replace("/", "\\" if "\\" in str(base_dir) else "/")

@@ -26,7 +26,7 @@ from .html_fix import clean_html_meta, fix_cover_image_references, fix_html_stru
 from .image_fix import convert_webp_images, update_html_css_webp_refs, update_opf_webp_refs
 from .language_fix import fix_language_tags
 from .ncx_fix import fix_ncx_parent_navpoints
-from .opf_sanitize import fix_spine_direction_for_novel, sanitize_opf_for_kindle
+from .opf_sanitize import fix_spine_direction_for_novel, remove_stale_encryption_xml, sanitize_opf_for_kindle
 from .script_remove import remove_known_helper_scripts, remove_scripts_from_book
 from .svg_fix import convert_svg_pages_to_img, remove_stale_svg_properties
 from .utils import LogCallback, _default_log
@@ -78,6 +78,7 @@ def resolve_output_path(epub_path: str, output_path: Optional[str] = None) -> st
 
 
 def _apply_safe_repairs(
+    temp_dir: str,
     opf_path: str,
     book_type: str,
     preserve_layout: bool,
@@ -92,6 +93,9 @@ def _apply_safe_repairs(
     helper_cleanup = remove_known_helper_scripts(opf_path)
     if helper_cleanup:
         log(f"Removed {helper_cleanup} known helper script artifacts")
+
+    if remove_stale_encryption_xml(temp_dir):
+        log("Removed stale encryption metadata with missing encrypted resources")
 
     fixed_count = fix_html_structure(opf_path)
     if fixed_count:
@@ -235,7 +239,7 @@ def process_files(
     if plan.has_kobo_markers:
         log("Adobe Adept / Kobo markers detected")
 
-    _apply_safe_repairs(opf_path, plan.book_type, plan.preserve_layout, log)
+    _apply_safe_repairs(temp_dir, opf_path, plan.book_type, plan.preserve_layout, log)
     if plan.run_novel_compat_repairs:
         _apply_novel_compat_repairs(opf_path, plan.book_type, log)
     _apply_font_repairs(

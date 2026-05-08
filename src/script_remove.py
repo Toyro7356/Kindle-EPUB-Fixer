@@ -1,4 +1,6 @@
 import os
+import posixpath
+import re
 from pathlib import Path
 
 import lxml.etree as etree
@@ -19,6 +21,16 @@ def _is_known_helper_script(src: str) -> bool:
     return name in KNOWN_HELPER_SCRIPT_NAMES or name.startswith("jquery-")
 
 
+def _looks_sanitized_script_href(href: str) -> bool:
+    stem = Path(href).stem
+    return bool(re.fullmatch(r"_{8,}(?:_\d+)?", stem))
+
+
+def _resolve_relative_href(base_href: str, href: str) -> str:
+    base_dir = posixpath.dirname(base_href.replace("\\", "/"))
+    return posixpath.normpath(posixpath.join(base_dir, href.replace("\\", "/")))
+
+
 def remove_known_helper_scripts(opf_path: str) -> int:
     base_dir = Path(opf_dir(opf_path))
     tree = etree.parse(opf_path)
@@ -33,10 +45,13 @@ def remove_known_helper_scripts(opf_path: str) -> int:
     helper_hrefs: set[str] = set()
     if manifest is not None:
         for item in manifest.findall(f"{{{NS_OPF}}}item"):
+            item_id = item.get("id") or ""
             href = item.get("href") or ""
             media_type = (item.get("media-type") or "").lower()
             if "javascript" in media_type or href.lower().endswith(".js"):
-                if _is_known_helper_script(href):
+                if _is_known_helper_script(href) or (
+                    _is_known_helper_script(item_id) and _looks_sanitized_script_href(href)
+                ):
                     helper_hrefs.add(href.replace("\\", "/"))
 
     fixed_docs = 0
@@ -57,6 +72,8 @@ def remove_known_helper_scripts(opf_path: str) -> int:
             src = (script.get("src") or "").replace("\\", "/")
             remove_script = False
             if src and _is_known_helper_script(src):
+                remove_script = True
+            if src and _resolve_relative_href(href, src) in helper_hrefs:
                 remove_script = True
             if href_name in {"navigation-documents.xhtml", "navigation-toc.xhtml", "toc.xhtml", "toc.html", "toc.htm"}:
                 remove_script = True
@@ -80,8 +97,13 @@ def remove_known_helper_scripts(opf_path: str) -> int:
     removed_manifest_items = 0
     if manifest is not None and helper_hrefs:
         for item in list(manifest.findall(f"{{{NS_OPF}}}item")):
+            item_id = item.get("id") or ""
             href = (item.get("href") or "").replace("\\", "/")
-            if href in helper_hrefs or _is_known_helper_script(href):
+            remove_item = href in helper_hrefs or _is_known_helper_script(href)
+            remove_item = remove_item or (
+                _is_known_helper_script(item_id) and _looks_sanitized_script_href(href)
+            )
+            if remove_item:
                 manifest.remove(item)
                 removed_manifest_items += 1
                 continue
@@ -95,8 +117,9 @@ def remove_known_helper_scripts(opf_path: str) -> int:
                         item.attrib.pop("properties", None)
 
     deleted_files = 0
+    helper_paths = {base_dir / href.replace("/", os.sep) for href in helper_hrefs}
     for js_path in base_dir.rglob("*.js"):
-        if _is_known_helper_script(js_path.name):
+        if _is_known_helper_script(js_path.name) or js_path in helper_paths:
             try:
                 js_path.unlink()
                 deleted_files += 1

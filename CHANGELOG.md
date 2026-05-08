@@ -7,6 +7,29 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-05-08
+
+### Added
+- Added safe EPUB unpacking for ZIP entries whose internal paths contain Windows-invalid characters, with automatic reference rewriting across OPF, XHTML, CSS, NCX, XML, and SVG text resources.
+- Added stale encryption metadata cleanup when `META-INF/encryption.xml` only points at missing resources, preventing false DRM warnings in readers.
+- Added output validation for broken font references in CSS and XHTML, alongside the existing image/script/WebP checks.
+
+### Changed
+- Changed WebP and font resource rewrites to use full relative paths instead of file basenames, avoiding collisions when multiple EPUB assets share sanitized or repeated names.
+- Changed known helper-script cleanup to recognize sanitized Duokan-style script resources while keeping normal JavaScript resources out of scope.
+- Changed imported missing-font handling so successfully completed fonts remove their old broken `@font-face` declarations and keep only the generated valid font stylesheet.
+
+### Fixed
+- Fixed images disappearing after WebP conversion in EPUBs with unusual internal paths or repeated sanitized filenames.
+- Fixed false DRM reports caused by stale Duokan encryption metadata.
+- Fixed Fangsong-style missing font completion so aliases such as `fangsong`, `dk-fangsong`, `华文仿宋`, `方正仿宋`, and `仿宋` import bundled Zhuque Fangsong and pass broken-font validation.
+- Fixed EPUB3 books without NCX navigation so the NCX repair step no longer tries to parse the current directory as a file.
+
+### Verified
+- Verified Fangsong completion with a generated missing-font smoke EPUB: bundled Zhuque Fangsong was embedded, stale font declarations were removed, and validation passed.
+- Verified the two current regression EPUBs: `0` WebP files left, `0` JavaScript helper files left, no stale encryption metadata, and output validation passed.
+- Verified Python compile checks and release installer build for `1.4.0`.
+
 ## [1.4.0-beta.3] - 2026-05-07
 
 ### Fixed

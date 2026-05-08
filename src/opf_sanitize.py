@@ -1,11 +1,48 @@
 import os
+import posixpath
 from pathlib import Path
+from urllib.parse import unquote
 
 import lxml.etree as etree
 
 from .constants import NS_OPF
 from .epub_io import opf_dir
 from .opf_metadata import get_effective_book_language
+
+
+NS_XMLENC = "http://www.w3.org/2001/04/xmlenc#"
+
+
+def remove_stale_encryption_xml(temp_dir: str) -> bool:
+    encryption_path = Path(temp_dir) / "META-INF" / "encryption.xml"
+    if not encryption_path.exists():
+        return False
+
+    try:
+        tree = etree.parse(str(encryption_path))
+    except etree.XMLSyntaxError:
+        return False
+
+    references = [
+        uri.split("#", 1)[0]
+        for uri in tree.xpath("//enc:CipherReference/@URI", namespaces={"enc": NS_XMLENC})
+        if uri and not uri.startswith("#")
+    ]
+    if not references:
+        return False
+
+    temp_root = Path(temp_dir)
+    missing_references = []
+    for uri in references:
+        normalized = posixpath.normpath(unquote(uri).replace("\\", "/")).lstrip("/")
+        if not (temp_root / normalized.replace("/", os.sep)).exists():
+            missing_references.append(uri)
+
+    if len(missing_references) != len(references):
+        return False
+
+    encryption_path.unlink()
+    return True
 
 
 def sanitize_opf_for_kindle(opf_path: str, book_type: str, preserve_layout: bool = False) -> None:
