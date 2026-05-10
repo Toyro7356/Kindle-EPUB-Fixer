@@ -1,22 +1,17 @@
-"""ESJZone web novel importer.
+"""ESJZone source reader.
 
-The importer uses the user's existing ESJZone login cookie when a book requires
-an authenticated session. It does not store account credentials.
+This module only knows how to read ESJZone pages and produce the shared web
+novel model. EPUB generation is handled by ``novel_epub`` so future sites can
+share the same conversion pipeline.
 """
 
 from __future__ import annotations
 
 import html as html_lib
 import http.client
-import os
 import re
 import ssl
-import shutil
-import tempfile
 import time
-import uuid
-import zipfile
-from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -27,7 +22,8 @@ from urllib.request import Request, build_opener
 import lxml.etree as etree
 import lxml.html as lxml_html
 
-from .core import process_epub
+from .novel_epub import EpubConversionOptions, KindleNovelEpubConverter
+from .novel_source import NovelAsset, NovelBook, NovelChapter
 from .utils import LogCallback, _default_log
 
 
@@ -50,14 +46,14 @@ class EsjzoneSearchResult:
 
 
 @dataclass(frozen=True)
-class EsjzoneChapter:
+class EsjzoneChapterRef:
     title: str
     url: str
     is_volume: bool = False
 
 
 @dataclass(frozen=True)
-class EsjzoneBook:
+class EsjzoneBookInfo:
     title: str
     author: str
     url: str
@@ -66,7 +62,7 @@ class EsjzoneBook:
     kind: str
     word_count: str
     latest_chapter: str
-    chapters: list[EsjzoneChapter]
+    chapters: list[EsjzoneChapterRef]
 
 
 @dataclass(frozen=True)
@@ -77,16 +73,10 @@ class EsjzoneBuildOptions:
     cookie: Optional[str] = None
     cookie_file: Optional[str] = None
     max_chapters: Optional[int] = None
-    keep_raw: bool = False
 
 
 def _text(value: object) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
-
-
-def _safe_filename(value: str, default: str = "book") -> str:
-    sanitized = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "_", value).strip(" .")
-    return sanitized[:120] or default
 
 
 def _slug(value: str, default: str = "item") -> str:
@@ -134,18 +124,6 @@ def _read_cookie(cookie: Optional[str], cookie_file: Optional[str]) -> str:
     if cookie_file:
         return Path(cookie_file).read_text(encoding="utf-8").strip()
     return ""
-
-
-@contextmanager
-def _temporary_work_dir():
-    temp_root = Path(os.environ.get("KINDLE_EPUB_FIXER_TEMP_DIR") or tempfile.gettempdir())
-    temp_root.mkdir(parents=True, exist_ok=True)
-    temp_dir = temp_root / f"esjzone-epub-{uuid.uuid4().hex}"
-    temp_dir.mkdir()
-    try:
-        yield temp_dir
-    finally:
-        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 class EsjzoneClient:
@@ -222,9 +200,15 @@ class EsjzoneClient:
             return False
         return bool(doc.xpath("//a[contains(@href, '/my/logout') or contains(@href, 'logout')]")) or "/my/profile" in body_text
 
+
+class EsjzoneReader:
+    def __init__(self, client: EsjzoneClient, log: LogCallback = _default_log) -> None:
+        self.client = client
+        self.log = log
+
     def search(self, keyword: str, page: int = 1) -> list[EsjzoneSearchResult]:
         path = f"/tags/{quote(keyword.strip())}/{page}.html"
-        doc = self.get_document(path)
+        doc = self.client.get_document(path)
         cards = doc.xpath(
             "//div[contains(concat(' ', normalize-space(@class), ' '), ' product-item ')]"
             "|//div[contains(concat(' ', normalize-space(@class), ' '), ' card ')]"
@@ -236,7 +220,7 @@ class EsjzoneClient:
             href = _first_attr(card, ".//a[contains(@href, '/detail/')][1]/@href")
             if not href:
                 continue
-            url = self.absolute_url(href)
+            url = self.client.absolute_url(href)
             if url in seen:
                 continue
             seen.add(url)
@@ -252,9 +236,7 @@ class EsjzoneClient:
             if not latest:
                 latest = _first_text(card, ".//*[contains(concat(' ', normalize-space(@class), ' '), ' book-ep ')]//a/text()")
             summary = _first_text(card, ".//*[contains(concat(' ', normalize-space(@class), ' '), ' book-ep ')]//text()")
-            cover = _first_attr(card, ".//img/@data-src")
-            if not cover:
-                cover = _first_attr(card, ".//img/@src")
+            cover = _first_attr(card, ".//img/@data-src") or _first_attr(card, ".//img/@src")
             if "empty" in cover:
                 cover = ""
             results.append(
@@ -262,16 +244,64 @@ class EsjzoneClient:
                     title=title,
                     author=author,
                     url=url,
-                    cover_url=self.absolute_url(cover) if cover else "",
+                    cover_url=self.client.absolute_url(cover) if cover else "",
                     latest_chapter=latest,
                     summary=summary,
                 )
             )
         return results
 
-    def fetch_book(self, book_url: str) -> EsjzoneBook:
-        doc = self.get_document(book_url)
-        url = self.absolute_url(book_url)
+    def read(self, book_url: str, max_chapters: Optional[int] = None) -> NovelBook:
+        info = self.fetch_book_info(book_url)
+        if not info.chapters:
+            raise RuntimeError("No chapters found on ESJZone detail page")
+
+        assets: list[NovelAsset] = []
+        cover = self._download_cover(info)
+        selected = [chapter for chapter in info.chapters if not chapter.is_volume]
+        if max_chapters is not None:
+            selected = selected[: max(0, max_chapters)]
+        selected_urls = {chapter.url for chapter in selected}
+
+        novel_chapters: list[NovelChapter] = []
+        content_index = 0
+        for entry in info.chapters:
+            if entry.is_volume:
+                novel_chapters.append(NovelChapter(title=entry.title, is_volume=True))
+                continue
+            if entry.url not in selected_urls:
+                continue
+
+            content_index += 1
+            self.log(f"Reading chapter {content_index}/{len(selected)}: {entry.title}")
+            raw_html = self.fetch_chapter_html(entry)
+            content_html = self._prepare_chapter_content(raw_html, entry.url, content_index, assets)
+            novel_chapters.append(
+                NovelChapter(
+                    title=entry.title,
+                    content_html=content_html,
+                    source_url=entry.url,
+                    is_volume=False,
+                )
+            )
+
+        return NovelBook(
+            title=info.title,
+            author=info.author,
+            source_url=info.url,
+            language="zh-CN",
+            intro_html=info.intro_html,
+            kind=info.kind,
+            word_count=info.word_count,
+            latest_chapter=info.latest_chapter,
+            cover=cover,
+            assets=assets,
+            chapters=novel_chapters,
+        )
+
+    def fetch_book_info(self, book_url: str) -> EsjzoneBookInfo:
+        doc = self.client.get_document(book_url)
+        url = self.client.absolute_url(book_url)
 
         title = _first_text(
             doc,
@@ -307,16 +337,16 @@ class EsjzoneClient:
         kind = "；".join(kind_items[-2:]) if len(kind_items) >= 2 else ""
         word_count = _first_text(doc, "//*[contains(concat(' ', normalize-space(@class), ' '), ' icon-file-text ')]/parent::*//text()")
 
-        chapters = self._parse_chapters(doc, url)
+        chapters = self._parse_chapters(doc)
         latest = next((chapter.title for chapter in reversed(chapters) if not chapter.is_volume), "")
         if not latest:
             latest = _first_text(doc, "//*[@id='chapterList']//a[last()]/text()")
 
-        return EsjzoneBook(
+        return EsjzoneBookInfo(
             title=title or "ESJZone Book",
             author=author or "未知作者",
             url=url,
-            cover_url=self.absolute_url(cover) if cover else "",
+            cover_url=self.client.absolute_url(cover) if cover else "",
             intro_html="\n".join(part for part in intro_parts if part),
             kind=kind,
             word_count=word_count,
@@ -324,9 +354,9 @@ class EsjzoneClient:
             chapters=chapters,
         )
 
-    def _parse_chapters(self, doc: etree._Element, book_url: str) -> list[EsjzoneChapter]:
+    def _parse_chapters(self, doc: etree._Element) -> list[EsjzoneChapterRef]:
         nodes = doc.xpath("//*[@id='chapterList']//*[self::a or self::p or self::summary]")
-        chapters: list[EsjzoneChapter] = []
+        chapters: list[EsjzoneChapterRef] = []
         seen_urls: set[str] = set()
         for node in nodes:
             tag = node.tag.lower() if isinstance(node.tag, str) else ""
@@ -334,30 +364,30 @@ class EsjzoneClient:
             is_volume = tag in {"p", "summary"} or _has_class(class_attr, "non")
             title = _text(node.get("data-title") or node.text_content())
             href = node.get("href") or ""
-            url = self.absolute_url(href) if href else ""
+            url = self.client.absolute_url(href) if href else ""
 
             if is_volume:
                 if title:
-                    chapters.append(EsjzoneChapter(title=title, url="", is_volume=True))
+                    chapters.append(EsjzoneChapterRef(title=title, url="", is_volume=True))
                 continue
             if not title or not url or url in seen_urls:
                 continue
             seen_urls.add(url)
-            chapters.append(EsjzoneChapter(title=title, url=url, is_volume=False))
+            chapters.append(EsjzoneChapterRef(title=title, url=url, is_volume=False))
 
         if chapters:
             return chapters
 
         for link in doc.xpath("//a[contains(@href, '.html') and contains(@href, '/forum/')]"):
             title = _text(link.text_content())
-            url = self.absolute_url(link.get("href") or "")
+            url = self.client.absolute_url(link.get("href") or "")
             if title and url and url not in seen_urls:
                 seen_urls.add(url)
-                chapters.append(EsjzoneChapter(title=title, url=url, is_volume=False))
+                chapters.append(EsjzoneChapterRef(title=title, url=url, is_volume=False))
         return chapters
 
-    def fetch_chapter_html(self, chapter: EsjzoneChapter) -> str:
-        doc = self.get_document(chapter.url)
+    def fetch_chapter_html(self, chapter: EsjzoneChapterRef) -> str:
+        doc = self.client.get_document(chapter.url)
         content_nodes = doc.xpath(
             "//div[contains(concat(' ', normalize-space(@class), ' '), ' forum-content ') "
             "and contains(concat(' ', normalize-space(@class), ' '), ' mt-3 ')]"
@@ -370,136 +400,29 @@ class EsjzoneClient:
             return "<p></p>"
         return _inner_html(content_nodes[0])
 
-
-class EsjzoneEpubBuilder:
-    def __init__(self, client: EsjzoneClient, log: LogCallback = _default_log) -> None:
-        self.client = client
-        self.log = log
-
-    def build(self, options: EsjzoneBuildOptions) -> str:
-        self.log("Fetching ESJZone book metadata")
-        book = self.client.fetch_book(options.book_url)
-        if not book.chapters:
-            raise RuntimeError("No chapters found on ESJZone detail page")
-
-        output_path = self._resolve_output_path(book, options)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with _temporary_work_dir() as temp_dir:
-            raw_epub = temp_dir / "raw.esjzone.epub"
-            self._write_raw_epub(book, raw_epub, temp_dir, options)
-            if options.keep_raw:
-                shutil.copy2(raw_epub, output_path)
-                return str(output_path)
-
-            self.log("Running Kindle EPUB compatibility repair")
-            process_epub(str(raw_epub), str(output_path), log=self.log)
-            return str(output_path)
-
-    def _resolve_output_path(self, book: EsjzoneBook, options: EsjzoneBuildOptions) -> Path:
-        if options.output_path:
-            path = Path(options.output_path)
-            if path.exists() and path.is_dir():
-                return path / f"{_safe_filename(book.title)}.epub"
-            if path.suffix.lower() != ".epub":
-                return path / f"{_safe_filename(book.title)}.epub"
-            return path
-        if options.output_dir:
-            return Path(options.output_dir) / f"{_safe_filename(book.title)}.epub"
-        return Path.cwd() / "转换后" / f"{_safe_filename(book.title)}.epub"
-
-    def _write_raw_epub(
-        self,
-        book: EsjzoneBook,
-        epub_path: Path,
-        temp_dir: Path,
-        options: EsjzoneBuildOptions,
-    ) -> None:
-        root = temp_dir / "epub"
-        oebps = root / "OEBPS"
-        text_dir = oebps / "Text"
-        style_dir = oebps / "Styles"
-        image_dir = oebps / "Images"
-        meta_dir = root / "META-INF"
-        for directory in (text_dir, style_dir, image_dir, meta_dir):
-            directory.mkdir(parents=True, exist_ok=True)
-
-        (root / "mimetype").write_text("application/epub+zip", encoding="ascii")
-        (meta_dir / "container.xml").write_text(CONTAINER_XML, encoding="utf-8")
-        (style_dir / "style.css").write_text(STYLE_CSS, encoding="utf-8")
-
-        manifest_items: list[tuple[str, str, str, str]] = [
-            ("nav", "nav.xhtml", "application/xhtml+xml", "nav"),
-            ("ncx", "toc.ncx", "application/x-dtbncx+xml", ""),
-            ("style", "Styles/style.css", "text/css", ""),
-        ]
-        spine_ids: list[str] = []
-        nav_points: list[tuple[int, str, str]] = []
-        nav_items: list[tuple[str, str, bool]] = []
-
-        cover_href = self._download_cover(book, image_dir)
-        if cover_href:
-            manifest_items.append(("cover-image", cover_href, _media_type_for_path(cover_href), "cover-image"))
-
-        intro_href = "Text/intro.xhtml"
-        (oebps / intro_href).write_text(self._chapter_document("书籍信息", book.intro_html or "<p></p>"), encoding="utf-8")
-        manifest_items.append(("intro", intro_href, "application/xhtml+xml", ""))
-        spine_ids.append("intro")
-        nav_points.append((1, "书籍信息", intro_href))
-        nav_items.append(("书籍信息", intro_href, False))
-
-        chapters = [chapter for chapter in book.chapters if not chapter.is_volume]
-        if options.max_chapters is not None:
-            chapters = chapters[: max(0, options.max_chapters)]
-
-        volume_index = 0
-        chapter_index = 0
-        chapter_lookup = {chapter.url: chapter for chapter in chapters}
-        for entry in book.chapters:
-            if entry.is_volume:
-                volume_index += 1
-                nav_items.append((entry.title, "", True))
-                continue
-            if entry.url not in chapter_lookup:
-                continue
-            chapter_index += 1
-            self.log(f"Fetching chapter {chapter_index}/{len(chapters)}: {entry.title}")
-            raw_html = self.client.fetch_chapter_html(entry)
-            content_html = self._prepare_chapter_content(raw_html, entry.url, image_dir, chapter_index)
-            item_id = f"chapter-{chapter_index:04d}"
-            href = f"Text/chapter-{chapter_index:04d}-{_slug(entry.title, 'chapter')}.xhtml"
-            (oebps / href).write_text(self._chapter_document(entry.title, content_html), encoding="utf-8")
-            manifest_items.append((item_id, href, "application/xhtml+xml", ""))
-            spine_ids.append(item_id)
-            nav_points.append((len(nav_points) + 1, entry.title, href))
-            nav_items.append((entry.title, href, False))
-
-        known_assets = {cover_href} if cover_href else set()
-        for image_path in sorted(image_dir.glob("*")):
-            href = f"Images/{image_path.name}"
-            if href in known_assets:
-                continue
-            manifest_items.append((f"image-{_slug(image_path.stem)}", href, _media_type_for_path(href), ""))
-
-        self._write_nav(oebps / "nav.xhtml", book, nav_items)
-        self._write_ncx(oebps / "toc.ncx", book, nav_points)
-        self._write_opf(oebps / "content.opf", book, manifest_items, spine_ids, cover_href)
-        self._zip_epub(root, epub_path)
-
-    def _download_cover(self, book: EsjzoneBook, image_dir: Path) -> str:
-        if not book.cover_url:
-            return ""
+    def _download_cover(self, info: EsjzoneBookInfo) -> Optional[NovelAsset]:
+        if not info.cover_url:
+            return None
         try:
-            data = self.client.get_bytes(book.cover_url, referer=book.url)
+            data = self.client.get_bytes(info.cover_url, referer=info.url)
         except Exception as exc:
             self.log(f"[Warning] Cover download failed: {exc}")
-            return ""
-        suffix = _guess_image_suffix(book.cover_url, data)
-        path = image_dir / f"cover{suffix}"
-        path.write_bytes(data)
-        return f"Images/{path.name}"
+            return None
+        suffix, media_type = _guess_image_type(info.cover_url, data)
+        return NovelAsset(
+            id="cover",
+            filename=f"cover{suffix}",
+            data=data,
+            media_type=media_type,
+        )
 
-    def _prepare_chapter_content(self, raw_html: str, chapter_url: str, image_dir: Path, chapter_index: int) -> str:
+    def _prepare_chapter_content(
+        self,
+        raw_html: str,
+        chapter_url: str,
+        chapter_index: int,
+        assets: list[NovelAsset],
+    ) -> str:
         wrapper = lxml_html.fragment_fromstring(f"<div>{raw_html}</div>", create_parent=False)
         for bad in wrapper.xpath(".//script|.//style|.//iframe|.//form"):
             parent = bad.getparent()
@@ -518,198 +441,64 @@ class EsjzoneEpubBuilder:
                 self.log(f"[Warning] Image download failed: {image_url}: {exc}")
                 continue
             image_counter += 1
-            suffix = _guess_image_suffix(image_url, data)
-            image_name = f"chapter-{chapter_index:04d}-{image_counter:03d}{suffix}"
-            (image_dir / image_name).write_bytes(data)
-            img.set("src", f"../Images/{image_name}")
+            suffix, media_type = _guess_image_type(image_url, data)
+            asset_id = f"chapter-{chapter_index:04d}-{image_counter:03d}"
+            assets.append(
+                NovelAsset(
+                    id=asset_id,
+                    filename=f"{asset_id}{suffix}",
+                    data=data,
+                    media_type=media_type,
+                )
+            )
+            img.set("src", f"asset:{asset_id}")
             img.attrib.pop("data-src", None)
 
         return _inner_html(wrapper)
 
-    def _chapter_document(self, title: str, body_html: str) -> str:
-        return XHTML_TEMPLATE.format(
-            title=html_lib.escape(title),
-            body=body_html,
-        )
-
-    def _write_nav(self, path: Path, book: EsjzoneBook, nav_items: list[tuple[str, str, bool]]) -> None:
-        lines = [
-            '<?xml version="1.0" encoding="utf-8"?>',
-            '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="zh-CN" xml:lang="zh-CN">',
-            "<head>",
-            f"<title>{html_lib.escape(book.title)} - 目录</title>",
-            '<link rel="stylesheet" type="text/css" href="Styles/style.css"/>',
-            "</head><body>",
-            '<nav epub:type="toc" id="toc"><h1>目录</h1><ol>',
-        ]
-        for title, href, is_volume in nav_items:
-            if is_volume or not href:
-                lines.append(f'<li><span>{html_lib.escape(title)}</span></li>')
-            else:
-                lines.append(f'<li><a href="{html_lib.escape(href)}">{html_lib.escape(title)}</a></li>')
-        lines.extend(["</ol></nav>", "</body></html>"])
-        path.write_text("\n".join(lines), encoding="utf-8")
-
-    def _write_ncx(self, path: Path, book: EsjzoneBook, nav_points: list[tuple[int, str, str]]) -> None:
-        lines = [
-            '<?xml version="1.0" encoding="utf-8"?>',
-            '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">',
-            "<head>",
-            f'<meta name="dtb:uid" content="{html_lib.escape(_book_uuid(book.url))}"/>',
-            "</head>",
-            f"<docTitle><text>{html_lib.escape(book.title)}</text></docTitle>",
-            "<navMap>",
-        ]
-        for play_order, title, href in nav_points:
-            lines.extend(
-                [
-                    f'<navPoint id="navPoint-{play_order}" playOrder="{play_order}">',
-                    f"<navLabel><text>{html_lib.escape(title)}</text></navLabel>",
-                    f'<content src="{html_lib.escape(href)}"/>',
-                    "</navPoint>",
-                ]
-            )
-        lines.extend(["</navMap>", "</ncx>"])
-        path.write_text("\n".join(lines), encoding="utf-8")
-
-    def _write_opf(
-        self,
-        path: Path,
-        book: EsjzoneBook,
-        manifest_items: list[tuple[str, str, str, str]],
-        spine_ids: list[str],
-        cover_href: str,
-    ) -> None:
-        metadata = [
-            '<?xml version="1.0" encoding="utf-8"?>',
-            '<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="3.0">',
-            '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">',
-            f'<dc:identifier id="bookid">{html_lib.escape(_book_uuid(book.url))}</dc:identifier>',
-            f"<dc:title>{html_lib.escape(book.title)}</dc:title>",
-            f"<dc:creator>{html_lib.escape(book.author)}</dc:creator>",
-            "<dc:language>zh-CN</dc:language>",
-            f'<dc:source>{html_lib.escape(book.url)}</dc:source>',
-            f'<meta property="dcterms:modified">{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}</meta>',
-        ]
-        if cover_href:
-            metadata.append('<meta name="cover" content="cover-image"/>')
-        metadata.append("</metadata>")
-
-        manifest = ["<manifest>"]
-        for item_id, href, media_type, properties in manifest_items:
-            properties_attr = f' properties="{properties}"' if properties else ""
-            manifest.append(
-                f'<item id="{html_lib.escape(item_id)}" href="{html_lib.escape(href)}" '
-                f'media-type="{html_lib.escape(media_type)}"{properties_attr}/>'
-            )
-        manifest.append("</manifest>")
-
-        spine = ['<spine toc="ncx">']
-        for item_id in spine_ids:
-            spine.append(f'<itemref idref="{html_lib.escape(item_id)}"/>')
-        spine.append("</spine>")
-        path.write_text("\n".join(metadata + manifest + spine + ["</package>"]), encoding="utf-8")
-
-    def _zip_epub(self, root: Path, epub_path: Path) -> None:
-        with zipfile.ZipFile(epub_path, "w") as zf:
-            zf.write(root / "mimetype", "mimetype", compress_type=zipfile.ZIP_STORED)
-            for path in sorted(root.rglob("*")):
-                if path.name == "mimetype" or path.is_dir():
-                    continue
-                arcname = path.relative_to(root).as_posix()
-                zf.write(path, arcname, compress_type=zipfile.ZIP_DEFLATED)
-
 
 def build_esjzone_epub(options: EsjzoneBuildOptions, log: LogCallback = _default_log) -> str:
     cookie = _read_cookie(options.cookie, options.cookie_file)
-    client = EsjzoneClient(cookie=cookie)
-    builder = EsjzoneEpubBuilder(client, log)
-    return builder.build(options)
+    reader = EsjzoneReader(EsjzoneClient(cookie=cookie), log)
+    log("Reading ESJZone source data")
+    book = reader.read(options.book_url, max_chapters=options.max_chapters)
+    log("Converting source data to Kindle EPUB")
+    converter = KindleNovelEpubConverter(log)
+    return converter.convert(
+        book,
+        EpubConversionOptions(
+            output_path=options.output_path,
+            output_dir=options.output_dir,
+            validate_output=True,
+        ),
+    )
 
 
 def search_esjzone(keyword: str, page: int = 1, cookie: str = "", cookie_file: Optional[str] = None) -> list[EsjzoneSearchResult]:
-    client = EsjzoneClient(cookie=_read_cookie(cookie, cookie_file))
-    return client.search(keyword, page=page)
+    reader = EsjzoneReader(EsjzoneClient(cookie=_read_cookie(cookie, cookie_file)))
+    return reader.search(keyword, page=page)
 
 
-def _book_uuid(url: str) -> str:
-    return "urn:uuid:" + str(uuid.uuid5(uuid.NAMESPACE_URL, url))
-
-
-def _media_type_for_path(path: str) -> str:
-    suffix = Path(path).suffix.lower()
-    return {
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".png": "image/png",
-        ".gif": "image/gif",
-        ".svg": "image/svg+xml",
-        ".webp": "image/webp",
-    }.get(suffix, "application/octet-stream")
-
-
-def _guess_image_suffix(url: str, data: bytes) -> str:
+def _guess_image_type(url: str, data: bytes) -> tuple[str, str]:
     parsed_suffix = Path(unquote(urlparse(url).path)).suffix.lower()
-    if parsed_suffix in {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp"}:
-        return ".jpg" if parsed_suffix == ".jpeg" else parsed_suffix
+    if parsed_suffix == ".jpeg":
+        return ".jpg", "image/jpeg"
+    if parsed_suffix in {".jpg", ".png", ".gif", ".svg", ".webp"}:
+        return parsed_suffix, {
+            ".jpg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif",
+            ".svg": "image/svg+xml",
+            ".webp": "image/webp",
+        }[parsed_suffix]
     if data.startswith(b"\xff\xd8"):
-        return ".jpg"
+        return ".jpg", "image/jpeg"
     if data.startswith(b"\x89PNG"):
-        return ".png"
+        return ".png", "image/png"
     if data.startswith(b"GIF"):
-        return ".gif"
+        return ".gif", "image/gif"
     if data[:20].lstrip().startswith(b"<svg"):
-        return ".svg"
+        return ".svg", "image/svg+xml"
     if data.startswith(b"RIFF") and b"WEBP" in data[:16]:
-        return ".webp"
-    return ".jpg"
-
-
-CONTAINER_XML = """<?xml version="1.0" encoding="utf-8"?>
-<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
-  <rootfiles>
-    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
-  </rootfiles>
-</container>
-"""
-
-
-STYLE_CSS = """@charset "utf-8";
-body {
-  font-family: serif;
-  line-height: 1.75;
-  margin: 0 5%;
-}
-h1 {
-  font-size: 1.35em;
-  line-height: 1.35;
-  margin: 1.2em 0;
-  text-align: center;
-}
-p {
-  margin: 0.75em 0;
-}
-img {
-  max-width: 100%;
-  height: auto;
-}
-blockquote {
-  border-left: 0.25em solid #aaa;
-  margin: 1em 0;
-  padding-left: 1em;
-}
-"""
-
-
-XHTML_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
-<head>
-  <title>{title}</title>
-  <link rel="stylesheet" type="text/css" href="../Styles/style.css"/>
-</head>
-<body>
-  <h1>{title}</h1>
-  {body}
-</body>
-</html>
-"""
+        return ".webp", "image/webp"
+    return ".jpg", "image/jpeg"

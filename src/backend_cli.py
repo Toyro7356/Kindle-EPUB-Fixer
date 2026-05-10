@@ -29,7 +29,6 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--esjzone-cookie", help="Raw ESJZone Cookie header value")
     parser.add_argument("--esjzone-cookie-file", help="Path to a text file containing ESJZone Cookie header value")
     parser.add_argument("--max-chapters", type=int, help="Limit chapter count for ESJZone conversion")
-    parser.add_argument("--keep-raw-esjzone", action="store_true", help="Skip Kindle repair and keep the generated raw EPUB")
     return parser.parse_args()
 
 
@@ -73,7 +72,6 @@ def main() -> None:
                     cookie=args.esjzone_cookie,
                     cookie_file=args.esjzone_cookie_file,
                     max_chapters=args.max_chapters,
-                    keep_raw=args.keep_raw_esjzone,
                 ),
                 log=log,
             )
