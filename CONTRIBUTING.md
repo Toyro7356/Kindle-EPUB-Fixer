@@ -1,155 +1,117 @@
-# Contributing
+# Contributing / 贡献指南
 
-感谢你为 Kindle EPUB Fixer 做贡献。
+谢谢你参与 Kindle EPUB Fixer。
 
-这个项目的核心目标不是把所有 EPUB 改成统一模板，而是在尽可能保留作者原始排版、字体和结构意图的前提下，修复 Kindle / Send to Kindle 的明确兼容性问题。
+Thank you for contributing to Kindle EPUB Fixer.
 
-在开始提交代码前，建议先阅读：
-- [README.md](README.md)
-- [docs/PROCESS_FLOW.md](docs/PROCESS_FLOW.md)
+## 方向 / Direction
 
-## 贡献原则
+- 修复通用 Kindle / Send to Kindle 兼容性问题，不为单本书写硬编码特判。
+- Fix general Kindle and Send to Kindle compatibility issues. Do not hard-code one specific book.
+- 保留原书的语义、排版、字体和结构意图。
+- Preserve the original book semantics, layout, fonts, and structure whenever possible.
+- 对固定版式、漫画、复杂 SVG、脚注和字体处理保持保守。
+- Be conservative around fixed layout, comics, complex SVG, footnotes, and fonts.
+- 网页小说来源应先转成统一小说模型，再交给转换管线。
+- Web novel sources should normalize data into the shared novel model before EPUB generation.
 
-- 优先做通用修复，不为单一本书写来源硬编码特判。
-- 优先修结构错误、兼容性错误和 Kindle 明确不支持的内容。
-- 尽量减少对原始排版、字体、版式和语义的扰动。
-- 对布局敏感、固定版式、疑似精排内容保持保守。
-- 如果某项能力是 Kindle 先天支持较弱或不支持，不强行伪造。
+## 分支 / Branches
 
-一个简单判断标准：
-- “这是 EPUB 规范问题或 Kindle 明确兼容问题” -> 值得修
-- “这是某一本书的私人排版偏好” -> 默认不要硬改
+- `main`: stable releases.
+- `main`: 正式版分支。
+- `beta`: prerelease and active integration.
+- `beta`: 测试版和日常集成分支。
+- Feature branches should start from `beta` unless the change is an urgent release fix.
+- 功能分支默认从 `beta` 拉出，除非是正式版紧急修复。
 
-## 分支策略
+Recommended tag names:
 
-仓库长期保持这套结构：
-- `main`：稳定正式版分支
-- `beta`：日常开发与测试分支
-- `tag`：每次 beta / 正式发布的版本快照
+推荐 tag 命名：
 
-约定如下：
-- 日常修复、新样本收敛、新功能开发，优先提交到 `beta`
-- 通过样本验证、Previewer 验证和必要的实机验证后，再从 `beta` 合并到 `main`
-- 正式发布只从 `main` 打 tag
-- 测试版从 `beta` 打 tag
-
-推荐版本格式：
-- Beta：`v1.4.0-beta.1`
-- 正式版：`v1.4.0`
-
-## 开发流程
-
-推荐日常流程：
-1. 从 `beta` 开始开发。
-2. 完成修改后跑本地验证。
-3. 确认没有回归后提交到 `beta`。
-4. 当一轮修复足够稳定时，将 `beta` 合并到 `main`。
-5. 在 `main` 上打正式版标签并发布。
-
-如果只是本地单人维护，也建议遵守这个节奏，不要长期直接在 `main` 上开发。
-
-## 开发环境
-
-安装依赖：
-
-```bash
-pip install -r requirements.txt
+```text
+v2.0.0-beta.1
+v2.0.0
 ```
 
-构建并启动原生 GUI：
+## 开发环境 / Development
 
 ```bash
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt
+.\.venv\Scripts\python -m compileall -q src main.py main_backend.py build_backend.py
+```
+
+WinUI build:
+
+```powershell
 powershell -ExecutionPolicy Bypass -File build_winui.ps1
 ```
 
-命令行处理：
+If no .NET SDK is available:
 
-```bash
-python main.py "input.epub"
-python main.py "input.epub" "output.epub"
+如果没有 .NET SDK：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\install_dotnet_sdk.ps1
 ```
 
-打包安装器：
+## 验证 / Validation
 
-```bash
-powershell -ExecutionPolicy Bypass -File build_winui.ps1
-```
+Choose checks that match the risk of the change:
 
-## 验证要求
+按改动风险选择验证：
 
-任何会影响处理逻辑的改动，至少应跑以下验证中的一部分，并根据改动范围扩大验证范围。
+- Python backend changes: compile the backend and run targeted EPUB conversion checks.
+- Python 后端改动：编译后端并跑相关 EPUB 转换检查。
+- WinUI changes: build the WinUI project and check the touched workflow.
+- WinUI 改动：构建 WinUI，并检查受影响流程。
+- Release changes: run `build_winui.ps1` or let the tag workflow build the installer.
+- 发布改动：运行 `build_winui.ps1`，或交给 tag workflow 构建安装包。
 
-结构审计：
+Useful commands:
+
+常用命令：
 
 ```bash
 python tools/audit_samples.py --report build/audit-report.json --output-dir build/audit-output
+python tools/previewer_compare.py "input.epub" --keep-workdir build/previewer-debug
 ```
 
-单本 Previewer 对比：
+## 提交 / Commits
 
-```bash
-python tools/previewer_compare.py "测试文件\\自制epub\\OVERLOAD 05.epub" --keep-workdir build\\previewer-debug
+Use short, concrete commit messages:
+
+提交信息保持简短明确：
+
+```text
+fix: preserve embedded title fonts
+feat: add ESJZone EPUB importer
+docs: refresh bilingual release notes
+release: ship v2.0.0-beta.1
 ```
 
-全量 Previewer 审计：
+## 发布 / Release
 
-```bash
-python tools/previewer_audit.py --report build/previewer-audit.json --workdir build/previewer-audit --timeout-seconds 1200
-```
+Beta release:
 
-如果修改涉及以下区域，建议额外重点验证：
-- `footnote_fix.py`：角注/脚注专项样本
-- `comic_fix.py` / `svg_fix.py`：漫画、固定版式、SVG 页样本
-- `css_sanitize.py` / `vertical_fix.py`：Kobo 小说和精排敏感样本
-- `font_handler.py`：自制 EPUB、缺字库样本、安装器内置字体与用户字体目录
+测试版发布：
 
-## 代码修改建议
+1. Merge feature work into `beta`.
+2. Update versions, README, changelog, and docs.
+3. Commit with a signed commit.
+4. Create a signed tag from `beta`.
+5. Push `beta` and the tag. GitHub Actions builds the installer and creates the prerelease.
 
-- 保持修复逻辑可解释，尽量让“为什么修”和“为什么不修”都说得清楚。
-- 新增判断规则时，优先复用 `BookProfile`、`ContentAnalysis` 和 `ProcessingPlan`，不要把逻辑散落到多个模块里。
-- 如果修复只应该发生在可重排路径，请明确放在 reflow 分支里。
-- 如果修复可能影响精排内容，请先考虑是否应该只在 `preserve-layout=False` 时执行。
-- 对脚注、SVG、字体、漫画元数据这类高风险区域，默认从保守策略出发。
+正式版发布从 `main` 打 tag。Beta 发布从 `beta` 打 tag。
 
-## 提交建议
+Stable releases are tagged from `main`. Beta releases are tagged from `beta`.
 
-提交信息尽量简洁明确，例如：
-- `fix(footnote): avoid rewriting already-valid noteref structures`
-- `fix(css): narrow risky transform downgrades`
-- `docs: document beta/main release workflow`
-- `release: ship v1.4.0-beta.1`
+Stable release:
 
-如果一次改动同时涉及逻辑、文档和发布文件，优先保证提交信息能表达“这次改动的核心目的”。
+正式版发布：
 
-## 不建议的做法
-
-- 不要为了通过某一本样本而写死书名、来源或目录名判断。
-- 不要默认大规模清洗固定版式或疑似精排内容。
-- 不要轻易移除作者自带字体、脚注或排版结构，除非它们已经明确造成 Kindle 问题。
-- 不要在没有验证的情况下直接改 `main` 并发正式版。
-
-## 发布流程
-
-推荐正式发布步骤：
-1. 在 `beta` 完成修复并验证。
-2. 更新 `README.md`、`CHANGELOG.md`、`docs/PROCESS_FLOW.md` 和版本号。
-3. 重新打包安装器。
-4. 将 `beta` 合并到 `main`。
-5. 在 `main` 上打正式 tag。
-6. 发布 GitHub Release，并上传 EXE。
-
-推荐测试发布步骤：
-1. 在 `beta` 完成一轮阶段性修复。
-2. 更新 beta 版本号和变更说明。
-3. 打包安装器。
-4. 在 `beta` 上打 `-beta.x` tag。
-5. 发布 prerelease。
-
-## 最后
-
-如果你准备做的是：
-- 修复一个明确的 Kindle 兼容问题
-- 用通用方法解决，而不是样本特判
-- 并且愿意补上验证
-
-那这通常就是一个值得推进的改动。
+1. Finish and push the `beta` release candidate.
+2. Merge `beta` into `main`.
+3. Update the stable changelog section so it includes all beta changes since the previous stable release.
+4. Create a signed stable tag from `main`.
+5. Push `main` and the tag. GitHub Actions builds the installer and creates the stable release.

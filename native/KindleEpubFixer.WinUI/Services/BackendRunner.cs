@@ -8,6 +8,8 @@ public sealed record BackendProgress(string Status, int Progress, string? Output
 
 public sealed class BackendRunner
 {
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
     public async Task<string> ProcessAsync(
         string inputPath,
         string? outputDirectory,
@@ -16,6 +18,67 @@ public sealed class BackendRunner
         CancellationToken cancellationToken)
     {
         var psi = CreateStartInfo(inputPath, outputDirectory);
+        return await RunAsync(psi, onLog, onProgress, cancellationToken);
+    }
+
+    public async Task<string> BuildEsjzoneAsync(
+        string bookUrl,
+        string? outputDirectory,
+        string? cookie,
+        int? maxChapters,
+        int? chapterStart,
+        int? chapterEnd,
+        Action<string> onLog,
+        Action<BackendProgress> onProgress,
+        CancellationToken cancellationToken)
+    {
+        string? cookieFile = null;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(cookie))
+            {
+                cookieFile = Path.Combine(Path.GetTempPath(), $"kindle-epub-fixer-esjzone-{Guid.NewGuid():N}.cookie.txt");
+                await File.WriteAllTextAsync(cookieFile, CleanCookieHeader(cookie), Utf8NoBom, cancellationToken);
+            }
+
+            var psi = CreateEsjzoneStartInfo(bookUrl, outputDirectory, cookieFile, maxChapters, chapterStart, chapterEnd);
+            return await RunAsync(psi, onLog, onProgress, cancellationToken);
+        }
+        finally
+        {
+            if (!string.IsNullOrWhiteSpace(cookieFile))
+            {
+                try
+                {
+                    File.Delete(cookieFile);
+                }
+                catch
+                {
+                }
+            }
+        }
+    }
+
+    private static string CleanCookieHeader(string cookie)
+    {
+        var cleaned = cookie
+            .Replace("\ufeff", string.Empty, StringComparison.Ordinal)
+            .Replace("\u200b", string.Empty, StringComparison.Ordinal)
+            .Replace("\r", string.Empty, StringComparison.Ordinal)
+            .Replace("\n", string.Empty, StringComparison.Ordinal)
+            .Replace("\t", string.Empty, StringComparison.Ordinal)
+            .Trim();
+
+        return string.Join("; ", cleaned
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+    }
+
+    private static async Task<string> RunAsync(
+        ProcessStartInfo psi,
+        Action<string> onLog,
+        Action<BackendProgress> onProgress,
+        CancellationToken cancellationToken)
+    {
         using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
         process.Start();
@@ -73,7 +136,7 @@ public sealed class BackendRunner
         return outputPath;
     }
 
-    private static ProcessStartInfo CreateStartInfo(string inputPath, string? outputDirectory)
+    private static ProcessStartInfo CreateBaseStartInfo()
     {
         var backendExe = AppPaths.BackendExecutable;
         ProcessStartInfo psi;
@@ -88,6 +151,19 @@ public sealed class BackendRunner
             psi.ArgumentList.Add(script);
         }
 
+        psi.UseShellExecute = false;
+        psi.RedirectStandardOutput = true;
+        psi.RedirectStandardError = true;
+        psi.StandardOutputEncoding = Encoding.UTF8;
+        psi.StandardErrorEncoding = Encoding.UTF8;
+        psi.CreateNoWindow = true;
+        psi.Environment["KINDLE_EPUB_FIXER_FONT_DIRS"] = AppPaths.FontSearchPath;
+        return psi;
+    }
+
+    private static ProcessStartInfo CreateStartInfo(string inputPath, string? outputDirectory)
+    {
+        var psi = CreateBaseStartInfo();
         psi.ArgumentList.Add("--input");
         psi.ArgumentList.Add(inputPath);
         if (!string.IsNullOrWhiteSpace(outputDirectory))
@@ -96,13 +172,46 @@ public sealed class BackendRunner
             psi.ArgumentList.Add(outputDirectory);
         }
 
-        psi.UseShellExecute = false;
-        psi.RedirectStandardOutput = true;
-        psi.RedirectStandardError = true;
-        psi.StandardOutputEncoding = Encoding.UTF8;
-        psi.StandardErrorEncoding = Encoding.UTF8;
-        psi.CreateNoWindow = true;
-        psi.Environment["KINDLE_EPUB_FIXER_FONT_DIRS"] = AppPaths.FontSearchPath;
+        return psi;
+    }
+
+    private static ProcessStartInfo CreateEsjzoneStartInfo(
+        string bookUrl,
+        string? outputDirectory,
+        string? cookieFile,
+        int? maxChapters,
+        int? chapterStart,
+        int? chapterEnd)
+    {
+        var psi = CreateBaseStartInfo();
+        psi.ArgumentList.Add("--esjzone-url");
+        psi.ArgumentList.Add(bookUrl);
+        if (!string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            psi.ArgumentList.Add("--output-dir");
+            psi.ArgumentList.Add(outputDirectory);
+        }
+        if (!string.IsNullOrWhiteSpace(cookieFile))
+        {
+            psi.ArgumentList.Add("--esjzone-cookie-file");
+            psi.ArgumentList.Add(cookieFile);
+        }
+        if (maxChapters is > 0)
+        {
+            psi.ArgumentList.Add("--max-chapters");
+            psi.ArgumentList.Add(maxChapters.Value.ToString());
+        }
+        if (chapterStart is > 0)
+        {
+            psi.ArgumentList.Add("--chapter-start");
+            psi.ArgumentList.Add(chapterStart.Value.ToString());
+        }
+        if (chapterEnd is > 0)
+        {
+            psi.ArgumentList.Add("--chapter-end");
+            psi.ArgumentList.Add(chapterEnd.Value.ToString());
+        }
+
         return psi;
     }
 }

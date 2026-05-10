@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag, for example v2.0.0-beta.1"
+        description: "Release tag, for example v2.0.0 or v2.0.0-beta.1"
         required: true
 
 permissions:
@@ -26,10 +26,13 @@ jobs:
         shell: pwsh
         run: |
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            "RELEASE_TAG=${{ github.event.inputs.tag }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+            $tag = "${{ github.event.inputs.tag }}"
           } else {
-            "RELEASE_TAG=${env:GITHUB_REF_NAME}" | Out-File -FilePath $env:GITHUB_ENV -Append
+            $tag = "${env:GITHUB_REF_NAME}"
           }
+          $isPrerelease = $tag.Contains("-").ToString().ToLowerInvariant()
+          "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "IS_PRERELEASE=$isPrerelease" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Check out release ref
         shell: pwsh
@@ -71,8 +74,6 @@ jobs:
               "Kindle EPUB Fixer $env:RELEASE_TAG"
               ""
               "See CHANGELOG.md for details."
-              ""
-              "请查看 CHANGELOG.md 获取变更说明。"
             ) | Set-Content -LiteralPath build\release-notes.md -Encoding utf8
             exit 0
           }
@@ -89,7 +90,7 @@ jobs:
             dist/KindleEpubFixer.Setup.exe
             dist/KindleEpubFixer-*-Setup.exe
 
-      - name: Create or update prerelease
+      - name: Create or update release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -99,9 +100,10 @@ jobs:
             "dist\KindleEpubFixer.Setup.exe",
             "dist\KindleEpubFixer-$version-Setup.exe"
           )
+          $releaseFlag = if ($env:IS_PRERELEASE -eq "true") { "--prerelease" } else { "--latest" }
           if (gh release view $env:RELEASE_TAG *> $null) {
             gh release upload $env:RELEASE_TAG $assets --clobber
-            gh release edit $env:RELEASE_TAG --title "Kindle EPUB Fixer $env:RELEASE_TAG" --notes-file build\release-notes.md --prerelease
+            gh release edit $env:RELEASE_TAG --title "Kindle EPUB Fixer $env:RELEASE_TAG" --notes-file build\release-notes.md $releaseFlag
           } else {
-            gh release create $env:RELEASE_TAG $assets --title "Kindle EPUB Fixer $env:RELEASE_TAG" --notes-file build\release-notes.md --prerelease
+            gh release create $env:RELEASE_TAG $assets --title "Kindle EPUB Fixer $env:RELEASE_TAG" --notes-file build\release-notes.md $releaseFlag
           }

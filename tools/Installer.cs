@@ -13,9 +13,9 @@ using System.Windows.Forms;
 [assembly: AssemblyProduct("Kindle EPUB Fixer")]
 [assembly: AssemblyCompany("Kindle EPUB Fixer")]
 [assembly: AssemblyCopyright("Copyright © 2026 Kindle EPUB Fixer contributors")]
-[assembly: AssemblyVersion("1.4.0.0")]
-[assembly: AssemblyFileVersion("1.4.0.0")]
-[assembly: AssemblyInformationalVersion("1.4.0")]
+[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("2.0.0.0")]
+[assembly: AssemblyInformationalVersion("2.0.0")]
 
 internal static class InstallerProgram
 {
@@ -23,7 +23,7 @@ internal static class InstallerProgram
     private const string AppExeName = "KindleEpubFixer.WinUI.exe";
     private const string ResourceName = "KindleEpubFixer.Payload.zip";
     private const string UninstallRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\KindleEpubFixer";
-    private const string Version = "1.4.0";
+    private const string Version = "2.0.0";
 
     [STAThread]
     private static int Main(string[] args)

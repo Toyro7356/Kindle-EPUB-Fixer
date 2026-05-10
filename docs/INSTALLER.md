@@ -1,44 +1,63 @@
-# Windows installer
+# Windows Installer / Windows 安装器
 
-`build_winui.ps1` builds two installer artifacts:
+`build_winui.ps1` creates the Windows setup executable.
 
-- `dist/KindleEpubFixer.Setup.exe`
-- `dist/KindleEpubFixer-<version>-Setup.exe`
+`build_winui.ps1` 会生成 Windows 安装包。
 
-The setup executable embeds the full WinUI runtime folder, the Python backend executable,
-and the bundled `fonts/` directory. It installs files to a user-selected folder and writes
-a standard per-user uninstall entry under:
+## Artifacts / 产物
 
-`HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\KindleEpubFixer`
+```text
+dist/KindleEpubFixer.Setup.exe
+dist/KindleEpubFixer-<version>-Setup.exe
+```
 
-## Behavior
+The installer embeds:
 
-- The installer is per-user and declares `asInvoker`, so it does not require UAC elevation for the default install path.
-- The installer manifest declares `PerMonitorV2` DPI awareness for HiDPI displays.
-- The installer executable includes Windows file details: product name, description, company, file version, product version, and informational version.
-- Custom install directory is supported.
-- Re-running the installer over the same directory performs an overwrite update.
-- Existing app processes running from the target directory are closed before replacement.
-- `Uninstall.exe` is copied into the install directory.
-- Uninstall removes installed files, Start menu/Desktop shortcuts, the uninstall registry entry, and `%LocalAppData%\KindleEpubFixer`.
-- User-added fonts and app settings are stored under `%LocalAppData%\KindleEpubFixer`, so normal uninstall removes them too.
-- No portable ZIP or portable launcher is produced.
+安装包内置：
 
-## Release checklist
+- WinUI desktop app.
+- WinUI 桌面程序。
+- Python backend executable.
+- Python 后端可执行文件。
+- Bundled `fonts/` resources.
+- 仓库内置 `fonts/` 字体资源。
+- App assets and runtime files.
+- 应用资源和运行时文件。
 
-Before publishing a Windows release:
+## Behavior / 行为
 
-- Build with `powershell -ExecutionPolicy Bypass -File build_winui.ps1`.
-- Confirm `dist/KindleEpubFixer.Setup.exe` and the versioned setup executable exist.
-- Smoke-test quiet install, required payload files, app launch, quiet uninstall, and install directory cleanup.
-- Confirm the setup manifest contains `requestedExecutionLevel`, `asInvoker`, `dpiAwareness`, and `PerMonitorV2`.
-- Publish with a signed annotated tag so GitHub can show the verified tag indicator.
+- Per-user installer, defaulting to `%LocalAppData%\Programs\Kindle EPUB Fixer`.
+- 当前是用户级安装器，默认安装到 `%LocalAppData%\Programs\Kindle EPUB Fixer`。
+- Uses `asInvoker`, so the default path does not require administrator rights.
+- 使用 `asInvoker`，默认路径不需要管理员权限。
+- Supports custom install folders, overwrite update, Start menu shortcut, optional desktop shortcut, and uninstall.
+- 支持自定义目录、覆盖更新、开始菜单快捷方式、可选桌面快捷方式和卸载。
+- App settings and user fonts live under `%LocalAppData%\KindleEpubFixer`.
+- 应用设置和用户字体保存在 `%LocalAppData%\KindleEpubFixer`。
 
-## Test switches
+## Build / 构建
 
-These switches are mainly for smoke tests and automation:
+```powershell
+powershell -ExecutionPolicy Bypass -File build_winui.ps1
+```
+
+If the machine has no .NET SDK:
+
+如果本机没有 .NET SDK：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\install_dotnet_sdk.ps1
+```
+
+## Silent Switches / 静默参数
 
 ```powershell
 dist\KindleEpubFixer.Setup.exe /install /quiet /dir "C:\Path\Kindle EPUB Fixer" /no-start-menu
 "C:\Path\Kindle EPUB Fixer\Uninstall.exe" /uninstall /quiet /keep-user-data
 ```
+
+## Release / 发布
+
+Signed tags trigger GitHub Actions. Tags with a hyphen, such as `v2.0.0-beta.1`, are published as prereleases. Stable tags, such as `v2.0.0`, are published as normal releases.
+
+签名 tag 会触发 GitHub Actions。带连字符的 tag，例如 `v2.0.0-beta.1`，会发布为 prerelease；正式 tag，例如 `v2.0.0`，会发布为普通 release。

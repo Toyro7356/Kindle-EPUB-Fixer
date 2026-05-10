@@ -8,6 +8,8 @@ public sealed class SettingsStore
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     public string DefaultOutputDirectory { get; set; } = string.Empty;
+    public bool RememberEsjzoneCookie { get; set; }
+    public string EsjzoneCookie { get; set; } = string.Empty;
 
     public List<FontAlias> LoadAliases()
     {
@@ -38,6 +40,8 @@ public sealed class SettingsStore
     public void LoadAppSettings()
     {
         DefaultOutputDirectory = string.Empty;
+        RememberEsjzoneCookie = false;
+        EsjzoneCookie = string.Empty;
         if (!File.Exists(AppPaths.AppSettingsPath))
         {
             return;
@@ -50,10 +54,20 @@ public sealed class SettingsStore
             {
                 DefaultOutputDirectory = output.GetString() ?? string.Empty;
             }
+            if (doc.RootElement.TryGetProperty("remember_esjzone_cookie", out var remember))
+            {
+                RememberEsjzoneCookie = remember.ValueKind == JsonValueKind.True;
+            }
+            if (doc.RootElement.TryGetProperty("esjzone_cookie", out var cookie))
+            {
+                EsjzoneCookie = cookie.GetString() ?? string.Empty;
+            }
         }
         catch (JsonException)
         {
             DefaultOutputDirectory = string.Empty;
+            RememberEsjzoneCookie = false;
+            EsjzoneCookie = string.Empty;
         }
     }
 
@@ -62,6 +76,8 @@ public sealed class SettingsStore
         var payload = new Dictionary<string, object?>
         {
             ["default_output_dir"] = DefaultOutputDirectory,
+            ["remember_esjzone_cookie"] = RememberEsjzoneCookie,
+            ["esjzone_cookie"] = RememberEsjzoneCookie ? EsjzoneCookie : string.Empty,
         };
         File.WriteAllText(AppPaths.AppSettingsPath, JsonSerializer.Serialize(payload, JsonOptions));
     }

@@ -54,6 +54,11 @@
                         <SymbolIcon Symbol="Setting" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Height="56" Content="ESJZone" Tag="Esjzone">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Download" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Height="56" Content="关于" Tag="About">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Help" />
@@ -92,7 +97,7 @@
                         <TextBlock
                             HorizontalAlignment="Right"
                             Foreground="{StaticResource MutedTextBrush}"
-                            Text="v1.4.0" />
+                            Text="v2.0.0" />
                         <TextBlock
                             x:Name="StatusText"
                             HorizontalAlignment="Right"

@@ -1,109 +1,56 @@
-# GUI Refactor Plan
+# GUI Architecture / GUI 架构
 
-This document defines the direction for the native GUI after `1.4.0-beta.2`.
-The goal is to keep the application small, native, maintainable, and ready for
-a future macOS frontend without diluting the Windows experience.
+The desktop app is a native WinUI 3 frontend over a Python EPUB backend.
 
-## Goals
+桌面端是原生 WinUI 3 前端，核心 EPUB 处理由 Python 后端提供。
 
-- Keep EPUB repair logic in the Python backend.
-- Keep each desktop frontend native to its platform.
-- Use a stable JSON-lines backend protocol as the shared boundary.
-- Prefer declarative UI and small view code-behind files.
-- Follow WinUI 3 conventions on Windows: Mica, NavigationView, CommandBar,
-  InfoBar notifications, ContentDialog only for forms that require user input,
-  theme resources, and accessible keyboard focus.
-- Keep installer, update, and uninstall behavior predictable.
+## Goals / 目标
 
-## Boundaries
+- Keep repair and conversion logic in `src/`.
+- 修复和转制逻辑保留在 `src/`。
+- Keep Windows UI code in `native/KindleEpubFixer.WinUI/`.
+- Windows UI 代码集中在 `native/KindleEpubFixer.WinUI/`。
+- Keep the backend protocol JSON-lines based and frontend-neutral.
+- 后端协议保持 JSON-lines，避免绑定具体前端。
+- Prefer simple XAML layouts with small code-behind files.
+- 优先使用 XAML 布局，让 code-behind 保持小而清晰。
 
-### Backend Core
+## Boundaries / 边界
 
-Owned by `src/`.
+### Backend / 后端
 
-- EPUB unpacking, analysis, repair, validation, and logging.
-- Machine-readable events emitted by `src/backend_cli.py`.
-- No Windows UI concepts, shell paths, or WinUI-specific strings.
+- EPUB unpacking, analysis, repair, validation, and web novel conversion.
+- EPUB 解包、分析、修复、校验和网页小说转制。
+- Emits events such as `version`, `progress`, `log`, `done`, and `error`.
+- 输出 `version`、`progress`、`log`、`done`、`error` 等事件。
+- No WinUI controls, Windows shell assumptions, or UI layout decisions.
+- 不包含 WinUI 控件、Windows Shell 假设或界面布局决策。
 
-### Windows Frontend
+### WinUI Frontend / WinUI 前端
 
-Owned by `native/KindleEpubFixer.WinUI/`.
+- Navigation, file pickers, folder pickers, dialogs, notifications, and settings.
+- 负责导航、文件选择、目录选择、弹窗、通知和设置。
+- Runs the backend process and renders JSON-lines events.
+- 启动后端进程并渲染 JSON-lines 事件。
+- Stores per-user settings under `%LocalAppData%\KindleEpubFixer`.
+- 用户设置保存在 `%LocalAppData%\KindleEpubFixer`。
 
-- WinUI 3 shell, navigation, notifications, input dialogs, file/folder pickers, launchers.
-- Windows material treatment such as Mica and acrylic fallback surfaces.
-- Per-user settings under `%LocalAppData%\KindleEpubFixer`.
-- Windows installer integration.
+## Current Pages / 当前页面
 
-### Future macOS Frontend
+- Home: batch EPUB repair.
+- 主页：批量 EPUB 修复。
+- ESJZone: web login, Cookie handling, chapter range selection, and EPUB generation.
+- ESJZone：网页登录、Cookie、章节范围和 EPUB 生成。
+- Settings: output directory and font library settings.
+- 设置：输出目录和字体库。
+- About: version and project information.
+- 关于：版本和项目信息。
 
-Expected future root: `native/KindleEpubFixer.Mac/`.
+## Future Work / 后续方向
 
-- Native macOS UI using SwiftUI/AppKit conventions.
-- macOS-specific settings, file importer/exporter, app bundle, and installer.
-- Reuse only the backend CLI protocol and shared product concepts, not WinUI
-  controls, visual resources, or Windows shell assumptions.
-
-## Windows Architecture Direction
-
-### Shell
-
-- `MainWindow` owns only the app frame: backdrop, NavigationView, title/status,
-  minimum size, page navigation, and crash guard hooks.
-- Pages own their own local workflows.
-- Visual resources should move out of `App.xaml` into focused dictionaries once
-  the surface stabilizes.
-
-### Pages
-
-- Prefer XAML for layout.
-- Code-behind should be limited to WinUI API calls that are awkward to bind:
-  file pickers, ContentDialog, Flyout placement, and shell launching.
-- Shared task state should live in small observable models or view models.
-
-### Backend Integration
-
-- `BackendRunner` remains the Windows process bridge.
-- The backend protocol should stay JSON-lines and event-based:
-  `version`, `progress`, `log`, `done`, `error`.
-- Future frontends should be able to implement their own runner without touching
-  Python repair logic.
-
-### Packaging
-
-- Keep the installer per-user and reversible.
-- Keep the installer payload explicit: bundled WinUI output, backend, fonts,
-  and assets.
-- Smoke tests should cover install, overwrite install, launch-critical files,
-  uninstall, and optional user-data preservation.
-
-## Refactor Phases
-
-1. Move the Home page from programmatic control construction to XAML.
-2. Split task state and workflow orchestration away from UI surface code.
-3. Move the main window shell from programmatic construction to XAML.
-4. Normalize styles/resources around WinUI theme resources instead of ad hoc
-   per-control brushes.
-5. Reduce `MainWindow` to a thin native shell and move reusable helpers into
-   services.
-6. Add focused installer/package smoke scripts so release packaging is tested
-   without manual clicking.
-7. Freeze the backend CLI contract before starting macOS work.
-
-## Current First Step
-
-`Views/HomePage.xaml` now owns the Home layout. `HomePage.xaml.cs` keeps the
-existing workflow but is much smaller and limited to picker/dialog/task-runner
-logic. `ViewModels/HomePageViewModel.cs` owns task list state and selection
-summary.
-
-`MainWindow.xaml` now owns the WinUI shell structure: NavigationView, title
-area, status text, notification host, and content host. `MainWindow.xaml.cs`
-keeps native window behavior such as Mica, navigation, minimum size enforcement,
-app-wide notifications, and icon setup.
-
-The current notification rule is:
-
-- Use compact `InfoBar` notifications for success, warning, and short status
-  messages.
-- Use `ContentDialog` only when the user must enter or confirm structured data.
-- Keep task logs in per-row flyouts instead of global blocking dialogs.
+- Keep shared workflows in services instead of page code-behind.
+- 共享流程沉到 service，避免页面代码膨胀。
+- Keep future macOS or other frontends on the same backend protocol.
+- 后续 macOS 或其他前端复用同一后端协议。
+- Add small release smoke scripts only where they reduce manual packaging risk.
+- 只在能减少发布风险时增加小型发布检查脚本。
