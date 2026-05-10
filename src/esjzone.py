@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, unquote, unquote_to_bytes, urljoin, urlparse
+from urllib.parse import quote, unquote, unquote_to_bytes, urljoin, urlparse, urlsplit, urlunsplit
 from urllib.request import Request, build_opener
 
 import lxml.etree as etree
@@ -224,6 +224,13 @@ def _image_source(img: etree._Element) -> str:
     return ""
 
 
+def _quote_request_url(url: str) -> str:
+    parts = urlsplit(url)
+    path = quote(parts.path, safe="/%:@!$&'()*+,;=")
+    query = quote(parts.query, safe="/%:@!$&'()*+,;=?")
+    return urlunsplit((parts.scheme, parts.netloc, path, query, ""))
+
+
 class EsjzoneClient:
     def __init__(
         self,
@@ -246,13 +253,14 @@ class EsjzoneClient:
 
     def get_bytes(self, url: str, *, referer: str = "") -> bytes:
         absolute = self.absolute_url(url)
+        request_url = _quote_request_url(absolute)
         headers = {
             "User-Agent": USER_AGENT,
             "Accept-Language": "zh-CN,zh;q=0.9,ja;q=0.8,en;q=0.7",
             "Connection": "close",
         }
         if referer:
-            headers["Referer"] = self.absolute_url(referer)
+            headers["Referer"] = _quote_request_url(self.absolute_url(referer))
         if self.cookie:
             headers["Cookie"] = self.cookie
 
@@ -264,7 +272,7 @@ class EsjzoneClient:
                 time.sleep(self.throttle_seconds - elapsed)
             self._last_request = time.monotonic()
 
-            request = Request(absolute, headers=headers)
+            request = Request(request_url, headers=headers)
             try:
                 with self._opener.open(request, timeout=self.timeout) as response:
                     return response.read()

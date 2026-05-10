@@ -4,6 +4,13 @@ All notable changes are documented here.
 
 本文件记录值得发布说明的变更，避免列出样本数量或内部验证流水账。
 
+## [Unreleased]
+
+### Fixed / 修复
+
+- Fixed ESJZone image downloads when remote image filenames contain Chinese, Japanese, or other non-ASCII characters.
+- 修复 ESJZone 远程图片文件名包含中文、日文或其他非 ASCII 字符时下载失败的问题。
+
 ## [2.0.0-beta.1] - 2026-05-10
 
 ### Added / 新增
