@@ -58,7 +58,9 @@
   - 检查处理后 EPUB 中的 XHTML、manifest、spine、图片引用和基础元数据是否仍然有效
 - ESJZone 网页转制
   - 从 ESJZone 详情页自动获取书籍信息、目录、正文与正文图片并生成 EPUB
-  - 支持 Cookie 登录态导入，用于用户有权限访问的书籍内容
+  - 默认使用 `https://www.esjzone.cc/`，同时兼容旧的 `https://www.esjzone.one/` 详情页
+  - 支持弹出网页登录并自动读取 Cookie，也可以手动粘贴 Cookie
+  - 章节数留空时默认抓取全部章节，输入正整数时仅用于小范围测试
   - ESJZone 作为书源读取器输出统一小说对象，再交给独立 EPUB 转换管线
   - 转换管线直接生成 Kindle 友好的 EPUB，并对输出结构做校验
 
@@ -139,7 +141,7 @@ GUI 现已改为原生 WinUI 3 / Windows App SDK 前端；Python 只作为 EPUB 
 ```bash
 python main.py "input.epub"
 python main.py "input.epub" "output.epub"
-python main.py esjzone "https://www.esjzone.one/detail/xxxx.html" "output.epub"
+python main.py esjzone "https://www.esjzone.cc/detail/xxxx.html" "output.epub"
 ```
 
 如果不指定输出路径，默认输出到输入文件同目录下的 `转换后` 文件夹。

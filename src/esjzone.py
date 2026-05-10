@@ -27,7 +27,7 @@ from .novel_source import NovelAsset, NovelBook, NovelChapter
 from .utils import LogCallback, _default_log
 
 
-ESJZONE_BASE_URL = "https://www.esjzone.one"
+ESJZONE_BASE_URL = "https://www.esjzone.cc"
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "

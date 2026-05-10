@@ -21,15 +21,15 @@
             <TextBox
                 x:Name="UrlBox"
                 Height="40"
-                PlaceholderText="https://www.esjzone.one/detail/..."
+                PlaceholderText="https://www.esjzone.cc/detail/..."
                 TextChanged="Input_TextChanged" />
 
             <TextBox
                 x:Name="MaxChaptersBox"
                 Grid.Column="1"
-                Width="112"
+                Width="142"
                 Height="40"
-                PlaceholderText="章节数"
+                PlaceholderText="全部章节"
                 TextChanged="Input_TextChanged" />
 
             <Button
@@ -89,13 +89,31 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock FontWeight="SemiBold" Text="Cookie" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock FontWeight="SemiBold" Text="登录态 Cookie" />
+                        <Button
+                            Grid.Column="1"
+                            MinWidth="104"
+                            Padding="12,4"
+                            Click="Login_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="13" Glyph="&#xE774;" />
+                                <TextBlock VerticalAlignment="Center" Text="网页登录" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
                     <TextBox
                         x:Name="CookieBox"
                         Grid.Row="1"
                         AcceptsReturn="True"
                         TextWrapping="Wrap"
-                        PlaceholderText="name=value; name2=value2"
+                        PlaceholderText="网页登录后自动填入；也可以手动粘贴 name=value; name2=value2"
                         TextChanged="Input_TextChanged" />
                 </Grid>
             </Border>
