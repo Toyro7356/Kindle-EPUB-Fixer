@@ -7,6 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Added ESJZone web novel import on the feature branch, including search parsing, detail metadata extraction, table-of-contents parsing, chapter content fetching, image downloading, EPUB generation, and Kindle compatibility repair.
+- Added JSON-lines backend options for ESJZone conversion and search.
+- Added a WinUI ESJZone page for detail URL conversion with optional Cookie login state, output directory selection, chapter limit, progress, and logs.
+
+### Fixed
+- Added retry handling for intermittent ESJZone TLS/connection drops during detail or chapter fetching.
+
 ## [1.4.0] - 2026-05-08
 
 ### Added

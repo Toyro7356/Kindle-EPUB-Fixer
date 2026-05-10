@@ -56,6 +56,10 @@
   - 修复 NCX 导航层级
 - 输出结构校验
   - 检查处理后 EPUB 中的 XHTML、manifest、spine、图片引用和基础元数据是否仍然有效
+- ESJZone 网页转制
+  - 从 ESJZone 详情页自动获取书籍信息、目录、正文与正文图片并生成 EPUB
+  - 支持 Cookie 登录态导入，用于用户有权限访问的书籍内容
+  - 生成后的 EPUB 会继续进入 Kindle 兼容修复流程
 
 ## 1.4.0 正式版重点
 
@@ -126,6 +130,7 @@ GUI 现已改为原生 WinUI 3 / Windows App SDK 前端；Python 只作为 EPUB 
 - 表格式任务队列、单本选择、单本进度、可调列宽与单本日志
 - 设置默认输出目录
 - 管理字体库与字体回落别名
+- 从 ESJZone 详情页转制 EPUB
 - 查看版本、内置字体与项目说明
 
 ### 命令行
@@ -133,6 +138,7 @@ GUI 现已改为原生 WinUI 3 / Windows App SDK 前端；Python 只作为 EPUB 
 ```bash
 python main.py "input.epub"
 python main.py "input.epub" "output.epub"
+python main.py esjzone "https://www.esjzone.one/detail/xxxx.html" "output.epub"
 ```
 
 如果不指定输出路径，默认输出到输入文件同目录下的 `转换后` 文件夹。
