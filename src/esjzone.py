@@ -118,11 +118,17 @@ def _has_class(class_attr: str, class_name: str) -> bool:
     return class_name in (class_attr or "").split()
 
 
+def _clean_cookie_header(value: str) -> str:
+    value = value.replace("\ufeff", "").replace("\u200b", "").strip()
+    value = re.sub(r"[\r\n\t]+", "", value)
+    return "; ".join(part.strip() for part in value.split(";") if part.strip())
+
+
 def _read_cookie(cookie: Optional[str], cookie_file: Optional[str]) -> str:
     if cookie:
-        return cookie.strip()
+        return _clean_cookie_header(cookie)
     if cookie_file:
-        return Path(cookie_file).read_text(encoding="utf-8").strip()
+        return _clean_cookie_header(Path(cookie_file).read_text(encoding="utf-8-sig"))
     return ""
 
 
@@ -135,7 +141,7 @@ class EsjzoneClient:
         throttle_seconds: float = 0.25,
     ) -> None:
         self.base_url = base_url.rstrip("/")
-        self.cookie = cookie.strip()
+        self.cookie = _clean_cookie_header(cookie)
         self.timeout = timeout
         self.throttle_seconds = throttle_seconds
         self._opener = build_opener()

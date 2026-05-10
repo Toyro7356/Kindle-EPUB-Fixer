@@ -8,6 +8,8 @@ public sealed record BackendProgress(string Status, int Progress, string? Output
 
 public sealed class BackendRunner
 {
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
     public async Task<string> ProcessAsync(
         string inputPath,
         string? outputDirectory,
@@ -34,7 +36,7 @@ public sealed class BackendRunner
             if (!string.IsNullOrWhiteSpace(cookie))
             {
                 cookieFile = Path.Combine(Path.GetTempPath(), $"kindle-epub-fixer-esjzone-{Guid.NewGuid():N}.cookie.txt");
-                await File.WriteAllTextAsync(cookieFile, cookie.Trim(), Encoding.UTF8, cancellationToken);
+                await File.WriteAllTextAsync(cookieFile, CleanCookieHeader(cookie), Utf8NoBom, cancellationToken);
             }
 
             var psi = CreateEsjzoneStartInfo(bookUrl, outputDirectory, cookieFile, maxChapters);
@@ -53,6 +55,20 @@ public sealed class BackendRunner
                 }
             }
         }
+    }
+
+    private static string CleanCookieHeader(string cookie)
+    {
+        var cleaned = cookie
+            .Replace("\ufeff", string.Empty, StringComparison.Ordinal)
+            .Replace("\u200b", string.Empty, StringComparison.Ordinal)
+            .Replace("\r", string.Empty, StringComparison.Ordinal)
+            .Replace("\n", string.Empty, StringComparison.Ordinal)
+            .Replace("\t", string.Empty, StringComparison.Ordinal)
+            .Trim();
+
+        return string.Join("; ", cleaned
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
     }
 
     private static async Task<string> RunAsync(

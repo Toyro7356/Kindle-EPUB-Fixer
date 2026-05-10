@@ -20,6 +20,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - Added retry handling for intermittent ESJZone TLS/connection drops during detail or chapter fetching.
+- Fixed ESJZone Cookie handoff from WinUI to the backend so UTF-8 BOMs and pasted line breaks no longer break the HTTP `Cookie` header.
 
 ## [1.4.0] - 2026-05-08
 
