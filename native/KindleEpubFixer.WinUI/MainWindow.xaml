@@ -97,7 +97,7 @@
                         <TextBlock
                             HorizontalAlignment="Right"
                             Foreground="{StaticResource MutedTextBrush}"
-                            Text="v1.4.0" />
+                            Text="v2.0.0-beta.1" />
                         <TextBlock
                             x:Name="StatusText"
                             HorizontalAlignment="Right"

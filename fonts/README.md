@@ -1,30 +1,76 @@
-# Font Library
+# Font Library / 字体库
 
-这个目录用于放置可被程序自动扫描的预置字体，以及字体回落配置。
+This directory contains bundled fonts and font fallback settings.
 
-源码和命令行模式会自动扫描以下位置中的字体文件：
+此目录保存内置字体和字体回落配置。
+
+## Scanned Paths / 扫描路径
+
+The backend scans:
+
+后端会扫描：
 
 - `fonts/`
 - `fonts/common/`
 - `fonts/user/`
-
-当前仓库默认预置了一套仿宋字体：
-
-- `fonts/common/ZhuqueFangsong-Regular.ttf`
-  - 来源：`TrionesType/zhuque`
-  - 版本：`v0.212`
-  - 授权：`SIL Open Font License 1.1`
-  - 许可证副本：`fonts/common/LICENSE.zhuque.txt`
-
-Windows 安装器会把整个 `fonts/` 目录一起打包进去。
-原生 GUI 运行时会同时扫描：
-
-- 安装目录下的内置 `fonts/`
 - `%LocalAppData%\KindleEpubFixer\fonts`
 
-设置页添加的用户字体会保存到 `%LocalAppData%\KindleEpubFixer\fonts\user`，后端处理 EPUB 时会优先把这个目录和安装器内置字体一起纳入匹配。
+The Windows installer packages the repository `fonts/` directory with the app.
 
-支持的字体格式：
+Windows 安装器会把仓库内的 `fonts/` 一起打包。
+
+## Bundled Font / 内置字体
+
+- `fonts/common/ZhuqueFangsong-Regular.ttf`
+- Source: `TrionesType/zhuque`
+- Version: `v0.212`
+- License: SIL Open Font License 1.1
+- License copy: `fonts/common/LICENSE.zhuque.txt`
+
+用途：
+
+- Fangsong-style fallback.
+- 仿宋类字体回落。
+- Missing-font completion when a Kindle generic family is not enough.
+- 当 Kindle 通用字体族不足以表达原字体角色时用于补全。
+
+## Settings / 配置
+
+Default settings:
+
+默认配置：
+
+```text
+fonts/font-settings.json
+```
+
+Installed user settings:
+
+安装版用户配置：
+
+```text
+%LocalAppData%\KindleEpubFixer\fonts\font-settings.json
+```
+
+`family_aliases` maps private EPUB family names to font files or fallback family names.
+
+`family_aliases` 用于把 EPUB 内的私有字体名映射到字体文件或回落字体族。
+
+Example:
+
+示例：
+
+```json
+{
+  "family_aliases": {
+    "dk-fangsong": ["common/ZhuqueFangsong-Regular.ttf", "serif"],
+    "title": ["Amazon Ember", "serif"],
+    "body-sans": ["sans-serif"]
+  }
+}
+```
+
+## Supported Formats / 支持格式
 
 - `.ttf`
 - `.otf`
@@ -33,51 +79,13 @@ Windows 安装器会把整个 `fonts/` 目录一起打包进去。
 - `.woff`
 - `.woff2`
 
-## 配置文件
+## Policy / 策略
 
-源码默认配置文件是 [font-settings.json](C:/Users/auror/Documents/code/epub/fonts/font-settings.json)。
-安装器版本的用户配置会保存在 `%LocalAppData%\KindleEpubFixer\fonts\font-settings.json`。
-
-它现在主要控制一件事：
-
-- `family_aliases`
-  - 用于把书内私有字体别名，手动绑定到你指定的字体文件或字体家族名
-
-`family_aliases` 的每个值都按顺序尝试：
-
-1. 相对 `fonts/` 的字体文件路径，比如 `common/title.ttf`
-2. 绝对路径字体文件
-3. 系统已安装字体名称
-4. Kindle / 通用字体家族名，比如 `Amazon Ember`、`Bookerly`、`serif`
-
-示例：
-
-```json
-{
-  "family_aliases": {
-    "title": ["common/title.ttf", "Amazon Ember", "Futura"],
-    "cont": ["common/cont.ttf", "Amazon Ember", "Helvetica"],
-    "dk-songti": ["common/dk-songti.ttf", "Source Han Serif SC", "宋体"]
-  }
-}
-```
-
-## 当前回落策略
-
-- 默认只保留 Kindle 字体优先策略
-- 会优先回退到 Kindle 可识别的字体族名或通用字体族，比如 `STSong`、`STKai`、`TBMincho`、`serif`、`sans-serif`
-- 只有当这条路无法稳定表达原字体角色时，才会继续尝试系统字体或预置字体
-- 仿宋相关别名默认会优先命中仓库内置的 `朱雀仿宋`
-
-## 处理逻辑
-
-- 程序会先尝试 `family_aliases` 中的显式映射。
-- 如果没有命中，再按内置的 Kindle 优先角色回落做自动映射。
-- 如果仍然没有合适结果，再尝试系统字体库。
-- GUI 在这些都失败后，才会提示手动选字体文件。
-
-## 建议
-
-- `fonts/common/` 放你长期想复用的字体。
-- `fonts/user/` 放临时测试字体。
-- 真正有版权风险的商业字体，不建议直接提交到公开仓库。
+- Keep valid embedded EPUB fonts.
+- 保留 EPUB 中有效的内嵌字体。
+- Prefer Kindle-recognized families or generic families when they express the role well.
+- 能表达字体角色时，优先使用 Kindle 可识别字体族或通用字体族。
+- Import bundled or user fonts only when a real font file is needed.
+- 只有确实需要真实字体文件时，才导入内置或用户字体。
+- Do not commit commercial fonts unless their license allows redistribution.
+- 不要提交没有再分发授权的商业字体。
