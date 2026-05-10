@@ -56,6 +56,17 @@
   - 修复 NCX 导航层级
 - 输出结构校验
   - 检查处理后 EPUB 中的 XHTML、manifest、spine、图片引用和基础元数据是否仍然有效
+- ESJZone 网页转制
+  - 从 ESJZone 详情页自动获取书籍信息、目录、正文与正文图片并生成 EPUB
+  - 默认使用 `https://www.esjzone.cc/`，同时兼容旧的 `https://www.esjzone.one/` 详情页
+  - 支持弹出网页登录并自动读取 Cookie，也可以手动粘贴和选择记住 Cookie
+  - 章节范围留空时默认抓取全部章节，可输入 `10` 或 `1-10` 做小范围测试
+  - 目录只写入可点击章节，自动跳过 ESJZone 详情页里不可点击的分卷标题
+  - 自动清理正文里每段之间的假空行，同时保留连续空行代表的场景/视角切换留白
+  - 使用 Kindle 友好的通用字体族：正文 `sans-serif`，章节标题 `serif`
+  - 正文图片会写入 EPUB 资源；WebP 和动画图片会转为静态 JPEG 首帧
+  - ESJZone 作为书源读取器输出统一小说对象，再交给独立 EPUB 转换管线
+  - 转换管线直接生成 Kindle 友好的 EPUB，并对输出结构做校验
 
 ## 1.4.0 正式版重点
 
@@ -126,6 +137,7 @@ GUI 现已改为原生 WinUI 3 / Windows App SDK 前端；Python 只作为 EPUB 
 - 表格式任务队列、单本选择、单本进度、可调列宽与单本日志
 - 设置默认输出目录
 - 管理字体库与字体回落别名
+- 从 ESJZone 详情页转制 EPUB
 - 查看版本、内置字体与项目说明
 
 ### 命令行
@@ -133,6 +145,7 @@ GUI 现已改为原生 WinUI 3 / Windows App SDK 前端；Python 只作为 EPUB 
 ```bash
 python main.py "input.epub"
 python main.py "input.epub" "output.epub"
+python main.py esjzone "https://www.esjzone.cc/detail/xxxx.html" "output.epub"
 ```
 
 如果不指定输出路径，默认输出到输入文件同目录下的 `转换后` 文件夹。

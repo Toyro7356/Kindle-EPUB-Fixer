@@ -21,6 +21,7 @@ public sealed partial class MainWindow : Window
     private nint _oldWndProc;
     private HomePage? _homePage;
     private SettingsPage? _settingsPage;
+    private EsjzonePage? _esjzonePage;
     private AboutPage? _aboutPage;
 
     public MainWindow()
@@ -114,6 +115,11 @@ public sealed partial class MainWindow : Window
                 _settingsPage ??= CreateSettingsPage();
                 ContentHost.Children.Add(_settingsPage);
                 break;
+            case "Esjzone":
+                _esjzonePage ??= CreateEsjzonePage();
+                _esjzonePage.RefreshSettings();
+                ContentHost.Children.Add(_esjzonePage);
+                break;
             case "About":
                 _aboutPage ??= new AboutPage();
                 ContentHost.Children.Add(_aboutPage);
@@ -136,7 +142,18 @@ public sealed partial class MainWindow : Window
     private SettingsPage CreateSettingsPage()
     {
         var page = new SettingsPage();
-        page.SettingsSaved += (_, _) => _homePage?.RefreshSettings();
+        page.SettingsSaved += (_, _) =>
+        {
+            _homePage?.RefreshSettings();
+            _esjzonePage?.RefreshSettings();
+        };
+        return page;
+    }
+
+    private EsjzonePage CreateEsjzonePage()
+    {
+        var page = new EsjzonePage();
+        page.StatusChanged += (_, status) => StatusText.Text = status;
         return page;
     }
 

@@ -1,0 +1,159 @@
+<UserControl
+    x:Class="KindleEpubFixer.WinUI.Views.EsjzonePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid RowSpacing="14" Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="UrlBox"
+                Height="40"
+                PlaceholderText="https://www.esjzone.cc/detail/..."
+                TextChanged="Input_TextChanged" />
+
+            <TextBox
+                x:Name="MaxChaptersBox"
+                Grid.Column="1"
+                Width="142"
+                Height="40"
+                PlaceholderText="全部 / 1-10"
+                TextChanged="Input_TextChanged" />
+
+            <Button
+                x:Name="StartButton"
+                Grid.Column="2"
+                Height="40"
+                MinWidth="132"
+                Padding="18,0"
+                Click="StartButton_Click"
+                Style="{ThemeResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="15" Glyph="&#xE768;" />
+                    <TextBlock VerticalAlignment="Center" Text="开始转制" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="1" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="OutputDirBox"
+                Height="40"
+                PlaceholderText="输出目录"
+                TextChanged="Input_TextChanged" />
+
+            <Button
+                Grid.Column="1"
+                Height="40"
+                MinWidth="112"
+                Click="BrowseOutput_Click">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="15" Glyph="&#xE8B7;" />
+                    <TextBlock VerticalAlignment="Center" Text="选择目录" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="2" ColumnSpacing="14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="360" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource SubtleBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12">
+                <Grid RowSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock FontWeight="SemiBold" Text="登录态 Cookie" />
+                        <CheckBox
+                            x:Name="RememberCookieBox"
+                            Grid.Column="1"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            Checked="RememberCookie_Changed"
+                            Content="记住"
+                            Unchecked="RememberCookie_Changed" />
+                        <Button
+                            Grid.Column="2"
+                            MinWidth="104"
+                            Padding="12,4"
+                            Click="Login_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="13" Glyph="&#xE774;" />
+                                <TextBlock VerticalAlignment="Center" Text="网页登录" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <TextBox
+                        x:Name="CookieBox"
+                        Grid.Row="1"
+                        AcceptsReturn="True"
+                        TextWrapping="Wrap"
+                        PlaceholderText="网页登录后自动填入；也可以手动粘贴 name=value; name2=value2"
+                        TextChanged="Input_TextChanged" />
+                </Grid>
+            </Border>
+
+            <Border
+                Grid.Column="1"
+                Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource SubtleBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12">
+                <Grid RowSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock FontWeight="SemiBold" Text="日志" />
+                    <TextBox
+                        x:Name="LogBox"
+                        Grid.Row="1"
+                        AcceptsReturn="True"
+                        IsReadOnly="True"
+                        TextWrapping="Wrap" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <StackPanel Grid.Row="3" Spacing="8">
+            <ProgressBar x:Name="Progress" Maximum="100" />
+            <TextBlock x:Name="OutputText" Foreground="{StaticResource MutedTextBrush}" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+    </Grid>
+</UserControl>
