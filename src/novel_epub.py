@@ -190,7 +190,6 @@ class KindleNovelEpubConverter:
         chapter_index = 0
         for entry in book.chapters:
             if entry.is_volume:
-                nav_items.append((entry.title, "", True))
                 continue
 
             chapter_index += 1
@@ -297,6 +296,7 @@ class KindleNovelEpubConverter:
     def _write_nav(self, path: Path, book: NovelBook, nav_items: list[tuple[str, str, bool]]) -> None:
         lines = [
             '<?xml version="1.0" encoding="utf-8"?>',
+            "<!DOCTYPE html>",
             f'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="{html_lib.escape(book.language)}" xml:lang="{html_lib.escape(book.language)}">',
             "<head>",
             f"<title>{html_lib.escape(book.title)} - 目录</title>",
@@ -307,9 +307,8 @@ class KindleNovelEpubConverter:
         ]
         for title, href, is_volume in nav_items:
             if is_volume or not href:
-                lines.append(f'<li><span>{html_lib.escape(title)}</span></li>')
-            else:
-                lines.append(f'<li><a href="{html_lib.escape(href)}">{html_lib.escape(title)}</a></li>')
+                continue
+            lines.append(f'<li><a href="{html_lib.escape(href)}">{html_lib.escape(title)}</a></li>')
         lines.extend(["</ol></nav>", "</body></html>"])
         path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -422,6 +421,7 @@ blockquote {
 
 
 XHTML_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="{language}" xml:lang="{language}">
 <head>
   <title>{title}</title>

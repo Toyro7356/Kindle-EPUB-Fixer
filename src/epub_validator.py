@@ -141,6 +141,7 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
             broken_font_refs: List[str] = []
             xhtml_without_viewport: List[str] = []
             xhtml_with_script: List[str] = []
+            xhtml_missing_structure: List[str] = []
             webp_in_zip: List[str] = []
 
             def _scan_font_refs(owner_href: str, owner_resolved: str, content: str) -> None:
@@ -180,6 +181,16 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
 
                 if "<script" in content.lower():
                     xhtml_with_script.append(href)
+
+                if book_type == "novel":
+                    lowered_content = content.lower()
+                    if (
+                        "<!doctype" not in lowered_content
+                        or "<html" not in lowered_content
+                        or "<head" not in lowered_content
+                        or "<body" not in lowered_content
+                    ):
+                        xhtml_missing_structure.append(href)
 
                 _scan_font_refs(href, resolved, content)
 
@@ -229,6 +240,10 @@ def validate_epub(epub_path: str, book_type: str = "") -> List[str]:
                 errors.append(f"Found {len(broken_font_refs)} broken font references: {broken_font_refs[:3]}")
             if xhtml_with_script:
                 errors.append(f"Found {len(xhtml_with_script)} XHTML files still containing scripts: {xhtml_with_script[:3]}")
+            if xhtml_missing_structure:
+                errors.append(
+                    f"Found {len(xhtml_missing_structure)} generated XHTML files missing doctype/html/head/body: {xhtml_missing_structure[:3]}"
+                )
             if script_items:
                 errors.append(f"Found {len(script_items)} JavaScript files: {script_items[:3]}")
 

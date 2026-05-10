@@ -3,6 +3,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
@@ -17,6 +18,7 @@ public sealed partial class EsjzonePage : UserControl
     private readonly SettingsStore _settings = new();
     private CancellationTokenSource? _cancellation;
     private bool _isRunning;
+    private bool _isLoadingSettings;
 
     public EsjzonePage()
     {
@@ -29,11 +31,18 @@ public sealed partial class EsjzonePage : UserControl
 
     public void RefreshSettings()
     {
+        _isLoadingSettings = true;
         _settings.LoadAppSettings();
         if (string.IsNullOrWhiteSpace(OutputDirBox.Text))
         {
             OutputDirBox.Text = _settings.DefaultOutputDirectory;
         }
+        RememberCookieBox.IsChecked = _settings.RememberEsjzoneCookie;
+        if (_settings.RememberEsjzoneCookie && string.IsNullOrWhiteSpace(CookieBox.Text))
+        {
+            CookieBox.Text = _settings.EsjzoneCookie;
+        }
+        _isLoadingSettings = false;
     }
 
     private async void BrowseOutput_Click(object sender, RoutedEventArgs e)
@@ -71,11 +80,13 @@ public sealed partial class EsjzonePage : UserControl
             return;
         }
 
-        if (!TryGetMaxChapters(out var maxChapters))
+        if (!TryGetChapterSelection(out var maxChapters, out var chapterStart, out var chapterEnd))
         {
-            App.MainWindowInstance?.ShowNotification("章节数无效", "留空会自动抓取全部章节；只测试前几章时再输入正整数。", InfoBarSeverity.Warning);
+            App.MainWindowInstance?.ShowNotification("章节范围无效", "留空会抓取全部章节；可以输入 10 或 1-10。", InfoBarSeverity.Warning);
             return;
         }
+
+        SaveCookiePreference();
 
         _isRunning = true;
         _cancellation = new CancellationTokenSource();
@@ -92,6 +103,8 @@ public sealed partial class EsjzonePage : UserControl
                 string.IsNullOrWhiteSpace(OutputDirBox.Text) ? null : OutputDirBox.Text.Trim(),
                 CookieBox.Text,
                 maxChapters,
+                chapterStart,
+                chapterEnd,
                 AppendLog,
                 progress => DispatcherQueue.TryEnqueue(() =>
                 {
@@ -146,22 +159,54 @@ public sealed partial class EsjzonePage : UserControl
         });
     }
 
-    private bool TryGetMaxChapters(out int? maxChapters)
+    private void RememberCookie_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_isLoadingSettings)
+        {
+            return;
+        }
+
+        SaveCookiePreference();
+    }
+
+    private void SaveCookiePreference()
+    {
+        _settings.RememberEsjzoneCookie = RememberCookieBox.IsChecked == true;
+        _settings.EsjzoneCookie = _settings.RememberEsjzoneCookie ? CookieBox.Text.Trim() : string.Empty;
+        _settings.SaveAppSettings();
+    }
+
+    private bool TryGetChapterSelection(out int? maxChapters, out int? chapterStart, out int? chapterEnd)
     {
         maxChapters = null;
+        chapterStart = null;
+        chapterEnd = null;
         var text = MaxChaptersBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(text))
         {
             return true;
         }
 
-        if (int.TryParse(text, out var value) && value > 0)
+        var singleMatch = Regex.Match(text, @"^(\d+)\s*(?:话|話|章|章节|章節)?$");
+        if (singleMatch.Success && int.TryParse(singleMatch.Groups[1].Value, out var value) && value > 0)
         {
             maxChapters = value;
             return true;
         }
 
-        return false;
+        var rangeMatch = Regex.Match(text, @"^(\d+)\s*(?:-|~|～|—|–|至|到)\s*(\d+)\s*(?:话|話|章|章节|章節)?$");
+        if (!rangeMatch.Success
+            || !int.TryParse(rangeMatch.Groups[1].Value, out var start)
+            || !int.TryParse(rangeMatch.Groups[2].Value, out var end)
+            || start <= 0
+            || end < start)
+        {
+            return false;
+        }
+
+        chapterStart = start;
+        chapterEnd = end;
+        return true;
     }
 
     private static bool IsSupportedEsjzoneUrl(string url)
@@ -234,6 +279,7 @@ public sealed partial class EsjzonePage : UserControl
                 }
 
                 CookieBox.Text = cookieText;
+                SaveCookiePreference();
                 statusText.Text = "已读取 Cookie。窗口会自动关闭。";
                 if (notify)
                 {

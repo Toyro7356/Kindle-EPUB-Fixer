@@ -73,6 +73,8 @@ class EsjzoneBuildOptions:
     cookie: Optional[str] = None
     cookie_file: Optional[str] = None
     max_chapters: Optional[int] = None
+    chapter_start: Optional[int] = None
+    chapter_end: Optional[int] = None
 
 
 def _text(value: object) -> str:
@@ -122,6 +124,28 @@ def _clean_cookie_header(value: str) -> str:
     value = value.replace("\ufeff", "").replace("\u200b", "").strip()
     value = re.sub(r"[\r\n\t]+", "", value)
     return "; ".join(part.strip() for part in value.split(";") if part.strip())
+
+
+def _clean_labeled_value(value: str, *labels: str) -> str:
+    text = _text(value)
+    for label in labels:
+        text = re.sub(rf"^\s*{re.escape(label)}\s*[:：]?\s*", "", text)
+    return text.strip(" :：")
+
+
+def _detail_value(doc: etree._Element, *labels: str) -> str:
+    items = doc.xpath("//ul[contains(concat(' ', normalize-space(@class), ' '), ' book-detail ')]//li")
+    for item in items:
+        text = _text(item.text_content())
+        if not any(label in text for label in labels):
+            continue
+        link_value = _first_text(item, ".//a[1]/text()")
+        if link_value and not any(link_value.strip(" :：") == label for label in labels):
+            return link_value
+        value = _clean_labeled_value(text, *labels)
+        if value:
+            return value
+    return ""
 
 
 def _read_cookie(cookie: Optional[str], cookie_file: Optional[str]) -> str:
@@ -257,7 +281,13 @@ class EsjzoneReader:
             )
         return results
 
-    def read(self, book_url: str, max_chapters: Optional[int] = None) -> NovelBook:
+    def read(
+        self,
+        book_url: str,
+        max_chapters: Optional[int] = None,
+        chapter_start: Optional[int] = None,
+        chapter_end: Optional[int] = None,
+    ) -> NovelBook:
         info = self.fetch_book_info(book_url)
         if not info.chapters:
             raise RuntimeError("No chapters found on ESJZone detail page")
@@ -265,19 +295,20 @@ class EsjzoneReader:
         assets: list[NovelAsset] = []
         cover = self._download_cover(info)
         selected = [chapter for chapter in info.chapters if not chapter.is_volume]
-        if max_chapters is not None:
+        if chapter_start is not None or chapter_end is not None:
+            start = max(1, chapter_start or 1)
+            end = chapter_end or len(selected)
+            if end < start:
+                raise RuntimeError("Invalid chapter range: end is before start")
+            selected = selected[start - 1 : end]
+        elif max_chapters is not None:
             selected = selected[: max(0, max_chapters)]
-        selected_urls = {chapter.url for chapter in selected}
+        if not selected:
+            raise RuntimeError("No readable chapters matched the requested range")
 
         novel_chapters: list[NovelChapter] = []
         content_index = 0
-        for entry in info.chapters:
-            if entry.is_volume:
-                novel_chapters.append(NovelChapter(title=entry.title, is_volume=True))
-                continue
-            if entry.url not in selected_urls:
-                continue
-
+        for entry in selected:
             content_index += 1
             self.log(f"Reading chapter {content_index}/{len(selected)}: {entry.title}")
             raw_html = self.fetch_chapter_html(entry)
@@ -314,11 +345,7 @@ class EsjzoneReader:
             "//div[contains(concat(' ', normalize-space(@class), ' '), ' book-detail ')]/h2/text()"
             "|//h2/text()",
         )
-        author = _first_text(
-            doc,
-            "(//ul[contains(concat(' ', normalize-space(@class), ' '), ' book-detail ')]//li)[2]//a/text()"
-            "|(//ul[contains(concat(' ', normalize-space(@class), ' '), ' book-detail ')]//li)[2]//text()",
-        )
+        author = _detail_value(doc, "作者")
         cover = _first_attr(doc, "//div[contains(@class, 'col-md-3')]//img[1]/@src")
         if "empty" in cover:
             cover = ""
@@ -335,12 +362,7 @@ class EsjzoneReader:
         if desc:
             intro_parts.append(_inner_html(desc[0]))
 
-        kind_items = [
-            _text(item.text_content())
-            for item in doc.xpath("//ul[contains(concat(' ', normalize-space(@class), ' '), ' book-detail ')]//li")
-            if _text(item.text_content())
-        ]
-        kind = "；".join(kind_items[-2:]) if len(kind_items) >= 2 else ""
+        kind = _detail_value(doc, "类型", "類型")
         word_count = _first_text(doc, "//*[contains(concat(' ', normalize-space(@class), ' '), ' icon-file-text ')]/parent::*//text()")
 
         chapters = self._parse_chapters(doc)
@@ -373,8 +395,6 @@ class EsjzoneReader:
             url = self.client.absolute_url(href) if href else ""
 
             if is_volume:
-                if title:
-                    chapters.append(EsjzoneChapterRef(title=title, url="", is_volume=True))
                 continue
             if not title or not url or url in seen_urls:
                 continue
@@ -467,7 +487,12 @@ def build_esjzone_epub(options: EsjzoneBuildOptions, log: LogCallback = _default
     cookie = _read_cookie(options.cookie, options.cookie_file)
     reader = EsjzoneReader(EsjzoneClient(cookie=cookie), log)
     log("Reading ESJZone source data")
-    book = reader.read(options.book_url, max_chapters=options.max_chapters)
+    book = reader.read(
+        options.book_url,
+        max_chapters=options.max_chapters,
+        chapter_start=options.chapter_start,
+        chapter_end=options.chapter_end,
+    )
     log("Converting source data to Kindle EPUB")
     converter = KindleNovelEpubConverter(log)
     return converter.convert(

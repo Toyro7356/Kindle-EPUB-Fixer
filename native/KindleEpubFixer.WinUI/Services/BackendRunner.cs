@@ -26,6 +26,8 @@ public sealed class BackendRunner
         string? outputDirectory,
         string? cookie,
         int? maxChapters,
+        int? chapterStart,
+        int? chapterEnd,
         Action<string> onLog,
         Action<BackendProgress> onProgress,
         CancellationToken cancellationToken)
@@ -39,7 +41,7 @@ public sealed class BackendRunner
                 await File.WriteAllTextAsync(cookieFile, CleanCookieHeader(cookie), Utf8NoBom, cancellationToken);
             }
 
-            var psi = CreateEsjzoneStartInfo(bookUrl, outputDirectory, cookieFile, maxChapters);
+            var psi = CreateEsjzoneStartInfo(bookUrl, outputDirectory, cookieFile, maxChapters, chapterStart, chapterEnd);
             return await RunAsync(psi, onLog, onProgress, cancellationToken);
         }
         finally
@@ -177,7 +179,9 @@ public sealed class BackendRunner
         string bookUrl,
         string? outputDirectory,
         string? cookieFile,
-        int? maxChapters)
+        int? maxChapters,
+        int? chapterStart,
+        int? chapterEnd)
     {
         var psi = CreateBaseStartInfo();
         psi.ArgumentList.Add("--esjzone-url");
@@ -196,6 +200,16 @@ public sealed class BackendRunner
         {
             psi.ArgumentList.Add("--max-chapters");
             psi.ArgumentList.Add(maxChapters.Value.ToString());
+        }
+        if (chapterStart is > 0)
+        {
+            psi.ArgumentList.Add("--chapter-start");
+            psi.ArgumentList.Add(chapterStart.Value.ToString());
+        }
+        if (chapterEnd is > 0)
+        {
+            psi.ArgumentList.Add("--chapter-end");
+            psi.ArgumentList.Add(chapterEnd.Value.ToString());
         }
 
         return psi;

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,22 @@ from .esjzone import EsjzoneBuildOptions, build_esjzone_epub, search_esjzone
 
 def _emit(event: str, **payload: Any) -> None:
     print(json.dumps({"event": event, **payload}, ensure_ascii=True), flush=True)
+
+
+def _parse_chapter_range(value: str | None) -> tuple[int | None, int | None]:
+    if not value:
+        return None, None
+    text = value.strip()
+    if not text:
+        return None, None
+    match = re.match(r"^(\d+)\s*(?:-|~|～|—|–|至|到)\s*(\d+)\s*(?:话|話|章|章节|章節)?$", text)
+    if not match:
+        raise ValueError("Chapter range must look like 1-10")
+    start = int(match.group(1))
+    end = int(match.group(2))
+    if start <= 0 or end < start:
+        raise ValueError("Chapter range must be positive and ascending")
+    return start, end
 
 
 def _parse_args() -> argparse.Namespace:
@@ -29,6 +46,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--esjzone-cookie", help="Raw ESJZone Cookie header value")
     parser.add_argument("--esjzone-cookie-file", help="Path to a text file containing ESJZone Cookie header value")
     parser.add_argument("--max-chapters", type=int, help="Limit chapter count for ESJZone conversion")
+    parser.add_argument("--chapter-range", help="Fetch an inclusive 1-based ESJZone chapter range, for example 1-10")
+    parser.add_argument("--chapter-start", type=int, help="Fetch ESJZone chapters starting at this 1-based index")
+    parser.add_argument("--chapter-end", type=int, help="Fetch ESJZone chapters through this 1-based index")
     return parser.parse_args()
 
 
@@ -59,6 +79,9 @@ def main() -> None:
 
     if args.esjzone_url:
         try:
+            range_start, range_end = _parse_chapter_range(args.chapter_range)
+            chapter_start = args.chapter_start or range_start
+            chapter_end = args.chapter_end or range_end
             _emit("progress", status="抓取书籍信息", progress=5)
 
             def log(message: str) -> None:
@@ -72,6 +95,8 @@ def main() -> None:
                     cookie=args.esjzone_cookie,
                     cookie_file=args.esjzone_cookie_file,
                     max_chapters=args.max_chapters,
+                    chapter_start=chapter_start,
+                    chapter_end=chapter_end,
                 ),
                 log=log,
             )

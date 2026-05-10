@@ -29,7 +29,7 @@
                 Grid.Column="1"
                 Width="142"
                 Height="40"
-                PlaceholderText="全部章节"
+                PlaceholderText="全部 / 1-10"
                 TextChanged="Input_TextChanged" />
 
             <Button
@@ -93,11 +93,20 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <TextBlock FontWeight="SemiBold" Text="登录态 Cookie" />
-                        <Button
+                        <CheckBox
+                            x:Name="RememberCookieBox"
                             Grid.Column="1"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            Checked="RememberCookie_Changed"
+                            Content="记住"
+                            Unchecked="RememberCookie_Changed" />
+                        <Button
+                            Grid.Column="2"
                             MinWidth="104"
                             Padding="12,4"
                             Click="Login_Click">
