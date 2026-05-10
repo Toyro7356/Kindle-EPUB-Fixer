@@ -85,7 +85,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KindleEpubFixer-Windows-${{ env.RELEASE_TAG }}
+          name: KindleEpubFixer-Windows-${{ github.run_id }}
           path: |
             dist/KindleEpubFixer.Setup.exe
             dist/KindleEpubFixer-*-Setup.exe
