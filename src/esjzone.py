@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import html as html_lib
 import http.client
+import base64
 import re
 import ssl
 import time
@@ -16,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, unquote, urljoin, urlparse
+from urllib.parse import quote, unquote, unquote_to_bytes, urljoin, urlparse
 from urllib.request import Request, build_opener
 
 import lxml.etree as etree
@@ -153,6 +154,73 @@ def _read_cookie(cookie: Optional[str], cookie_file: Optional[str]) -> str:
         return _clean_cookie_header(cookie)
     if cookie_file:
         return _clean_cookie_header(Path(cookie_file).read_text(encoding="utf-8-sig"))
+    return ""
+
+
+def _is_empty_block(element: etree._Element) -> bool:
+    if not isinstance(element.tag, str) or element.tag.lower() not in {"p", "div"}:
+        return False
+    if element.xpath(".//img|.//svg|.//hr|.//table|.//video|.//audio"):
+        return False
+    return not _text(element.text_content())
+
+
+def _normalise_blank_blocks(wrapper: etree._Element) -> None:
+    children = list(wrapper)
+    index = 0
+    while index < len(children):
+        child = children[index]
+        if not _is_empty_block(child):
+            index += 1
+            continue
+
+        run: list[etree._Element] = []
+        while index < len(children) and _is_empty_block(children[index]):
+            run.append(children[index])
+            index += 1
+
+        if len(run) >= 2:
+            keeper = run[0]
+            keeper.clear()
+            keeper.tag = "p"
+            keeper.set("class", "scene-break")
+            keeper.text = "\u00a0"
+            for extra in run[1:]:
+                parent = extra.getparent()
+                if parent is not None:
+                    parent.remove(extra)
+        else:
+            parent = run[0].getparent()
+            if parent is not None:
+                parent.remove(run[0])
+
+
+def _decode_data_image(value: str) -> tuple[bytes, str, str] | None:
+    match = re.match(r"^data:(image/[a-zA-Z0-9.+-]+);?(base64)?,(.*)$", value, re.DOTALL)
+    if not match:
+        return None
+    media_type = match.group(1).lower()
+    payload = match.group(3)
+    try:
+        data = base64.b64decode(payload, validate=False) if match.group(2) else unquote_to_bytes(payload)
+    except Exception:
+        return None
+    suffix = {
+        "image/jpeg": ".jpg",
+        "image/jpg": ".jpg",
+        "image/png": ".png",
+        "image/gif": ".gif",
+        "image/svg+xml": ".svg",
+        "image/webp": ".webp",
+    }.get(media_type, ".jpg")
+    return data, suffix, "image/jpeg" if media_type == "image/jpg" else media_type
+
+
+def _image_source(img: etree._Element) -> str:
+    for attr in ("data-src", "data-original", "data-lazy-src", "src"):
+        value = (img.get(attr) or "").strip()
+        if value and "empty" not in value.lower() and "blank" not in value.lower():
+            return value
     return ""
 
 
@@ -456,18 +524,22 @@ class EsjzoneReader:
                 parent.remove(bad)
 
         image_counter = 0
-        for img in wrapper.xpath(".//img[@src]"):
-            src = img.get("src") or ""
-            if src.startswith("data:"):
+        for img in wrapper.xpath(".//img[@src or @data-src or @data-original or @data-lazy-src]"):
+            src = _image_source(img)
+            if not src:
                 continue
-            image_url = self.client.absolute_url(urljoin(chapter_url, src))
-            try:
-                data = self.client.get_bytes(image_url, referer=chapter_url)
-            except Exception as exc:
-                self.log(f"[Warning] Image download failed: {image_url}: {exc}")
-                continue
+            decoded = _decode_data_image(src) if src.startswith("data:") else None
+            if decoded:
+                data, suffix, media_type = decoded
+            else:
+                image_url = self.client.absolute_url(urljoin(chapter_url, src))
+                try:
+                    data = self.client.get_bytes(image_url, referer=chapter_url)
+                except Exception as exc:
+                    self.log(f"[Warning] Image download failed: {image_url}: {exc}")
+                    continue
+                suffix, media_type = _guess_image_type(image_url, data)
             image_counter += 1
-            suffix, media_type = _guess_image_type(image_url, data)
             asset_id = f"chapter-{chapter_index:04d}-{image_counter:03d}"
             assets.append(
                 NovelAsset(
@@ -479,7 +551,10 @@ class EsjzoneReader:
             )
             img.set("src", f"asset:{asset_id}")
             img.attrib.pop("data-src", None)
+            img.attrib.pop("data-original", None)
+            img.attrib.pop("data-lazy-src", None)
 
+        _normalise_blank_blocks(wrapper)
         return _inner_html(wrapper)
 
 

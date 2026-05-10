@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using KindleEpubFixer.WinUI.Models;
 using KindleEpubFixer.WinUI.Services;
 using KindleEpubFixer.WinUI.ViewModels;
@@ -93,6 +94,7 @@ public sealed partial class HomePage : UserControl
         SetStartButton(cancelMode: true);
         OverallProgress.Value = 0;
         StatusChanged?.Invoke(this, "处理中");
+        await Task.Yield();
 
         var total = Tasks.Count;
         var success = 0;
@@ -109,6 +111,7 @@ public sealed partial class HomePage : UserControl
                 task.Status = "处理中";
                 task.Progress = 3;
                 StatusChanged?.Invoke(this, $"处理中 {i + 1}/{total}: {task.Name}");
+                await Task.Yield();
 
                 var output = await _backend.ProcessAsync(
                     task.FilePath,
@@ -499,14 +502,16 @@ public sealed partial class HomePage : UserControl
 
     private static ScrollViewer BuildLogViewer(EpubTask task, double minHeight, double maxHeight)
     {
-        return new ScrollViewer
+        var textBlock = new TextBlock
         {
-            Content = new TextBlock
-            {
-                Text = task.Logs.Count == 0 ? "暂无日志。此任务还没有开始处理。" : string.Join(Environment.NewLine, task.Logs),
-                TextWrapping = TextWrapping.NoWrap,
-                IsTextSelectionEnabled = true,
-            },
+            TextWrapping = TextWrapping.Wrap,
+            IsTextSelectionEnabled = true,
+            MinWidth = 420,
+            MaxWidth = 620,
+        };
+        var scrollViewer = new ScrollViewer
+        {
+            Content = textBlock,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             MinHeight = minHeight,
@@ -514,6 +519,21 @@ public sealed partial class HomePage : UserControl
             MinWidth = 420,
             MaxWidth = 620,
         };
+
+        void Refresh()
+        {
+            textBlock.Text = task.Logs.Count == 0
+                ? "暂无日志。此任务还没有开始处理。"
+                : string.Join(Environment.NewLine, task.Logs);
+            scrollViewer.UpdateLayout();
+            scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
+
+        NotifyCollectionChangedEventHandler handler = (_, _) => Refresh();
+        task.Logs.CollectionChanged += handler;
+        scrollViewer.Unloaded += (_, _) => task.Logs.CollectionChanged -= handler;
+        Refresh();
+        return scrollViewer;
     }
 
     private Task ShowMessageAsync(string title, string message, InfoBarSeverity severity = InfoBarSeverity.Informational)

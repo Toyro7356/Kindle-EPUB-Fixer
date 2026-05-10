@@ -80,11 +80,24 @@ def _inner_xml(element: etree._Element) -> str:
 
 def _normalise_image_asset(asset: NovelAsset) -> NovelAsset:
     suffix = Path(asset.filename).suffix.lower()
-    if asset.media_type != "image/webp" and suffix != ".webp":
+    needs_conversion = asset.media_type == "image/webp" or suffix == ".webp"
+    if not needs_conversion and (asset.media_type == "image/gif" or suffix == ".gif"):
+        try:
+            with Image.open(io.BytesIO(asset.data)) as image:
+                needs_conversion = bool(getattr(image, "is_animated", False)) or getattr(image, "n_frames", 1) > 1
+        except Exception:
+            needs_conversion = False
+    if not needs_conversion:
         return asset
 
     with Image.open(io.BytesIO(asset.data)) as image:
-        converted = image.convert("RGB")
+        try:
+            image.seek(0)
+        except EOFError:
+            pass
+        frame = image.convert("RGBA")
+        converted = Image.new("RGB", frame.size, "white")
+        converted.paste(frame, mask=frame.getchannel("A"))
         output = io.BytesIO()
         converted.save(output, "JPEG", quality=92)
 
@@ -179,7 +192,7 @@ class KindleNovelEpubConverter:
         intro_href = "Text/intro.xhtml"
         intro_body = self._book_intro_html(book)
         (oebps / intro_href).write_text(
-            self._chapter_document("书籍信息", intro_body, intro_href, book.language, assets),
+            self._chapter_document("书籍信息", intro_body, intro_href, book.language, assets, show_heading=False),
             encoding="utf-8",
         )
         manifest_items.append(("intro", intro_href, "application/xhtml+xml", ""))
@@ -257,11 +270,13 @@ class KindleNovelEpubConverter:
         owner_href: str,
         language: str,
         assets: dict[str, str],
+        show_heading: bool = True,
     ) -> str:
         body = self._normalise_body_html(body_html, owner_href, assets)
         return XHTML_TEMPLATE.format(
             language=html_lib.escape(language or "zh-CN"),
             title=html_lib.escape(title),
+            heading=f"  <h1>{html_lib.escape(title)}</h1>" if show_heading else "",
             body=body,
         )
 
@@ -392,18 +407,24 @@ CONTAINER_XML = """<?xml version="1.0" encoding="utf-8"?>
 
 STYLE_CSS = """@charset "utf-8";
 body {
-  font-family: serif;
-  line-height: 1.75;
+  font-family: sans-serif;
+  line-height: 1.72;
   margin: 0 5%;
 }
 h1 {
+  font-family: serif;
   font-size: 1.35em;
   line-height: 1.35;
   margin: 1.2em 0;
   text-align: center;
 }
 p {
-  margin: 0.75em 0;
+  margin: 0.45em 0;
+}
+.scene-break {
+  line-height: 1;
+  margin: 1.25em 0;
+  text-align: center;
 }
 .cover {
   text-align: center;
@@ -429,7 +450,7 @@ XHTML_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
   <link rel="stylesheet" type="text/css" href="../Styles/style.css"/>
 </head>
 <body>
-  <h1>{title}</h1>
+{heading}
   {body}
 </body>
 </html>

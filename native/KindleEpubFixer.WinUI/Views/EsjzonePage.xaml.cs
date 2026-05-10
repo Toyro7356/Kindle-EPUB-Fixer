@@ -95,6 +95,7 @@ public sealed partial class EsjzonePage : UserControl
         LogBox.Text = string.Empty;
         OutputText.Text = string.Empty;
         StatusChanged?.Invoke(this, "ESJZone 转制中");
+        await Task.Yield();
 
         try
         {
@@ -156,6 +157,8 @@ public sealed partial class EsjzonePage : UserControl
             }
 
             LogBox.Text += message;
+            LogBox.SelectionStart = LogBox.Text.Length;
+            LogBox.SelectionLength = 0;
         });
     }
 
