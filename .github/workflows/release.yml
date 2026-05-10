@@ -1,0 +1,107 @@
+name: Build and publish release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v2.0.0-beta.1"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  windows-installer:
+    name: Windows installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            "RELEASE_TAG=${{ github.event.inputs.tag }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            "RELEASE_TAG=${env:GITHUB_REF_NAME}" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
+      - name: Check out release ref
+        shell: pwsh
+        run: |
+          git fetch --tags --force
+          git checkout $env:RELEASE_TAG
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip
+          .\.venv\Scripts\pip.exe install -r requirements.txt
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File build_winui.ps1
+
+      - name: Prepare release notes
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_TAG.TrimStart("v")
+          $lines = Get-Content CHANGELOG.md
+          $startMatch = $lines | Select-String -Pattern ("^## \[" + [regex]::Escape($version) + "\]") | Select-Object -First 1
+          New-Item -ItemType Directory -Path build -Force | Out-Null
+          if ($null -eq $startMatch) {
+            @(
+              "Kindle EPUB Fixer $env:RELEASE_TAG"
+              ""
+              "See CHANGELOG.md for details."
+              ""
+              "请查看 CHANGELOG.md 获取变更说明。"
+            ) | Set-Content -LiteralPath build\release-notes.md -Encoding utf8
+            exit 0
+          }
+          $start = $startMatch.LineNumber - 1
+          $nextMatch = $lines | Select-String -Pattern "^## \[" | Where-Object { $_.LineNumber -gt $startMatch.LineNumber } | Select-Object -First 1
+          $end = if ($null -eq $nextMatch) { $lines.Count - 1 } else { $nextMatch.LineNumber - 2 }
+          $lines[$start..$end] | Set-Content -LiteralPath build\release-notes.md -Encoding utf8
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KindleEpubFixer-Windows-${{ env.RELEASE_TAG }}
+          path: |
+            dist/KindleEpubFixer.Setup.exe
+            dist/KindleEpubFixer-*-Setup.exe
+
+      - name: Create or update prerelease
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = $env:RELEASE_TAG.TrimStart("v")
+          $assets = @(
+            "dist\KindleEpubFixer.Setup.exe",
+            "dist\KindleEpubFixer-$version-Setup.exe"
+          )
+          if (gh release view $env:RELEASE_TAG *> $null) {
+            gh release upload $env:RELEASE_TAG $assets --clobber
+            gh release edit $env:RELEASE_TAG --title "Kindle EPUB Fixer $env:RELEASE_TAG" --notes-file build\release-notes.md --prerelease
+          } else {
+            gh release create $env:RELEASE_TAG $assets --title "Kindle EPUB Fixer $env:RELEASE_TAG" --notes-file build\release-notes.md --prerelease
+          }
