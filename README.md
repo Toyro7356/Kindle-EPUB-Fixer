@@ -98,11 +98,14 @@ powershell -ExecutionPolicy Bypass -File tools\install_dotnet_sdk.ps1
 
 ## 发布 / Release
 
-Beta 版本从 `beta` 分支打签名 tag，GitHub Actions 会构建安装包并创建 prerelease。
+Beta 版本从 `beta` 分支打签名 tag，正式版从 `main` 分支打签名 tag。GitHub Actions 会构建安装包并发布到对应 release。
 
-Beta releases are tagged from `beta` with a signed tag. GitHub Actions builds the installer and creates a prerelease.
+Beta releases are tagged from `beta`; stable releases are tagged from `main`. GitHub Actions builds the installer and publishes the matching release.
 
 ```bash
 git tag -s v2.0.0-beta.1 -m "release: v2.0.0-beta.1"
 git push origin beta v2.0.0-beta.1
+
+git tag -s v2.0.0 -m "release: v2.0.0"
+git push origin main v2.0.0
 ```

@@ -58,6 +58,6 @@ dist\KindleEpubFixer.Setup.exe /install /quiet /dir "C:\Path\Kindle EPUB Fixer" 
 
 ## Release / 发布
 
-Signed beta tags trigger GitHub Actions. The workflow builds the installer on Windows and uploads both setup executables to a GitHub prerelease.
+Signed tags trigger GitHub Actions. Tags with a hyphen, such as `v2.0.0-beta.1`, are published as prereleases. Stable tags, such as `v2.0.0`, are published as normal releases.
 
-签名 beta tag 会触发 GitHub Actions，在 Windows runner 上构建安装包，并把两个安装器上传到 GitHub prerelease。
+签名 tag 会触发 GitHub Actions。带连字符的 tag，例如 `v2.0.0-beta.1`，会发布为 prerelease；正式 tag，例如 `v2.0.0`，会发布为普通 release。

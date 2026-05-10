@@ -4,25 +4,18 @@ All notable changes are documented here.
 
 本文件记录值得发布说明的变更，避免列出样本数量或内部验证流水账。
 
-## [Unreleased]
-
-### Fixed / 修复
-
-- Fixed ESJZone image downloads when remote image filenames contain Chinese, Japanese, or other non-ASCII characters.
-- 修复 ESJZone 远程图片文件名包含中文、日文或其他非 ASCII 字符时下载失败的问题。
-
-## [2.0.0-beta.1] - 2026-05-10
+## [2.0.0] - 2026-05-10
 
 ### Added / 新增
 
-- Added a web-novel source model and a standalone Kindle EPUB generation pipeline.
+- Added a shared web-novel source model and a standalone Kindle EPUB generation pipeline.
 - 新增网页小说统一书源模型和独立 Kindle EPUB 生成管线。
 - Added ESJZone conversion with web login Cookie capture, metadata parsing, chapter fetching, image handling, chapter ranges, and output validation.
 - 新增 ESJZone 转制：网页登录 Cookie、书籍信息、目录、正文、图片、章节范围和输出校验。
 - Added WinUI controls for ESJZone conversion, remembered Cookie storage, output directory selection, progress, and logs.
 - 新增 WinUI ESJZone 页面，支持记住 Cookie、选择输出目录、进度和日志。
-- Added GitHub Actions release automation for signed tag prereleases.
-- 新增签名 tag 触发的 GitHub Actions prerelease 自动构建与上传。
+- Added GitHub Actions release automation for signed beta and stable tags.
+- 新增签名 beta / 正式 tag 触发的 GitHub Actions 自动构建与上传。
 
 ### Changed / 调整
 
@@ -36,6 +29,8 @@ All notable changes are documented here.
 - 目录只写入可点击章节，跳过网页上的不可点击分卷标题。
 - Changed WebP and animated image assets to static JPEG first frames for Kindle compatibility.
 - WebP 和动画图片转为静态 JPEG 首帧，以提高 Kindle 兼容性。
+- Changed release automation so tags containing `-` become prereleases and stable tags become normal releases.
+- 发布自动化改为：带 `-` 的 tag 发布为 prerelease，正式 tag 发布为普通 release。
 
 ### Fixed / 修复
 
@@ -43,16 +38,23 @@ All notable changes are documented here.
 - 修复 Cookie 粘贴中的 BOM 和换行导致请求头非法的问题。
 - Fixed generated XHTML structure so Sigil does not need to repair missing document wrappers.
 - 修复生成 XHTML 的基础结构，避免 Sigil 打开时自动修复。
-- Fixed author metadata extraction, duplicate TOC entries, and non-clickable chapter headings.
-- 修复作者元数据、目录重复和不可点击章节标题问题。
+- Fixed ESJZone author metadata extraction, duplicate TOC entries, and non-clickable chapter headings.
+- 修复 ESJZone 作者元数据、目录重复和不可点击章节标题问题。
 - Fixed artificial blank paragraphs while preserving intentional scene breaks.
 - 删除正文里的假空行，同时保留场景或视角切换留白。
-- Fixed inline `data:image` and lazy-loaded images so they are written as EPUB resources.
-- 修复正文内嵌图片和懒加载图片，确保写入 EPUB 资源。
+- Fixed inline `data:image`, lazy-loaded images, and `srcset` image sources so they are written as EPUB resources.
+- 修复正文内嵌图片、懒加载图片和 `srcset` 图片源，确保写入 EPUB 资源。
+- Fixed ESJZone image downloads when remote image filenames contain Chinese, Japanese, or other non-ASCII characters.
+- 修复 ESJZone 远程图片文件名包含中文、日文或其他非 ASCII 字符时下载失败的问题。
 - Fixed stale encryption metadata cleanup and image path rewriting inherited from the 1.4 line.
 - 保留 1.4 线中的旧加密元数据清理和图片路径重写修复。
 - Fixed WinUI start-button responsiveness and live log scrolling/wrapping.
 - 修复 WinUI 开始按钮短暂卡顿、日志不实时刷新和不自动滚动的问题。
+
+## [2.0.0-beta.1] - 2026-05-10
+
+- First public beta of the ESJZone-to-EPUB pipeline and release automation.
+- ESJZone 转 EPUB 管线和发布自动化的首个公开 beta。
 
 ## [1.4.0] - 2026-05-08
 

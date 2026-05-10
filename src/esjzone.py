@@ -221,6 +221,19 @@ def _image_source(img: etree._Element) -> str:
         value = (img.get(attr) or "").strip()
         if value and "empty" not in value.lower() and "blank" not in value.lower():
             return value
+    for attr in ("data-srcset", "srcset"):
+        value = _srcset_source(img.get(attr) or "")
+        if value and "empty" not in value.lower() and "blank" not in value.lower():
+            return value
+    return ""
+
+
+def _srcset_source(value: str) -> str:
+    candidates = [part.strip() for part in value.split(",") if part.strip()]
+    for candidate in reversed(candidates):
+        pieces = candidate.split()
+        if pieces:
+            return pieces[0]
     return ""
 
 
@@ -532,7 +545,7 @@ class EsjzoneReader:
                 parent.remove(bad)
 
         image_counter = 0
-        for img in wrapper.xpath(".//img[@src or @data-src or @data-original or @data-lazy-src]"):
+        for img in wrapper.xpath(".//img[@src or @data-src or @data-original or @data-lazy-src or @srcset or @data-srcset]"):
             src = _image_source(img)
             if not src:
                 continue
@@ -561,6 +574,8 @@ class EsjzoneReader:
             img.attrib.pop("data-src", None)
             img.attrib.pop("data-original", None)
             img.attrib.pop("data-lazy-src", None)
+            img.attrib.pop("srcset", None)
+            img.attrib.pop("data-srcset", None)
 
         _normalise_blank_blocks(wrapper)
         return _inner_html(wrapper)

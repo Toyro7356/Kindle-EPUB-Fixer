@@ -105,3 +105,13 @@ Beta release:
 正式版发布从 `main` 打 tag。Beta 发布从 `beta` 打 tag。
 
 Stable releases are tagged from `main`. Beta releases are tagged from `beta`.
+
+Stable release:
+
+正式版发布：
+
+1. Finish and push the `beta` release candidate.
+2. Merge `beta` into `main`.
+3. Update the stable changelog section so it includes all beta changes since the previous stable release.
+4. Create a signed stable tag from `main`.
+5. Push `main` and the tag. GitHub Actions builds the installer and creates the stable release.
