@@ -69,6 +69,49 @@ def _relative_href(owner_href: str, target_href: str) -> str:
     return posixpath.relpath(target_href, owner_dir)
 
 
+_XML_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
+_XML_TEXT_RE = re.compile(
+    "[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x84\x86-\x9f\ufffe\uffff]"
+)
+
+
+def _clean_xml_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    return _XML_TEXT_RE.sub("", value)
+
+
+def _xml_escape(value: object) -> str:
+    cleaned = _clean_xml_text(str(value or "")) or ""
+    return html_lib.escape(cleaned)
+
+
+def _is_safe_xml_name(name: str) -> bool:
+    return bool(name and ":" not in name and _XML_NAME_RE.match(name))
+
+
+def _sanitize_xhtml_fragment(wrapper: etree._Element) -> None:
+    for element in wrapper.iter():
+        if not isinstance(element.tag, str):
+            continue
+
+        if not _is_safe_xml_name(element.tag):
+            element.tag = "span"
+
+        element.text = _clean_xml_text(element.text)
+        element.tail = _clean_xml_text(element.tail)
+
+        for attr, value in list(element.attrib.items()):
+            if not _is_safe_xml_name(attr):
+                element.attrib.pop(attr, None)
+                continue
+            cleaned = _clean_xml_text(value)
+            if cleaned is None:
+                element.attrib.pop(attr, None)
+            else:
+                element.set(attr, cleaned)
+
+
 def _inner_xml(element: etree._Element) -> str:
     chunks: list[str] = []
     if element.text:
@@ -250,17 +293,17 @@ class KindleNovelEpubConverter:
     def _book_intro_html(self, book: NovelBook) -> str:
         parts = []
         if book.cover is not None:
-            parts.append(f'<p class="cover"><img src="asset:{html_lib.escape(book.cover.id)}" alt="cover"/></p>')
+            parts.append(f'<p class="cover"><img src="asset:{_xml_escape(book.cover.id)}" alt="cover"/></p>')
         if book.intro_html:
             parts.append(book.intro_html)
         if book.kind:
-            parts.append(f"<p>分类：{html_lib.escape(book.kind)}</p>")
+            parts.append(f"<p>分类：{_xml_escape(book.kind)}</p>")
         if book.word_count:
-            parts.append(f"<p>字数：{html_lib.escape(book.word_count)}</p>")
+            parts.append(f"<p>字数：{_xml_escape(book.word_count)}</p>")
         if book.latest_chapter:
-            parts.append(f"<p>最新章节：{html_lib.escape(book.latest_chapter)}</p>")
+            parts.append(f"<p>最新章节：{_xml_escape(book.latest_chapter)}</p>")
         if book.source_url:
-            parts.append(f"<p>来源：{html_lib.escape(book.source_url)}</p>")
+            parts.append(f"<p>来源：{_xml_escape(book.source_url)}</p>")
         return "\n".join(parts) or "<p></p>"
 
     def _chapter_document(
@@ -274,9 +317,9 @@ class KindleNovelEpubConverter:
     ) -> str:
         body = self._normalise_body_html(body_html, owner_href, assets)
         return XHTML_TEMPLATE.format(
-            language=html_lib.escape(language or "zh-CN"),
-            title=html_lib.escape(title),
-            heading=f"  <h1>{html_lib.escape(title)}</h1>" if show_heading else "",
+            language=_xml_escape(language or "zh-CN"),
+            title=_xml_escape(title),
+            heading=f"  <h1>{_xml_escape(title)}</h1>" if show_heading else "",
             body=body,
         )
 
@@ -306,15 +349,24 @@ class KindleNovelEpubConverter:
                 else:
                     element.attrib.pop(attr, None)
 
+        for image in wrapper.xpath(".//img"):
+            src = (image.get("src") or "").strip()
+            if src.startswith(("../Images/", "Images/")):
+                continue
+            parent = image.getparent()
+            if parent is not None:
+                parent.remove(image)
+
+        _sanitize_xhtml_fragment(wrapper)
         return _inner_xml(wrapper)
 
     def _write_nav(self, path: Path, book: NovelBook, nav_items: list[tuple[str, str, bool]]) -> None:
         lines = [
             '<?xml version="1.0" encoding="utf-8"?>',
             "<!DOCTYPE html>",
-            f'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="{html_lib.escape(book.language)}" xml:lang="{html_lib.escape(book.language)}">',
+            f'<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="{_xml_escape(book.language)}" xml:lang="{_xml_escape(book.language)}">',
             "<head>",
-            f"<title>{html_lib.escape(book.title)} - 目录</title>",
+            f"<title>{_xml_escape(book.title)} - 目录</title>",
             '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>',
             '<link rel="stylesheet" type="text/css" href="Styles/style.css"/>',
             "</head><body>",
@@ -323,7 +375,7 @@ class KindleNovelEpubConverter:
         for title, href, is_volume in nav_items:
             if is_volume or not href:
                 continue
-            lines.append(f'<li><a href="{html_lib.escape(href)}">{html_lib.escape(title)}</a></li>')
+            lines.append(f'<li><a href="{_xml_escape(href)}">{_xml_escape(title)}</a></li>')
         lines.extend(["</ol></nav>", "</body></html>"])
         path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -332,17 +384,17 @@ class KindleNovelEpubConverter:
             '<?xml version="1.0" encoding="utf-8"?>',
             '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">',
             "<head>",
-            f'<meta name="dtb:uid" content="{html_lib.escape(_book_uuid(book.source_url))}"/>',
+            f'<meta name="dtb:uid" content="{_xml_escape(_book_uuid(book.source_url))}"/>',
             "</head>",
-            f"<docTitle><text>{html_lib.escape(book.title)}</text></docTitle>",
+            f"<docTitle><text>{_xml_escape(book.title)}</text></docTitle>",
             "<navMap>",
         ]
         for play_order, title, href in nav_points:
             lines.extend(
                 [
                     f'<navPoint id="navPoint-{play_order}" playOrder="{play_order}">',
-                    f"<navLabel><text>{html_lib.escape(title)}</text></navLabel>",
-                    f'<content src="{html_lib.escape(href)}"/>',
+                    f"<navLabel><text>{_xml_escape(title)}</text></navLabel>",
+                    f'<content src="{_xml_escape(href)}"/>',
                     "</navPoint>",
                 ]
             )
@@ -360,29 +412,29 @@ class KindleNovelEpubConverter:
             '<?xml version="1.0" encoding="utf-8"?>',
             '<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="3.0">',
             '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">',
-            f'<dc:identifier id="bookid">{html_lib.escape(_book_uuid(book.source_url))}</dc:identifier>',
-            f"<dc:title>{html_lib.escape(book.title)}</dc:title>",
-            f"<dc:creator>{html_lib.escape(book.author or '未知作者')}</dc:creator>",
-            f"<dc:language>{html_lib.escape(book.language or 'zh-CN')}</dc:language>",
-            f'<dc:source>{html_lib.escape(book.source_url)}</dc:source>',
+            f'<dc:identifier id="bookid">{_xml_escape(_book_uuid(book.source_url))}</dc:identifier>',
+            f"<dc:title>{_xml_escape(book.title)}</dc:title>",
+            f"<dc:creator>{_xml_escape(book.author or '未知作者')}</dc:creator>",
+            f"<dc:language>{_xml_escape(book.language or 'zh-CN')}</dc:language>",
+            f'<dc:source>{_xml_escape(book.source_url)}</dc:source>',
             f'<meta property="dcterms:modified">{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}</meta>',
         ]
         if book.cover is not None:
-            metadata.append(f'<meta name="cover" content="asset-{html_lib.escape(_slug(book.cover.id))}"/>')
+            metadata.append(f'<meta name="cover" content="asset-{_xml_escape(_slug(book.cover.id))}"/>')
         metadata.append("</metadata>")
 
         manifest = ["<manifest>"]
         for item_id, href, media_type, properties in manifest_items:
             properties_attr = f' properties="{properties}"' if properties else ""
             manifest.append(
-                f'<item id="{html_lib.escape(item_id)}" href="{html_lib.escape(href)}" '
-                f'media-type="{html_lib.escape(media_type)}"{properties_attr}/>'
+                f'<item id="{_xml_escape(item_id)}" href="{_xml_escape(href)}" '
+                f'media-type="{_xml_escape(media_type)}"{properties_attr}/>'
             )
         manifest.append("</manifest>")
 
         spine = ['<spine toc="ncx">']
         for item_id in spine_ids:
-            spine.append(f'<itemref idref="{html_lib.escape(item_id)}"/>')
+            spine.append(f'<itemref idref="{_xml_escape(item_id)}"/>')
         spine.append("</spine>")
         path.write_text("\n".join(metadata + manifest + spine + ["</package>"]), encoding="utf-8")
 

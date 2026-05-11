@@ -4,6 +4,17 @@ All notable changes are documented here.
 
 本文件记录值得发布说明的变更，避免列出样本数量或内部验证流水账。
 
+## [2.0.1] - 2026-05-10
+
+### Fixed / 修复
+
+- Fixed generated XHTML when source HTML contains browser-tolerated but XML-invalid attributes such as `width:`.
+- 修复网页源码含有 `width:` 等浏览器可容忍、但 XML 不合法属性时生成的 XHTML 校验错误。
+- Sanitized generated novel metadata, navigation, and body fragments for XML-invalid control characters.
+- 清理生成小说 EPUB 的元数据、目录和正文片段中的 XML 非法控制字符。
+- Dropped ESJZone images that still fail to download instead of leaving remote image references inside the EPUB.
+- ESJZone 图片下载失败时不再把远程图片引用留在 EPUB 内部。
+
 ## [2.0.0] - 2026-05-10
 
 ### Added / 新增

@@ -558,6 +558,9 @@ class EsjzoneReader:
                     data = self.client.get_bytes(image_url, referer=chapter_url)
                 except Exception as exc:
                     self.log(f"[Warning] Image download failed: {image_url}: {exc}")
+                    parent = img.getparent()
+                    if parent is not None:
+                        parent.remove(img)
                     continue
                 suffix, media_type = _guess_image_type(image_url, data)
             image_counter += 1
