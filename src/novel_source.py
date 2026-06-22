@@ -12,6 +12,7 @@ class NovelAsset:
     filename: str
     data: bytes
     media_type: str
+    kind: str = "image"
 
 
 @dataclass(frozen=True)
@@ -20,6 +21,7 @@ class NovelChapter:
     content_html: str = ""
     source_url: str = ""
     is_volume: bool = False
+    head_css: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

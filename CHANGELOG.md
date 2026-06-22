@@ -4,6 +4,28 @@ All notable changes are documented here.
 
 本文件记录值得发布说明的变更，避免列出样本数量或内部验证流水账。
 
+## [2.1.0-beta1] - 2026-06-22
+
+### Added / 新增
+
+- Added chapter-level ESJZone scrambled-font embedding: chapters with site-provided anti-scraping fonts now extract the WOFF2 data font, convert it to an EPUB font resource, add it to OPF, and apply it only to that chapter.
+- 新增 ESJZone 章节级混淆字体嵌入：检测到站点反爬字体的章节会提取 WOFF2 data 字体、转换为 EPUB 字体资源、写入 OPF，并且只作用于对应章节。
+
+### Changed / 调整
+
+- Upgraded the beta build toolchain to .NET SDK 10.0.301, Windows App SDK 2.2.0, and current Python package baselines.
+- beta 构建工具链升级到 .NET SDK 10.0.301、Windows App SDK 2.2.0，以及当前 Python 依赖基线。
+- Generated web-novel EPUBs can now carry non-image assets such as fonts, while ordinary image handling remains unchanged.
+- 网页小说 EPUB 生成器现在可携带字体等非图片资源，同时保持普通图片处理逻辑不变。
+
+### Fixed / 修复
+
+- Fixed ESJZone chapters that render garbled text on Kindle because the source page relies on a per-page custom font encoding.
+- Removed GSUB substitution tables from extracted ESJZone fonts so Kindle/Calibre do not partially substitute scrambled glyphs back to the wrong visible characters.
+- 修复 ESJZone 章节因依赖每页自定义字体编码而在 Kindle 上显示错乱的问题。
+- Removed source `data:text/css` font links from generated XHTML after externalizing the font into EPUB resources.
+- 字体外置为 EPUB 资源后，会从生成 XHTML 中移除原网页的 `data:text/css` 字体链接。
+
 ## [2.0.1] - 2026-05-10
 
 ### Fixed / 修复

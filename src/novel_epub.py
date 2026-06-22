@@ -56,11 +56,17 @@ def _media_type_for_path(path: str) -> str:
         ".png": "image/png",
         ".gif": "image/gif",
         ".svg": "image/svg+xml",
+        ".otf": "font/otf",
+        ".ttf": "font/ttf",
+        ".woff": "font/woff",
+        ".woff2": "font/woff2",
     }.get(suffix, "application/octet-stream")
 
 
 def _asset_href(asset: NovelAsset) -> str:
     filename = _safe_filename(asset.filename, asset.id)
+    if asset.kind == "font":
+        return f"Fonts/{filename}"
     return f"Images/{filename}"
 
 
@@ -210,15 +216,16 @@ class KindleNovelEpubConverter:
         text_dir = oebps / "Text"
         style_dir = oebps / "Styles"
         image_dir = oebps / "Images"
+        font_dir = oebps / "Fonts"
         meta_dir = root / "META-INF"
-        for directory in (text_dir, style_dir, image_dir, meta_dir):
+        for directory in (text_dir, style_dir, image_dir, font_dir, meta_dir):
             directory.mkdir(parents=True, exist_ok=True)
 
         (root / "mimetype").write_text("application/epub+zip", encoding="ascii")
         (meta_dir / "container.xml").write_text(CONTAINER_XML, encoding="utf-8")
         (style_dir / "style.css").write_text(STYLE_CSS, encoding="utf-8")
 
-        assets = self._write_assets(book, image_dir)
+        assets = self._write_assets(book, image_dir, font_dir)
         manifest_items: list[tuple[str, str, str, str]] = [
             ("nav", "nav.xhtml", "application/xhtml+xml", "nav"),
             ("ncx", "toc.ncx", "application/x-dtbncx+xml", ""),
@@ -252,7 +259,7 @@ class KindleNovelEpubConverter:
             item_id = f"chapter-{chapter_index:04d}"
             href = f"Text/chapter-{chapter_index:04d}-{_slug(entry.title, 'chapter')}.xhtml"
             (oebps / href).write_text(
-                self._chapter_document(entry.title, entry.content_html, href, book.language, assets),
+                self._chapter_document(entry.title, entry.content_html, href, book.language, assets, entry.head_css),
                 encoding="utf-8",
             )
             manifest_items.append((item_id, href, "application/xhtml+xml", ""))
@@ -264,7 +271,7 @@ class KindleNovelEpubConverter:
         self._write_ncx(oebps / "toc.ncx", book, nav_points)
         self._write_opf(oebps / "content.opf", book, manifest_items, spine_ids)
 
-    def _write_assets(self, book: NovelBook, image_dir: Path) -> dict[str, str]:
+    def _write_assets(self, book: NovelBook, image_dir: Path, font_dir: Path) -> dict[str, str]:
         hrefs: dict[str, str] = {}
         seen_filenames: set[str] = set()
 
@@ -273,7 +280,7 @@ class KindleNovelEpubConverter:
             all_assets.insert(0, book.cover)
 
         for asset in all_assets:
-            normalised = _normalise_image_asset(asset)
+            normalised = asset if asset.kind == "font" else _normalise_image_asset(asset)
             filename = _safe_filename(normalised.filename, normalised.id)
             stem = Path(filename).stem
             suffix = Path(filename).suffix or ".bin"
@@ -284,9 +291,9 @@ class KindleNovelEpubConverter:
                 counter += 1
             seen_filenames.add(candidate.lower())
 
-            path = image_dir / candidate
+            path = (font_dir if normalised.kind == "font" else image_dir) / candidate
             path.write_bytes(normalised.data)
-            hrefs[normalised.id] = f"Images/{candidate}"
+            hrefs[normalised.id] = f"{'Fonts' if normalised.kind == 'font' else 'Images'}/{candidate}"
 
         return hrefs
 
@@ -313,15 +320,29 @@ class KindleNovelEpubConverter:
         owner_href: str,
         language: str,
         assets: dict[str, str],
+        head_css: tuple[str, ...] = (),
         show_heading: bool = True,
     ) -> str:
         body = self._normalise_body_html(body_html, owner_href, assets)
         return XHTML_TEMPLATE.format(
             language=_xml_escape(language or "zh-CN"),
             title=_xml_escape(title),
+            extra_head=self._chapter_head_css(owner_href, assets, head_css),
             heading=f"  <h1>{_xml_escape(title)}</h1>" if show_heading else "",
             body=body,
         )
+
+    def _chapter_head_css(self, owner_href: str, assets: dict[str, str], head_css: tuple[str, ...]) -> str:
+        if not head_css:
+            return ""
+
+        css_parts: list[str] = []
+        for css in head_css:
+            updated = css
+            for asset_id, href in assets.items():
+                updated = updated.replace(f"asset:{asset_id}", _relative_href(owner_href, href))
+            css_parts.append(updated)
+        return "  <style type=\"text/css\">\n" + "\n".join(css_parts) + "\n  </style>"
 
     def _normalise_body_html(self, body_html: str, owner_href: str, assets: dict[str, str]) -> str:
         wrapper = lxml_html.fragment_fromstring(f"<div>{body_html or '<p></p>'}</div>", create_parent=False)
@@ -500,6 +521,7 @@ XHTML_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
   <title>{title}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" type="text/css" href="../Styles/style.css"/>
+{extra_head}
 </head>
 <body>
 {heading}

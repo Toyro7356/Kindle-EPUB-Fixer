@@ -1,5 +1,5 @@
 param(
-    [string]$Channel = "8.0",
+    [string]$Channel = "10.0",
     [string]$InstallDir = ".dotnet"
 )
 

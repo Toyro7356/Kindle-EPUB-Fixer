@@ -151,11 +151,38 @@ Flow:
 4. 读取器提取元数据、封面、目录、章节和图片。
 5. Reader returns a normalized `NovelBook`.
 6. 读取器返回统一的 `NovelBook`。
-7. `KindleNovelEpubConverter` generates EPUB structure directly.
-8. `KindleNovelEpubConverter` 直接生成 EPUB 结构。
-9. The generated EPUB is validated.
-10. 校验生成的 EPUB。
+7. Source-specific chapter CSS and assets, such as ESJZone scrambled fonts, are attached to the relevant chapters only.
+8. 站点特定的章节 CSS 和资源（例如 ESJZone 混淆字体）只挂载到对应章节。
+9. `KindleNovelEpubConverter` generates EPUB structure directly.
+10. `KindleNovelEpubConverter` 直接生成 EPUB 结构。
+11. The generated EPUB is validated.
+12. 校验生成的 EPUB。
 
 This keeps website-specific logic separate from Kindle EPUB generation.
 
 这样可以把站点解析逻辑和 Kindle EPUB 生成逻辑分开。
+
+## ESJZone Scrambled Fonts / ESJZone 混淆字体
+
+Some ESJZone chapters render readable text only through a page-specific `@font-face` data font.
+
+部分 ESJZone 章节依赖每页特定的 `@font-face` data 字体才能显示正确文本。
+
+For those chapters, the reader:
+
+对应章节的读取器会：
+
+1. Extract the `data:text/css` font rule from the chapter page.
+2. 从章节页面提取 `data:text/css` 字体规则。
+3. Decode the embedded WOFF2 font and save it as an EPUB font asset.
+4. 解码内嵌 WOFF2 字体并保存为 EPUB 字体资源。
+5. Add chapter-level CSS that references the packaged font through a relative EPUB path.
+6. 添加章节级 CSS，通过 EPUB 相对路径引用已打包字体。
+7. Apply the font only to the affected chapter body.
+8. 只对受影响章节正文套用该字体。
+
+The extracted font is normalized for reading engines: WOFF2 compression is removed, CID-keyed CFF markers are converted away when present, and GSUB substitution tables are dropped so Kindle/Calibre render the same scrambled cmap glyphs as the web page instead of partially substituting them back.
+
+Chapters without such a font keep the normal generated styling and receive no extra font asset.
+
+没有此类字体的章节保持普通生成样式，不会额外添加字体资源。

@@ -1,5 +1,5 @@
-Pillow>=10.0
-lxml>=5.0
-fonttools>=4.40.0
-brotli>=1.0.0
-pyinstaller>=6.0
+Pillow>=12.2.0
+lxml>=6.1.1
+fonttools>=4.63.0
+brotli>=1.2.0
+pyinstaller>=6.21.0

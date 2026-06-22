@@ -41,9 +41,9 @@ The installer embeds:
 powershell -ExecutionPolicy Bypass -File build_winui.ps1
 ```
 
-If the machine has no .NET SDK:
+If the machine has no .NET 10 SDK:
 
-如果本机没有 .NET SDK：
+如果本机没有 .NET 10 SDK：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\install_dotnet_sdk.ps1
@@ -58,6 +58,6 @@ dist\KindleEpubFixer.Setup.exe /install /quiet /dir "C:\Path\Kindle EPUB Fixer" 
 
 ## Release / 发布
 
-Signed tags trigger GitHub Actions. Tags with a hyphen, such as `v2.0.0-beta.1`, are published as prereleases. Stable tags, such as `v2.0.0`, are published as normal releases.
+Signed tags trigger GitHub Actions. Tags with a hyphen, such as `v2.1.0-beta1`, are published as prereleases. Stable tags, such as `v2.1.0`, are published as normal releases.
 
-签名 tag 会触发 GitHub Actions。带连字符的 tag，例如 `v2.0.0-beta.1`，会发布为 prerelease；正式 tag，例如 `v2.0.0`，会发布为普通 release。
+签名 tag 会触发 GitHub Actions。带连字符的 tag，例如 `v2.1.0-beta1`，会发布为 prerelease；正式 tag，例如 `v2.1.0`，会发布为普通 release。

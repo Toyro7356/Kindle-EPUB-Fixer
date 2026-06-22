@@ -29,7 +29,9 @@ Kindle EPUB Fixer repairs EPUB files for Kindle and Send to Kindle, and can also
 - 原生 WinUI 3 桌面界面，支持批量修复、日志查看、字体设置和 ESJZone 转制。
 - Native WinUI 3 desktop app with batch repair, logs, font settings, and ESJZone conversion.
 - ESJZone：网页登录获取 Cookie、自动读取书籍信息和目录、可选章节范围、正文图片资源化、Kindle 友好 EPUB 输出。
-- ESJZone support: web login cookie capture, metadata and TOC parsing, optional chapter ranges, image packaging, and Kindle-friendly EPUB output.
+- ESJZone support: web login cookie capture, metadata and TOC parsing, optional chapter ranges, image packaging, per-chapter scrambled-font embedding, and Kindle-friendly EPUB output.
+- ESJZone 特殊字体章节会自动提取并嵌入站点字体；普通章节不会额外套用特殊字体。
+- ESJZone chapters with site-specific scrambled fonts automatically embed those fonts; ordinary chapters remain untouched.
 
 ## 使用 / Usage
 
@@ -80,9 +82,9 @@ python -m venv .venv
 .\.venv\Scripts\python -m compileall -q src main.py main_backend.py build_backend.py
 ```
 
-WinUI 构建需要 .NET SDK。没有全局 SDK 时可以安装到仓库本地：
+WinUI 构建需要 .NET SDK 10。没有全局 SDK 时可以安装到仓库本地：
 
-WinUI builds require the .NET SDK. To install it locally:
+WinUI builds require the .NET 10 SDK. To install it locally:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\install_dotnet_sdk.ps1
@@ -103,8 +105,8 @@ Beta 版本从 `beta` 分支打签名 tag，正式版从 `main` 分支打签名 
 Beta releases are tagged from `beta`; stable releases are tagged from `main`. GitHub Actions builds the installer and publishes the matching release.
 
 ```bash
-git tag -s v2.0.0-beta.1 -m "release: v2.0.0-beta.1"
-git push origin beta v2.0.0-beta.1
+git tag -s v2.1.0-beta1 -m "release: v2.1.0-beta1"
+git push origin beta v2.1.0-beta1
 
 git tag -s v2.0.0 -m "release: v2.0.0"
 git push origin main v2.0.0

@@ -23,6 +23,7 @@ from urllib.request import Request, build_opener
 import lxml.etree as etree
 import lxml.html as lxml_html
 
+from .esjzone_font import chapter_font_css, extract_esjzone_font, rewrite_chapter_font_family
 from .novel_epub import EpubConversionOptions, KindleNovelEpubConverter
 from .novel_source import NovelAsset, NovelBook, NovelChapter
 from .utils import LogCallback, _default_log
@@ -324,6 +325,7 @@ class EsjzoneReader:
     def __init__(self, client: EsjzoneClient, log: LogCallback = _default_log) -> None:
         self.client = client
         self.log = log
+        self._font_asset_ids: set[str] = set()
 
     def search(self, keyword: str, page: int = 1) -> list[EsjzoneSearchResult]:
         path = f"/tags/{quote(keyword.strip())}/{page}.html"
@@ -400,14 +402,15 @@ class EsjzoneReader:
         for entry in selected:
             content_index += 1
             self.log(f"Reading chapter {content_index}/{len(selected)}: {entry.title}")
-            raw_html = self.fetch_chapter_html(entry)
-            content_html = self._prepare_chapter_content(raw_html, entry.url, content_index, assets)
+            raw_html, page_doc = self.fetch_chapter_html(entry)
+            content_html, head_css = self._prepare_chapter_content(raw_html, page_doc, entry.url, content_index, assets)
             novel_chapters.append(
                 NovelChapter(
                     title=entry.title,
                     content_html=content_html,
                     source_url=entry.url,
                     is_volume=False,
+                    head_css=head_css,
                 )
             )
 
@@ -501,7 +504,7 @@ class EsjzoneReader:
                 chapters.append(EsjzoneChapterRef(title=title, url=url, is_volume=False))
         return chapters
 
-    def fetch_chapter_html(self, chapter: EsjzoneChapterRef) -> str:
+    def fetch_chapter_html(self, chapter: EsjzoneChapterRef) -> tuple[str, etree._Element]:
         doc = self.client.get_document(chapter.url)
         content_nodes = doc.xpath(
             "//div[contains(concat(' ', normalize-space(@class), ' '), ' forum-content ') "
@@ -512,8 +515,8 @@ class EsjzoneReader:
         if not content_nodes:
             content_nodes = doc.xpath("//article|//main")
         if not content_nodes:
-            return "<p></p>"
-        return _inner_html(content_nodes[0])
+            return "<p></p>", doc
+        return _inner_html(content_nodes[0]), doc
 
     def _download_cover(self, info: EsjzoneBookInfo) -> Optional[NovelAsset]:
         if not info.cover_url:
@@ -534,15 +537,37 @@ class EsjzoneReader:
     def _prepare_chapter_content(
         self,
         raw_html: str,
+        page_doc: etree._Element,
         chapter_url: str,
         chapter_index: int,
         assets: list[NovelAsset],
-    ) -> str:
+    ) -> tuple[str, tuple[str, ...]]:
         wrapper = lxml_html.fragment_fromstring(f"<div>{raw_html}</div>", create_parent=False)
-        for bad in wrapper.xpath(".//script|.//style|.//iframe|.//form"):
+        for bad in wrapper.xpath(".//script|.//style|.//iframe|.//form|.//link[starts-with(translate(@href, 'DATA', 'data'), 'data:text/css')]"):
             parent = bad.getparent()
             if parent is not None:
                 parent.remove(bad)
+
+        head_css: tuple[str, ...] = ()
+        embedded_font = extract_esjzone_font(page_doc)
+        if embedded_font is not None:
+            if embedded_font.asset_id not in self._font_asset_ids:
+                assets.append(
+                    NovelAsset(
+                        id=embedded_font.asset_id,
+                        filename=embedded_font.filename,
+                        data=embedded_font.data,
+                        media_type=embedded_font.media_type,
+                        kind="font",
+                    )
+                )
+                self._font_asset_ids.add(embedded_font.asset_id)
+                self.log(
+                    "Embedded ESJZone scrambled font "
+                    f"{embedded_font.family!r} -> {embedded_font.filename}"
+                )
+            rewrite_chapter_font_family(wrapper, embedded_font)
+            head_css = (chapter_font_css(embedded_font),)
 
         image_counter = 0
         for img in wrapper.xpath(".//img[@src or @data-src or @data-original or @data-lazy-src or @srcset or @data-srcset]"):
@@ -581,7 +606,7 @@ class EsjzoneReader:
             img.attrib.pop("data-srcset", None)
 
         _normalise_blank_blocks(wrapper)
-        return _inner_html(wrapper)
+        return _inner_html(wrapper), head_css
 
 
 def build_esjzone_epub(options: EsjzoneBuildOptions, log: LogCallback = _default_log) -> str:
