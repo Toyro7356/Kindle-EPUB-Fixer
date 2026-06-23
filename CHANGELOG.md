@@ -4,6 +4,29 @@ All notable changes are documented here.
 
 本文件记录值得发布说明的变更，避免列出样本数量或内部验证流水账。
 
+## [2.1.0-beta2] - 2026-06-23
+
+### Added
+
+- Added a reusable web-novel source adapter architecture with a source registry, shared build orchestration, and a dedicated `sources/esjzone` adapter package.
+- Added generic CLI entry points for future website sources: `--novel-source`, `--novel-url`, `--novel-search`, `--novel-cookie`, and `--novel-cookie-file`.
+- Added normal and slow chapter queues for web-novel fetching. Slow chapters can move to an independent queue instead of blocking normal chapter downloads.
+- Added configurable chapter fetch controls: `--chapter-workers`, `--slow-chapter-workers`, `--chapter-timeout`, `--slow-chapter-timeout`, and `--chapter-retries`.
+- Added unit tests for ESJZone parsing, chapter processing, source registration, chapter selection, slow queue behavior, retry handling, and skip-on-failure behavior.
+
+### Changed
+
+- Split ESJZone conversion into smaller modules for client access, models, parsers, assets, chapter processing, and source orchestration.
+- Moved common chapter selection and chapter assembly into the shared web-novel build pipeline so future sources can reuse the same behavior.
+- ESJZone chapter fetches now use the shared scheduler and pass per-chapter timeouts to the HTTP client.
+
+### Fixed
+
+- Chapter fetch failures no longer abort the whole web-novel conversion. Failed chapters retry twice by default and are skipped if they still fail.
+- Slow or timing-out chapters no longer hold up the normal chapter queue.
+- ESJZone conversion logs are now buffered and flushed in batches so long conversions no longer freeze the WinUI page or log scrolling.
+- Backend stderr is drained concurrently with stdout to avoid process pipe backpressure during noisy conversions.
+
 ## [2.1.0-beta1] - 2026-06-22
 
 ### Added / 新增

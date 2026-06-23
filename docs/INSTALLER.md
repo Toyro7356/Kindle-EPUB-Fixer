@@ -58,6 +58,6 @@ dist\KindleEpubFixer.Setup.exe /install /quiet /dir "C:\Path\Kindle EPUB Fixer" 
 
 ## Release / 发布
 
-Signed tags trigger GitHub Actions. Tags with a hyphen, such as `v2.1.0-beta1`, are published as prereleases. Stable tags, such as `v2.1.0`, are published as normal releases.
+Signed tags trigger GitHub Actions. Tags with a hyphen, such as `v2.1.0-beta2`, are published as prereleases. Stable tags, such as `v2.1.0`, are published as normal releases.
 
-签名 tag 会触发 GitHub Actions。带连字符的 tag，例如 `v2.1.0-beta1`，会发布为 prerelease；正式 tag，例如 `v2.1.0`，会发布为普通 release。
+签名 tag 会触发 GitHub Actions。带连字符的 tag，例如 `v2.1.0-beta2`，会发布为 prerelease；正式 tag，例如 `v2.1.0`，会发布为普通 release。

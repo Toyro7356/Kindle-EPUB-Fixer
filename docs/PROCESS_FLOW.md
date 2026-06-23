@@ -162,6 +162,31 @@ This keeps website-specific logic separate from Kindle EPUB generation.
 
 这样可以把站点解析逻辑和 Kindle EPUB 生成逻辑分开。
 
+## Web Novel Source Architecture
+
+The web-novel path is split into reusable layers:
+
+- `novel_source.py`: normalized book, chapter, asset, source, and read-option models.
+- `novel_build.py`: shared build orchestration, chapter selection, normal/slow chapter scheduling, retry handling, and EPUB conversion handoff.
+- `source_registry.py`: maps source ids such as `esjzone` to source adapters.
+- `sources/esjzone/`: ESJZone adapter package with client, parser, asset, chapter processor, model, and source modules.
+- `novel_epub.py`: site-independent EPUB writer.
+
+A future website should implement a source adapter that returns `NovelBook` data and should reuse the shared chapter scheduler and EPUB writer instead of duplicating conversion logic.
+
+## Chapter Fetch Scheduler
+
+Web-novel chapter fetching uses two queues:
+
+1. The normal queue handles ordinary chapters with `chapter_workers` workers and `chapter_timeout_seconds` timeout.
+2. Chapters that time out, or explicitly report slow behavior, move to the slow queue.
+3. The slow queue uses `slow_chapter_workers` workers and `slow_chapter_timeout_seconds` timeout, so slow chapters do not occupy normal queue slots.
+4. Non-timeout failures retry up to `chapter_retries` times.
+5. Chapters that still fail are skipped and logged; the book continues as long as at least one chapter succeeds.
+6. Prepared chapters are written in original chapter order, even when fetches complete out of order.
+
+Default values are conservative: 4 normal workers, 2 slow workers, 12 seconds for normal timeout, 60 seconds for slow timeout, and 2 retries.
+
 ## ESJZone Scrambled Fonts / ESJZone 混淆字体
 
 Some ESJZone chapters render readable text only through a page-specific `@font-face` data font.

@@ -83,6 +83,18 @@ public sealed class BackendRunner
 
         process.Start();
         var outputPath = string.Empty;
+        var errorBuilder = new StringBuilder();
+        var errorTask = Task.Run(async () =>
+        {
+            string? errorLine;
+            while ((errorLine = await process.StandardError.ReadLineAsync(cancellationToken)) is not null)
+            {
+                if (errorLine.Length > 0)
+                {
+                    errorBuilder.AppendLine(errorLine);
+                }
+            }
+        }, CancellationToken.None);
 
         string? line;
         while ((line = await process.StandardOutput.ReadLineAsync(cancellationToken)) is not null)
@@ -126,11 +138,12 @@ public sealed class BackendRunner
             }
         }
 
-        var error = await process.StandardError.ReadToEndAsync(cancellationToken);
         await process.WaitForExitAsync(cancellationToken);
+        await errorTask;
+        var error = errorBuilder.ToString().Trim();
         if (process.ExitCode != 0)
         {
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? $"Backend exited with code {process.ExitCode}" : error.Trim());
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? $"Backend exited with code {process.ExitCode}" : error);
         }
 
         return outputPath;

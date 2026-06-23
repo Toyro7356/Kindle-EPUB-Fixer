@@ -12,6 +12,8 @@ from typing import Any
 from . import __version__
 from .core import process_epub
 from .esjzone import EsjzoneBuildOptions, build_esjzone_epub, search_esjzone
+from .novel_build import NovelBuildOptions, build_novel_epub
+from .source_registry import create_novel_source
 
 
 def _emit(event: str, **payload: Any) -> None:
@@ -34,12 +36,24 @@ def _parse_chapter_range(value: str | None) -> tuple[int | None, int | None]:
     return start, end
 
 
+def _read_optional_text(path: str | None) -> str:
+    if not path:
+        return ""
+    return Path(path).read_text(encoding="utf-8-sig")
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Kindle EPUB Fixer backend")
     parser.add_argument("--input", help="Input EPUB path")
     parser.add_argument("--output", help="Output EPUB path or output directory")
     parser.add_argument("--output-dir", help="Output directory")
     parser.add_argument("--version", action="store_true", help="Print backend version event")
+    parser.add_argument("--novel-source", help="Website novel source id, for example esjzone")
+    parser.add_argument("--novel-url", help="Book detail URL to fetch and convert with --novel-source")
+    parser.add_argument("--novel-search", help="Search a website novel source by keyword")
+    parser.add_argument("--novel-page", type=int, default=1, help="Website novel source search page")
+    parser.add_argument("--novel-cookie", help="Raw Cookie header value for the website novel source")
+    parser.add_argument("--novel-cookie-file", help="Path to a text file containing the website novel source Cookie header")
     parser.add_argument("--esjzone-url", help="ESJZone book detail URL to fetch and convert")
     parser.add_argument("--esjzone-search", help="Search ESJZone by keyword and print result events")
     parser.add_argument("--esjzone-page", type=int, default=1, help="ESJZone search page")
@@ -49,6 +63,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--chapter-range", help="Fetch an inclusive 1-based ESJZone chapter range, for example 1-10")
     parser.add_argument("--chapter-start", type=int, help="Fetch ESJZone chapters starting at this 1-based index")
     parser.add_argument("--chapter-end", type=int, help="Fetch ESJZone chapters through this 1-based index")
+    parser.add_argument("--chapter-workers", type=int, default=4, help="Normal website novel chapter worker count")
+    parser.add_argument("--slow-chapter-workers", type=int, default=2, help="Slow website novel chapter worker count")
+    parser.add_argument("--chapter-timeout", type=float, default=12.0, help="Normal chapter fetch timeout in seconds")
+    parser.add_argument("--slow-chapter-timeout", type=float, default=60.0, help="Slow queue chapter fetch timeout in seconds")
+    parser.add_argument("--chapter-retries", type=int, default=2, help="Retries before skipping a failed chapter")
     return parser.parse_args()
 
 
@@ -57,6 +76,68 @@ def main() -> None:
     if args.version:
         _emit("version", version=__version__)
         return
+
+    if args.novel_search:
+        try:
+            if not args.novel_source:
+                raise ValueError("Missing required argument: --novel-source")
+            source = create_novel_source(
+                args.novel_source,
+                cookie=args.novel_cookie or _read_optional_text(args.novel_cookie_file),
+            )
+            results = source.search(args.novel_search, page=args.novel_page)
+            _emit(
+                "search_results",
+                source=source.source_id,
+                count=len(results),
+                results=[result.__dict__ for result in results],
+            )
+            return
+        except Exception as exc:
+            _emit("error", message=str(exc))
+            sys.exit(1)
+
+    if args.novel_url:
+        try:
+            if not args.novel_source:
+                raise ValueError("Missing required argument: --novel-source")
+            range_start, range_end = _parse_chapter_range(args.chapter_range)
+            chapter_start = args.chapter_start or range_start
+            chapter_end = args.chapter_end or range_end
+            _emit("progress", status="Reading novel source", progress=5)
+
+            def log(message: str) -> None:
+                _emit("log", message=message)
+
+            source = create_novel_source(
+                args.novel_source,
+                cookie=args.novel_cookie or _read_optional_text(args.novel_cookie_file),
+                log=log,
+            )
+            output_path = build_novel_epub(
+                source,
+                NovelBuildOptions(
+                    book_url=args.novel_url,
+                    output_path=args.output,
+                    output_dir=args.output_dir,
+                    max_chapters=args.max_chapters,
+                    chapter_start=chapter_start,
+                    chapter_end=chapter_end,
+                    validate_output=True,
+                    chapter_workers=args.chapter_workers,
+                    slow_chapter_workers=args.slow_chapter_workers,
+                    chapter_timeout_seconds=args.chapter_timeout,
+                    slow_chapter_timeout_seconds=args.slow_chapter_timeout,
+                    chapter_retries=args.chapter_retries,
+                ),
+                log=log,
+            )
+            _emit("progress", status="Done", progress=100, output=output_path)
+            _emit("done", output=output_path)
+            return
+        except Exception as exc:
+            _emit("error", message=str(exc))
+            sys.exit(1)
 
     if args.esjzone_search:
         try:
@@ -97,6 +178,11 @@ def main() -> None:
                     max_chapters=args.max_chapters,
                     chapter_start=chapter_start,
                     chapter_end=chapter_end,
+                    chapter_workers=args.chapter_workers,
+                    slow_chapter_workers=args.slow_chapter_workers,
+                    chapter_timeout_seconds=args.chapter_timeout,
+                    slow_chapter_timeout_seconds=args.slow_chapter_timeout,
+                    chapter_retries=args.chapter_retries,
                 ),
                 log=log,
             )

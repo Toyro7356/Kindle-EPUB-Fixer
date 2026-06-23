@@ -1,12 +1,6 @@
-"""Compatibility facade for the ESJZone web novel source.
+"""ESJZone source adapter."""
 
-The implementation lives under ``src.sources.esjzone`` so future websites can
-share the same source-adapter layout without changing existing imports.
-"""
-
-from __future__ import annotations
-
-from .sources.esjzone.source import (
+from .source import (
     ESJZONE_BASE_URL,
     EsjzoneBookInfo,
     EsjzoneBuildOptions,

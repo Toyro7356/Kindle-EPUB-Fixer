@@ -32,6 +32,8 @@ Kindle EPUB Fixer repairs EPUB files for Kindle and Send to Kindle, and can also
 - ESJZone support: web login cookie capture, metadata and TOC parsing, optional chapter ranges, image packaging, per-chapter scrambled-font embedding, and Kindle-friendly EPUB output.
 - ESJZone 特殊字体章节会自动提取并嵌入站点字体；普通章节不会额外套用特殊字体。
 - ESJZone chapters with site-specific scrambled fonts automatically embed those fonts; ordinary chapters remain untouched.
+- Web-novel fetching uses separate normal and slow chapter queues. Slow or timing-out chapters are retried without blocking the normal queue, and persistently failing chapters are skipped instead of aborting the whole book.
+- Web-novel source adapters are registered through a shared pipeline so future sources can reuse chapter selection, fetching, asset handling, and EPUB generation.
 
 ## 使用 / Usage
 
@@ -70,6 +72,20 @@ python main.py "input.epub" "output.epub"
 python main.py esjzone "https://www.esjzone.cc/detail/xxxx.html" "output.epub"
 ```
 
+Machine-readable backend commands also expose the shared web-novel source pipeline:
+
+```bash
+python -m src.backend_cli --novel-source esjzone --novel-url "https://www.esjzone.cc/detail/xxxx.html" --output-dir dist
+python -m src.backend_cli --novel-source esjzone --novel-search "keyword" --novel-page 1
+```
+
+Chapter fetching can be tuned when a source has slow pages:
+
+```powershell
+python -m src.backend_cli --novel-source esjzone --novel-url "https://www.esjzone.cc/detail/xxxx.html" `
+  --chapter-workers 4 --slow-chapter-workers 2 --chapter-timeout 12 --slow-chapter-timeout 60 --chapter-retries 2
+```
+
 未指定输出路径时，结果会写入输入文件旁边的 `转换后` 文件夹。
 
 When no output path is provided, the result is written to a `转换后` folder next to the input file.
@@ -105,8 +121,8 @@ Beta 版本从 `beta` 分支打签名 tag，正式版从 `main` 分支打签名 
 Beta releases are tagged from `beta`; stable releases are tagged from `main`. GitHub Actions builds the installer and publishes the matching release.
 
 ```bash
-git tag -s v2.1.0-beta1 -m "release: v2.1.0-beta1"
-git push origin beta v2.1.0-beta1
+git tag -s v2.1.0-beta2 -m "release: v2.1.0-beta2"
+git push origin beta v2.1.0-beta2
 
 git tag -s v2.0.0 -m "release: v2.0.0"
 git push origin main v2.0.0

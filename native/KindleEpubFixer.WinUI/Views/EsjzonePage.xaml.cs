@@ -2,6 +2,7 @@ using KindleEpubFixer.WinUI.Services;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Windows.Storage.Pickers;
@@ -13,9 +14,15 @@ public sealed partial class EsjzonePage : UserControl
 {
     private const string DefaultEsjzoneBaseUrl = "https://www.esjzone.cc/";
     private const string LegacyEsjzoneBaseUrl = "https://www.esjzone.one/";
+    private const int MaxLogLines = 2000;
+    private const int MaxLogFlushLines = 250;
 
     private readonly BackendRunner _backend = new();
     private readonly SettingsStore _settings = new();
+    private readonly object _logLock = new();
+    private readonly Queue<string> _pendingLogLines = new();
+    private readonly List<string> _logLines = new();
+    private readonly DispatcherQueueTimer _logFlushTimer;
     private CancellationTokenSource? _cancellation;
     private bool _isRunning;
     private bool _isLoadingSettings;
@@ -23,6 +30,9 @@ public sealed partial class EsjzonePage : UserControl
     public EsjzonePage()
     {
         InitializeComponent();
+        _logFlushTimer = DispatcherQueue.CreateTimer();
+        _logFlushTimer.Interval = TimeSpan.FromMilliseconds(120);
+        _logFlushTimer.Tick += (_, _) => FlushPendingLogs(MaxLogFlushLines);
         RefreshSettings();
         UpdateStartButton();
     }
@@ -92,7 +102,7 @@ public sealed partial class EsjzonePage : UserControl
         _cancellation = new CancellationTokenSource();
         SetStartButton(cancelMode: true);
         Progress.Value = 0;
-        LogBox.Text = string.Empty;
+        ClearLog();
         OutputText.Text = string.Empty;
         StatusChanged?.Invoke(this, "ESJZone 转制中");
         await Task.Yield();
@@ -122,6 +132,7 @@ public sealed partial class EsjzonePage : UserControl
                 }),
                 _cancellation.Token);
 
+            FlushPendingLogs();
             OutputText.Text = output;
             Progress.Value = 100;
             StatusChanged?.Invoke(this, "ESJZone 转制完成");
@@ -129,6 +140,7 @@ public sealed partial class EsjzonePage : UserControl
         }
         catch (OperationCanceledException)
         {
+            FlushPendingLogs();
             StatusChanged?.Invoke(this, "任务已取消");
             App.MainWindowInstance?.ShowNotification("任务已取消", null, InfoBarSeverity.Warning);
         }
@@ -140,6 +152,7 @@ public sealed partial class EsjzonePage : UserControl
         }
         finally
         {
+            FlushPendingLogs();
             _isRunning = false;
             SetStartButton(cancelMode: false);
             _cancellation?.Dispose();
@@ -149,17 +162,87 @@ public sealed partial class EsjzonePage : UserControl
 
     private void AppendLog(string message)
     {
+        lock (_logLock)
+        {
+            _pendingLogLines.Enqueue(message);
+        }
+
         DispatcherQueue.TryEnqueue(() =>
         {
-            if (!string.IsNullOrEmpty(LogBox.Text))
+            if (!_logFlushTimer.IsRunning)
             {
-                LogBox.Text += Environment.NewLine;
+                _logFlushTimer.Start();
+            }
+        });
+    }
+
+    private void ClearLog()
+    {
+        _logFlushTimer.Stop();
+        lock (_logLock)
+        {
+            _pendingLogLines.Clear();
+            _logLines.Clear();
+        }
+
+        LogBox.Text = string.Empty;
+    }
+
+    private void FlushPendingLogs(int maxLines = int.MaxValue)
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(() => FlushPendingLogs(maxLines));
+            return;
+        }
+
+        List<string> batch = new();
+        lock (_logLock)
+        {
+            while (_pendingLogLines.Count > 0 && batch.Count < maxLines)
+            {
+                batch.Add(_pendingLogLines.Dequeue());
             }
 
-            LogBox.Text += message;
-            LogBox.SelectionStart = LogBox.Text.Length;
-            LogBox.SelectionLength = 0;
-        });
+            if (_pendingLogLines.Count == 0)
+            {
+                _logFlushTimer.Stop();
+            }
+        }
+
+        if (batch.Count == 0)
+        {
+            return;
+        }
+
+        _logLines.AddRange(batch);
+        if (_logLines.Count > MaxLogLines)
+        {
+            _logLines.RemoveRange(0, _logLines.Count - MaxLogLines);
+        }
+
+        var builder = new StringBuilder();
+        for (var i = 0; i < _logLines.Count; i++)
+        {
+            if (i > 0)
+            {
+                builder.AppendLine();
+            }
+
+            builder.Append(_logLines[i]);
+        }
+
+        LogBox.Text = builder.ToString();
+        LogBox.SelectionStart = LogBox.Text.Length;
+        LogBox.SelectionLength = 0;
+
+        lock (_logLock)
+        {
+            if (_pendingLogLines.Count > 0 && !_logFlushTimer.IsRunning)
+            {
+                _logFlushTimer.Start();
+            }
+        }
     }
 
     private void RememberCookie_Changed(object sender, RoutedEventArgs e)
