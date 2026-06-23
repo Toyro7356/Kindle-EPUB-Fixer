@@ -78,7 +78,20 @@ jobs:
             exit 0
           }
           $start = $startMatch.LineNumber - 1
-          $nextMatch = $lines | Select-String -Pattern "^## \[" | Where-Object { $_.LineNumber -gt $startMatch.LineNumber } | Select-Object -First 1
+          if ($env:IS_PRERELEASE -eq "true") {
+            $nextMatch = $lines |
+              Select-String -Pattern "^## \[[^\]]+\]" |
+              Where-Object {
+                $_.LineNumber -gt $startMatch.LineNumber -and
+                $_.Line -notmatch "^## \[[^\]]+-[^\]]+\]"
+              } |
+              Select-Object -First 1
+          } else {
+            $nextMatch = $lines |
+              Select-String -Pattern "^## \[" |
+              Where-Object { $_.LineNumber -gt $startMatch.LineNumber } |
+              Select-Object -First 1
+          }
           $end = if ($null -eq $nextMatch) { $lines.Count - 1 } else { $nextMatch.LineNumber - 2 }
           $lines[$start..$end] | Set-Content -LiteralPath build\release-notes.md -Encoding utf8
 

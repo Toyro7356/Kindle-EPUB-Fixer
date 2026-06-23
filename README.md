@@ -120,6 +120,10 @@ Beta 版本从 `beta` 分支打签名 tag，正式版从 `main` 分支打签名 
 
 Beta releases are tagged from `beta`; stable releases are tagged from `main`. GitHub Actions builds the installer and publishes the matching release.
 
+Prerelease notes are cumulative from the latest stable release. For example, `v2.1.0-beta2` includes both `2.1.0-beta2` and `2.1.0-beta1` changelog entries.
+
+预发布说明会从最近一个正式版之后累计。例如 `v2.1.0-beta2` 会包含 `2.1.0-beta2` 和 `2.1.0-beta1` 两段更新日志。
+
 ```bash
 git tag -s v2.1.0-beta2 -m "release: v2.1.0-beta2"
 git push origin beta v2.1.0-beta2

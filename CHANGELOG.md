@@ -6,26 +6,38 @@ All notable changes are documented here.
 
 ## [2.1.0-beta2] - 2026-06-23
 
-### Added
+### Added / 新增
 
 - Added a reusable web-novel source adapter architecture with a source registry, shared build orchestration, and a dedicated `sources/esjzone` adapter package.
+- 新增可复用的网页小说书源适配架构，包含书源注册表、共享构建编排，以及独立的 `sources/esjzone` 适配包。
 - Added generic CLI entry points for future website sources: `--novel-source`, `--novel-url`, `--novel-search`, `--novel-cookie`, and `--novel-cookie-file`.
+- 新增面向后续网站书源的通用 CLI 入口：`--novel-source`、`--novel-url`、`--novel-search`、`--novel-cookie`、`--novel-cookie-file`。
 - Added normal and slow chapter queues for web-novel fetching. Slow chapters can move to an independent queue instead of blocking normal chapter downloads.
+- 新增普通章节队列和慢速章节队列；慢速章节会转入独立队列，不再占用普通章节下载并发。
 - Added configurable chapter fetch controls: `--chapter-workers`, `--slow-chapter-workers`, `--chapter-timeout`, `--slow-chapter-timeout`, and `--chapter-retries`.
+- 新增章节抓取调节参数：`--chapter-workers`、`--slow-chapter-workers`、`--chapter-timeout`、`--slow-chapter-timeout`、`--chapter-retries`。
 - Added unit tests for ESJZone parsing, chapter processing, source registration, chapter selection, slow queue behavior, retry handling, and skip-on-failure behavior.
+- 新增 ESJZone 解析、章节处理、书源注册、章节选择、慢速队列、重试和失败跳过行为的单元测试。
 
-### Changed
+### Changed / 调整
 
 - Split ESJZone conversion into smaller modules for client access, models, parsers, assets, chapter processing, and source orchestration.
+- 将 ESJZone 转制拆分为客户端访问、模型、解析器、资源、章节处理和书源编排等更小模块。
 - Moved common chapter selection and chapter assembly into the shared web-novel build pipeline so future sources can reuse the same behavior.
+- 将通用章节选择和章节组装移动到共享网页小说构建管线，便于后续书源复用同一套行为。
 - ESJZone chapter fetches now use the shared scheduler and pass per-chapter timeouts to the HTTP client.
+- ESJZone 章节抓取改用共享调度器，并将单章超时时间传递给 HTTP 客户端。
 
-### Fixed
+### Fixed / 修复
 
 - Chapter fetch failures no longer abort the whole web-novel conversion. Failed chapters retry twice by default and are skipped if they still fail.
+- 章节抓取失败不再终止整个网页小说转制；失败章节默认重试 2 次，仍失败则跳过。
 - Slow or timing-out chapters no longer hold up the normal chapter queue.
+- 慢速或超时章节不再阻塞普通章节队列。
 - ESJZone conversion logs are now buffered and flushed in batches so long conversions no longer freeze the WinUI page or log scrolling.
+- ESJZone 转制日志现在会缓冲并批量刷新，长时间转制时不再导致 WinUI 页面或日志滚动卡死。
 - Backend stderr is drained concurrently with stdout to avoid process pipe backpressure during noisy conversions.
+- 后端进程的 stderr 现在会与 stdout 并发读取，避免输出较多时产生管道背压。
 
 ## [2.1.0-beta1] - 2026-06-22
 
