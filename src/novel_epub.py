@@ -239,6 +239,15 @@ class KindleNovelEpubConverter:
         nav_points: list[tuple[int, str, str]] = []
         nav_items: list[tuple[str, str, bool]] = []
 
+        if book.cover is not None:
+            cover_href = "Text/cover.xhtml"
+            (oebps / cover_href).write_text(
+                self._cover_document(book, cover_href, assets),
+                encoding="utf-8",
+            )
+            manifest_items.append(("cover-page", cover_href, "application/xhtml+xml", ""))
+            spine_ids.append("cover-page")
+
         intro_href = "Text/intro.xhtml"
         intro_body = self._book_intro_html(book)
         (oebps / intro_href).write_text(
@@ -299,12 +308,17 @@ class KindleNovelEpubConverter:
 
     def _book_intro_html(self, book: NovelBook) -> str:
         parts = []
-        if book.cover is not None:
-            parts.append(f'<p class="cover"><img src="asset:{_xml_escape(book.cover.id)}" alt="cover"/></p>')
         if book.intro_html:
             parts.append(book.intro_html)
-        if book.kind:
-            parts.append(f"<p>分类：{_xml_escape(book.kind)}</p>")
+        if book.translators:
+            parts.append(f"<p>翻译：{_xml_escape('、'.join(book.translators))}</p>")
+        if book.status:
+            parts.append(f"<p>状态：{_xml_escape(book.status)}</p>")
+        display_kind = book.kind
+        if book.status and display_kind.startswith(book.status):
+            display_kind = display_kind[len(book.status):].lstrip(" /｜|")
+        if display_kind:
+            parts.append(f"<p>分类：{_xml_escape(display_kind)}</p>")
         if book.word_count:
             parts.append(f"<p>字数：{_xml_escape(book.word_count)}</p>")
         if book.latest_chapter:
@@ -312,6 +326,16 @@ class KindleNovelEpubConverter:
         if book.source_url:
             parts.append(f"<p>来源：{_xml_escape(book.source_url)}</p>")
         return "\n".join(parts) or "<p></p>"
+
+    def _cover_document(self, book: NovelBook, owner_href: str, assets: dict[str, str]) -> str:
+        if book.cover is None or book.cover.id not in assets:
+            raise RuntimeError("Cover asset was not written to the EPUB")
+        image_href = _relative_href(owner_href, assets[book.cover.id])
+        return COVER_XHTML_TEMPLATE.format(
+            language=_xml_escape(book.language or "zh-CN"),
+            title=_xml_escape(book.title),
+            image_href=_xml_escape(image_href),
+        )
 
     def _chapter_document(
         self,
@@ -435,11 +459,32 @@ class KindleNovelEpubConverter:
             '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">',
             f'<dc:identifier id="bookid">{_xml_escape(_book_uuid(book.source_url))}</dc:identifier>',
             f"<dc:title>{_xml_escape(book.title)}</dc:title>",
-            f"<dc:creator>{_xml_escape(book.author or '未知作者')}</dc:creator>",
+            f'<dc:creator id="creator">{_xml_escape(book.author or "未知作者")}</dc:creator>',
+            '<meta refines="#creator" property="role" scheme="marc:relators">aut</meta>',
             f"<dc:language>{_xml_escape(book.language or 'zh-CN')}</dc:language>",
+            "<dc:type>Text</dc:type>",
             f'<dc:source>{_xml_escape(book.source_url)}</dc:source>',
-            f'<meta property="dcterms:modified">{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}</meta>',
         ]
+        if book.description:
+            metadata.append(f"<dc:description>{_xml_escape(book.description)}</dc:description>")
+        if book.publisher:
+            metadata.append(f"<dc:publisher>{_xml_escape(book.publisher)}</dc:publisher>")
+        for subject in dict.fromkeys(item.strip() for item in book.subjects if item.strip()):
+            metadata.append(f"<dc:subject>{_xml_escape(subject)}</dc:subject>")
+        for index, translator in enumerate(
+            dict.fromkeys(item.strip() for item in book.translators if item.strip()),
+            start=1,
+        ):
+            contributor_id = f"translator-{index}"
+            metadata.extend(
+                [
+                    f'<dc:contributor id="{contributor_id}">{_xml_escape(translator)}</dc:contributor>',
+                    f'<meta refines="#{contributor_id}" property="role" scheme="marc:relators">trl</meta>',
+                ]
+            )
+        metadata.append(
+            f'<meta property="dcterms:modified">{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}</meta>'
+        )
         if book.cover is not None:
             metadata.append(f'<meta name="cover" content="asset-{_xml_escape(_slug(book.cover.id))}"/>')
         metadata.append("</metadata>")
@@ -457,7 +502,14 @@ class KindleNovelEpubConverter:
         for item_id in spine_ids:
             spine.append(f'<itemref idref="{_xml_escape(item_id)}"/>')
         spine.append("</spine>")
-        path.write_text("\n".join(metadata + manifest + spine + ["</package>"]), encoding="utf-8")
+        guide = []
+        if book.cover is not None:
+            guide = [
+                "<guide>",
+                '<reference type="cover" title="Cover" href="Text/cover.xhtml"/>',
+                "</guide>",
+            ]
+        path.write_text("\n".join(metadata + manifest + spine + guide + ["</package>"]), encoding="utf-8")
 
     def _zip_epub(self, root: Path, epub_path: Path) -> None:
         with zipfile.ZipFile(epub_path, "w") as zf:
@@ -502,6 +554,16 @@ p {
 .cover {
   text-align: center;
 }
+.cover-page {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+.cover-page img {
+  max-height: 100%;
+  object-fit: contain;
+}
 img {
   max-width: 100%;
   height: auto;
@@ -526,6 +588,21 @@ XHTML_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
 <body>
 {heading}
   {body}
+</body>
+</html>
+"""
+
+
+COVER_XHTML_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="{language}" xml:lang="{language}">
+<head>
+  <title>{title}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" type="text/css" href="../Styles/style.css"/>
+</head>
+<body class="cover-page" epub:type="cover">
+  <img src="{image_href}" alt="{title}"/>
 </body>
 </html>
 """

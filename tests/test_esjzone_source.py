@@ -51,6 +51,8 @@ class EsjzoneParserTests(unittest.TestCase):
         self.assertEqual(info.title, "\u6d4b\u8bd5\u4e66")
         self.assertEqual(info.author, "\u6d4b\u8bd5\u4f5c\u8005")
         self.assertEqual(info.kind, "\u5947\u5e7b")
+        self.assertEqual(info.description, "\u7b80\u4ecb")
+        self.assertEqual(info.tags, ("\u6807\u7b7eA",))
         self.assertEqual(info.cover_url, "https://www.esjzone.cc/cover.jpg")
         self.assertEqual(info.latest_chapter, "\u7b2c\u4e00\u7ae0")
         self.assertEqual(len(info.chapters), 1)
@@ -114,7 +116,7 @@ class EsjzoneChapterProcessorTests(unittest.TestCase):
 
 class EsjzoneRegistryTests(unittest.TestCase):
     def test_legacy_models_and_registry_remain_available(self) -> None:
-        self.assertEqual(available_novel_sources(), ("esjzone",))
+        self.assertEqual(available_novel_sources(), ("esjzone", "masiro"))
         self.assertIsInstance(create_novel_source("esjzone"), EsjzoneSource)
         self.assertEqual(EsjzoneBuildOptions(book_url="u").book_url, "u")
 

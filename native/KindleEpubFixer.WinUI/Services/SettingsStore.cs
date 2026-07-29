@@ -10,6 +10,9 @@ public sealed class SettingsStore
     public string DefaultOutputDirectory { get; set; } = string.Empty;
     public bool RememberEsjzoneCookie { get; set; }
     public string EsjzoneCookie { get; set; } = string.Empty;
+    public bool RememberMasiroCookie { get; set; }
+    public string MasiroCookie { get; set; } = string.Empty;
+    public string MasiroUserAgent { get; set; } = string.Empty;
 
     public List<FontAlias> LoadAliases()
     {
@@ -42,6 +45,9 @@ public sealed class SettingsStore
         DefaultOutputDirectory = string.Empty;
         RememberEsjzoneCookie = false;
         EsjzoneCookie = string.Empty;
+        RememberMasiroCookie = false;
+        MasiroCookie = string.Empty;
+        MasiroUserAgent = string.Empty;
         if (!File.Exists(AppPaths.AppSettingsPath))
         {
             return;
@@ -62,12 +68,27 @@ public sealed class SettingsStore
             {
                 EsjzoneCookie = cookie.GetString() ?? string.Empty;
             }
+            if (doc.RootElement.TryGetProperty("remember_masiro_cookie", out var rememberMasiro))
+            {
+                RememberMasiroCookie = rememberMasiro.ValueKind == JsonValueKind.True;
+            }
+            if (doc.RootElement.TryGetProperty("masiro_cookie", out var masiroCookie))
+            {
+                MasiroCookie = masiroCookie.GetString() ?? string.Empty;
+            }
+            if (doc.RootElement.TryGetProperty("masiro_user_agent", out var masiroUserAgent))
+            {
+                MasiroUserAgent = masiroUserAgent.GetString() ?? string.Empty;
+            }
         }
         catch (JsonException)
         {
             DefaultOutputDirectory = string.Empty;
             RememberEsjzoneCookie = false;
             EsjzoneCookie = string.Empty;
+            RememberMasiroCookie = false;
+            MasiroCookie = string.Empty;
+            MasiroUserAgent = string.Empty;
         }
     }
 
@@ -78,6 +99,9 @@ public sealed class SettingsStore
             ["default_output_dir"] = DefaultOutputDirectory,
             ["remember_esjzone_cookie"] = RememberEsjzoneCookie,
             ["esjzone_cookie"] = RememberEsjzoneCookie ? EsjzoneCookie : string.Empty,
+            ["remember_masiro_cookie"] = RememberMasiroCookie,
+            ["masiro_cookie"] = RememberMasiroCookie ? MasiroCookie : string.Empty,
+            ["masiro_user_agent"] = RememberMasiroCookie ? MasiroUserAgent : string.Empty,
         };
         File.WriteAllText(AppPaths.AppSettingsPath, JsonSerializer.Serialize(payload, JsonOptions));
     }

@@ -27,9 +27,11 @@ Kindle EPUB Fixer repairs EPUB files for Kindle and Send to Kindle, and can also
 - 保守的脚注、SVG、CSS transform 和固定版式处理，避免为单本书过度改写。
 - Conservative handling for footnotes, SVG pages, CSS transforms, and fixed-layout content.
 - 原生 WinUI 3 桌面界面，支持批量修复、日志查看、字体设置和 ESJZone 转制。
-- Native WinUI 3 desktop app with batch repair, logs, font settings, and ESJZone conversion.
+- Native WinUI 3 desktop app with batch repair, logs, font settings, and web-novel conversion.
 - ESJZone：网页登录获取 Cookie、自动读取书籍信息和目录、可选章节范围、正文图片资源化、Kindle 友好 EPUB 输出。
 - ESJZone support: web login cookie capture, metadata and TOC parsing, optional chapter ranges, image packaging, per-chapter scrambled-font embedding, and Kindle-friendly EPUB output.
+- Masiro：登录态 Cookie 与浏览器 User-Agent 获取、章节范围、付费章节安全确认、图片资源化，以及 Kindle 友好 EPUB 输出。
+- Masiro support: authenticated detail-page and chapter extraction, browser Cookie and User-Agent capture for Cloudflare sessions, chapter ranges, image packaging, and accessible-chapter-only conversion.
 - ESJZone 特殊字体章节会自动提取并嵌入站点字体；普通章节不会额外套用特殊字体。
 - ESJZone chapters with site-specific scrambled fonts automatically embed those fonts; ordinary chapters remain untouched.
 - Web-novel fetching uses separate normal and slow chapter queues. Slow or timing-out chapters are retried without blocking the normal queue, and persistently failing chapters are skipped instead of aborting the whole book.
@@ -70,6 +72,7 @@ dist/KindleEpubFixer-<version>-Setup.exe
 python main.py "input.epub"
 python main.py "input.epub" "output.epub"
 python main.py esjzone "https://www.esjzone.cc/detail/xxxx.html" "output.epub"
+python -m src.backend_cli --novel-source masiro --novel-url "https://masiro.me/admin/novelView?novel_id=1308" --novel-cookie-file "masiro.cookie.txt" --novel-user-agent "<browser user agent>" --output-dir dist
 ```
 
 Machine-readable backend commands also expose the shared web-novel source pipeline:
@@ -77,6 +80,18 @@ Machine-readable backend commands also expose the shared web-novel source pipeli
 ```bash
 python -m src.backend_cli --novel-source esjzone --novel-url "https://www.esjzone.cc/detail/xxxx.html" --output-dir dist
 python -m src.backend_cli --novel-source esjzone --novel-search "keyword" --novel-page 1
+```
+
+Masiro requires a current login Cookie. Cloudflare may also bind the session to the browser User-Agent, so the WinUI login window captures and forwards both values. Automatic purchase is disabled by default. When enabled in WinUI, the app first previews the selected paid-chapter count, total cost, and account balance, then requires confirmation and locks the backend to that exact coin budget. A changed price stops the purchase.
+
+Masiro requests use a conservative site-wide pace. An HTTP 429 response pauses all Masiro workers together, honors `Retry-After` when present, and retries after a bounded cooldown instead of immediately hammering the next chapters.
+
+The CLI also requires an explicit hard budget when automatic purchase is enabled:
+
+```powershell
+python -m src.backend_cli --novel-source masiro --novel-url "https://masiro.me/admin/novelView?novel_id=10" `
+  --novel-cookie-file "masiro.cookie.txt" --novel-user-agent "<browser user agent>" `
+  --chapter-range 115-120 --novel-auto-purchase --novel-max-purchase-cost 6 --output-dir dist
 ```
 
 Chapter fetching can be tuned when a source has slow pages:
@@ -125,8 +140,8 @@ Prerelease notes are cumulative from the latest stable release. For example, `v2
 预发布说明会从最近一个正式版之后累计。例如 `v2.1.0-beta2` 会包含 `2.1.0-beta2` 和 `2.1.0-beta1` 两段更新日志。
 
 ```bash
-git tag -s v2.1.0-beta2 -m "release: v2.1.0-beta2"
-git push origin beta v2.1.0-beta2
+git tag -s v2.2.0-beta1 -m "release: v2.2.0-beta1"
+git push origin beta v2.2.0-beta1
 
 git tag -s v2.0.0 -m "release: v2.0.0"
 git push origin main v2.0.0

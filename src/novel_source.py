@@ -31,6 +31,11 @@ class NovelBook:
     source_url: str
     language: str = "zh-CN"
     intro_html: str = ""
+    description: str = ""
+    subjects: tuple[str, ...] = ()
+    translators: tuple[str, ...] = ()
+    publisher: str = ""
+    status: str = ""
     kind: str = ""
     word_count: str = ""
     latest_chapter: str = ""

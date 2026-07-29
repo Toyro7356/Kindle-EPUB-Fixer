@@ -170,6 +170,7 @@ The web-novel path is split into reusable layers:
 - `novel_build.py`: shared build orchestration, chapter selection, normal/slow chapter scheduling, retry handling, and EPUB conversion handoff.
 - `source_registry.py`: maps source ids such as `esjzone` to source adapters.
 - `sources/esjzone/`: ESJZone adapter package with client, parser, asset, chapter processor, model, and source modules.
+- `sources/masiro/`: authenticated Masiro adapter with Cookie/User-Agent HTTP access, detail and chapter parsing, and image packaging.
 - `novel_epub.py`: site-independent EPUB writer.
 
 A future website should implement a source adapter that returns `NovelBook` data and should reuse the shared chapter scheduler and EPUB writer instead of duplicating conversion logic.
@@ -211,3 +212,13 @@ The extracted font is normalized for reading engines: WOFF2 compression is remov
 Chapters without such a font keep the normal generated styling and receive no extra font asset.
 
 没有此类字体的章节保持普通生成样式，不会额外添加字体资源。
+
+## Masiro Authentication and Access
+
+Masiro pages require an authenticated browser session. The desktop login window captures the site Cookie and the matching browser User-Agent because Cloudflare may validate both values. The backend uses those values only for Masiro requests.
+
+The adapter reads metadata from `novelView`, collects chapter links from the episode lists or embedded chapter JSON, and extracts readable content from `.box-body.nvl-content`. Automatic purchase is disabled by default, so priced entries are skipped without a request.
+
+When the user enables automatic purchase, WinUI first runs a read-only preview for the selected range. It shows the paid chapter count, total cost, and account balance, and requires an explicit confirmation. The confirmed total becomes a backend hard budget. For each priced chapter, the backend verifies the official payment page fields and CSRF token before posting to `/admin/pay`; it stops if the price or chapter id changes. Ambiguous network responses are verified with a read-only chapter request and are never retried as another payment POST.
+
+Masiro also applies a source-wide request gate: at most two normal chapter workers are used, request starts are spaced apart, and any HTTP 429 response creates one shared cooldown for all workers. The client honors `Retry-After` when supplied and otherwise uses bounded increasing delays.

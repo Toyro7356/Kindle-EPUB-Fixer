@@ -79,6 +79,7 @@ def parse_book_info(
         if _text(item.text_content())
     ]
     desc = doc.xpath("//div[contains(concat(' ', normalize-space(@class), ' '), ' description ')]")
+    description = _text(desc[0].text_content()) if desc else ""
     intro_parts: list[str] = []
     if tags:
         intro_parts.append("<p>" + html_lib.escape("🏷️" + " / ".join(tags)) + "</p>")
@@ -99,6 +100,8 @@ def parse_book_info(
         url=book_url,
         cover_url=resolve_url(cover) if cover else "",
         intro_html="\n".join(part for part in intro_parts if part),
+        description=description,
+        tags=tuple(tags),
         kind=kind,
         word_count=word_count,
         latest_chapter=latest,

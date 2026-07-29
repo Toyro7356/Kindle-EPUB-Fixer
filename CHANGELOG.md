@@ -4,6 +4,37 @@ All notable changes are documented here.
 
 本文件记录值得发布说明的变更，避免列出样本数量或内部验证流水账。
 
+## [Unreleased]
+
+## [2.2.0-beta1] - 2026-07-29
+
+### Added / 新增
+
+- Added authenticated Masiro-to-EPUB conversion using the shared web-novel pipeline, including metadata, chapter ranges, inline and remote images, and output validation.
+- 新增基于共享网页小说管线的 Masiro 转 EPUB，支持元数据、章节范围、内嵌与远程图片以及输出校验。
+- Added a Masiro desktop page with web login Cookie and browser User-Agent capture for Cloudflare-protected sessions.
+- 新增 Masiro 桌面页面，通过网页登录同时获取 Cookie 与浏览器 User-Agent，以支持 Cloudflare 登录态。
+- Added optional Masiro paid-chapter purchase through the site's official CSRF-protected payment endpoint, with balance checks, price-change rejection, and duplicate-payment protection.
+- 新增可选的 Masiro 付费章节购买，通过站点官方 CSRF 支付接口执行，并包含余额检查、价格变化拒绝和重复支付保护。
+- Added complete EPUB metadata for web novels, including descriptions, subjects, publishers, author and translator roles.
+- 补全网页小说 EPUB 元数据，包括简介、标签、来源出版者，以及作者和译者角色。
+- Added a dedicated EPUB cover page with EPUB 2 and EPUB 3 cover declarations for broader reader compatibility.
+- 新增独立 EPUB 封面页，并同时写入 EPUB 2 与 EPUB 3 封面声明，以提升阅读器兼容性。
+
+### Security / 安全
+
+- Masiro automatic purchase is disabled by default and requires a read-only cost preview, explicit desktop confirmation, and a backend hard budget.
+- Masiro 自动购买默认关闭；启用时必须先只读预览费用、在桌面端明确确认，并受后端硬预算限制。
+
+### Fixed / 修复
+
+- Fixed the Masiro login window closing immediately when an old authenticated session was detected; it now stays open and can clear only the embedded browser cookies for a clean re-login.
+- 修复 Masiro 登录窗口检测到旧登录态后立即关闭的问题；现在窗口会保持打开，并可仅清除内置浏览器 Cookie 后重新登录。
+- Fixed older Masiro books whose chapter lists exist only in embedded chapter JSON before browser-side rendering.
+- 修复旧版 Masiro 书籍目录仅存在于内嵌章节 JSON、导致后端报告找不到章节的问题。
+- Fixed Masiro chapter batches failing after several successful requests by adding source-wide pacing, shared HTTP 429 cooldowns, `Retry-After` handling, and bounded retries.
+- 修复 Masiro 连续抓取数章后触发 HTTP 429 的问题，新增书源级请求节流、共享冷却、`Retry-After` 处理和有限重试。
+
 ## [2.1.0-beta2] - 2026-06-23
 
 ### Added / 新增

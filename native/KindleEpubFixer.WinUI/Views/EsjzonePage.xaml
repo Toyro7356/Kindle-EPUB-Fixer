@@ -94,6 +94,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <TextBlock FontWeight="SemiBold" Text="登录态 Cookie" />
@@ -105,14 +106,21 @@
                             Checked="RememberCookie_Changed"
                             Content="记住"
                             Unchecked="RememberCookie_Changed" />
-                        <Button
+                        <CheckBox
+                            x:Name="AutoPurchaseBox"
                             Grid.Column="2"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            Content="自动购买"
+                            Visibility="Collapsed" />
+                        <Button
+                            Grid.Column="3"
                             MinWidth="104"
                             Padding="12,4"
                             Click="Login_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontSize="13" Glyph="&#xE774;" />
-                                <TextBlock VerticalAlignment="Center" Text="网页登录" />
+                                <TextBlock VerticalAlignment="Center" Text="登录 / 刷新" />
                             </StackPanel>
                         </Button>
                     </Grid>

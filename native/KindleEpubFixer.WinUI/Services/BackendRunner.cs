@@ -5,6 +5,7 @@ using System.Text.Json;
 namespace KindleEpubFixer.WinUI.Services;
 
 public sealed record BackendProgress(string Status, int Progress, string? Output);
+public sealed record MasiroPurchasePlan(int ChapterCount, int TotalCost, int? AccountBalance);
 
 public sealed class BackendRunner
 {
@@ -21,10 +22,14 @@ public sealed class BackendRunner
         return await RunAsync(psi, onLog, onProgress, cancellationToken);
     }
 
-    public async Task<string> BuildEsjzoneAsync(
+    public async Task<string> BuildNovelAsync(
+        string sourceId,
         string bookUrl,
         string? outputDirectory,
         string? cookie,
+        string? userAgent,
+        bool autoPurchase,
+        int? maxPurchaseCost,
         int? maxChapters,
         int? chapterStart,
         int? chapterEnd,
@@ -37,12 +42,65 @@ public sealed class BackendRunner
         {
             if (!string.IsNullOrWhiteSpace(cookie))
             {
-                cookieFile = Path.Combine(Path.GetTempPath(), $"kindle-epub-fixer-esjzone-{Guid.NewGuid():N}.cookie.txt");
+                cookieFile = Path.Combine(Path.GetTempPath(), $"kindle-epub-fixer-{sourceId}-{Guid.NewGuid():N}.cookie.txt");
                 await File.WriteAllTextAsync(cookieFile, CleanCookieHeader(cookie), Utf8NoBom, cancellationToken);
             }
 
-            var psi = CreateEsjzoneStartInfo(bookUrl, outputDirectory, cookieFile, maxChapters, chapterStart, chapterEnd);
+            var psi = CreateNovelStartInfo(
+                sourceId,
+                bookUrl,
+                outputDirectory,
+                cookieFile,
+                userAgent,
+                autoPurchase,
+                maxPurchaseCost,
+                maxChapters,
+                chapterStart,
+                chapterEnd);
             return await RunAsync(psi, onLog, onProgress, cancellationToken);
+        }
+        finally
+        {
+            if (!string.IsNullOrWhiteSpace(cookieFile))
+            {
+                try
+                {
+                    File.Delete(cookieFile);
+                }
+                catch
+                {
+                }
+            }
+        }
+    }
+
+    public async Task<MasiroPurchasePlan> PreviewMasiroPurchaseAsync(
+        string bookUrl,
+        string? cookie,
+        string? userAgent,
+        int? maxChapters,
+        int? chapterStart,
+        int? chapterEnd,
+        CancellationToken cancellationToken)
+    {
+        string? cookieFile = null;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(cookie))
+            {
+                cookieFile = Path.Combine(Path.GetTempPath(), $"kindle-epub-fixer-masiro-{Guid.NewGuid():N}.cookie.txt");
+                await File.WriteAllTextAsync(cookieFile, CleanCookieHeader(cookie), Utf8NoBom, cancellationToken);
+            }
+
+            var psi = CreateMasiroPreviewStartInfo(bookUrl, cookieFile, userAgent, maxChapters, chapterStart, chapterEnd);
+            MasiroPurchasePlan? plan = null;
+            await RunAsync(
+                psi,
+                _ => { },
+                _ => { },
+                cancellationToken,
+                purchasePlan => plan = purchasePlan);
+            return plan ?? throw new InvalidOperationException("Backend did not return a Masiro purchase preview.");
         }
         finally
         {
@@ -77,7 +135,8 @@ public sealed class BackendRunner
         ProcessStartInfo psi,
         Action<string> onLog,
         Action<BackendProgress> onProgress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Action<MasiroPurchasePlan>? onPurchasePlan = null)
     {
         using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
@@ -127,6 +186,15 @@ public sealed class BackendRunner
                         break;
                     case "done":
                         outputPath = root.GetProperty("output").GetString() ?? outputPath;
+                        break;
+                    case "purchase_plan":
+                        var chapterCount = root.GetProperty("chapter_count").GetInt32();
+                        var totalCost = root.GetProperty("total_cost").GetInt32();
+                        int? accountBalance = root.TryGetProperty("account_balance", out var balanceElement)
+                            && balanceElement.ValueKind == JsonValueKind.Number
+                            ? balanceElement.GetInt32()
+                            : null;
+                        onPurchasePlan?.Invoke(new MasiroPurchasePlan(chapterCount, totalCost, accountBalance));
                         break;
                     case "error":
                         throw new InvalidOperationException(root.GetProperty("message").GetString());
@@ -188,16 +256,22 @@ public sealed class BackendRunner
         return psi;
     }
 
-    private static ProcessStartInfo CreateEsjzoneStartInfo(
+    private static ProcessStartInfo CreateNovelStartInfo(
+        string sourceId,
         string bookUrl,
         string? outputDirectory,
         string? cookieFile,
+        string? userAgent,
+        bool autoPurchase,
+        int? maxPurchaseCost,
         int? maxChapters,
         int? chapterStart,
         int? chapterEnd)
     {
         var psi = CreateBaseStartInfo();
-        psi.ArgumentList.Add("--esjzone-url");
+        psi.ArgumentList.Add("--novel-source");
+        psi.ArgumentList.Add(sourceId);
+        psi.ArgumentList.Add("--novel-url");
         psi.ArgumentList.Add(bookUrl);
         if (!string.IsNullOrWhiteSpace(outputDirectory))
         {
@@ -206,8 +280,22 @@ public sealed class BackendRunner
         }
         if (!string.IsNullOrWhiteSpace(cookieFile))
         {
-            psi.ArgumentList.Add("--esjzone-cookie-file");
+            psi.ArgumentList.Add("--novel-cookie-file");
             psi.ArgumentList.Add(cookieFile);
+        }
+        if (!string.IsNullOrWhiteSpace(userAgent))
+        {
+            psi.ArgumentList.Add("--novel-user-agent");
+            psi.ArgumentList.Add(userAgent);
+        }
+        if (autoPurchase)
+        {
+            psi.ArgumentList.Add("--novel-auto-purchase");
+            if (maxPurchaseCost is not null)
+            {
+                psi.ArgumentList.Add("--novel-max-purchase-cost");
+                psi.ArgumentList.Add(maxPurchaseCost.Value.ToString());
+            }
         }
         if (maxChapters is > 0)
         {
@@ -225,6 +313,46 @@ public sealed class BackendRunner
             psi.ArgumentList.Add(chapterEnd.Value.ToString());
         }
 
+        return psi;
+    }
+
+    private static ProcessStartInfo CreateMasiroPreviewStartInfo(
+        string bookUrl,
+        string? cookieFile,
+        string? userAgent,
+        int? maxChapters,
+        int? chapterStart,
+        int? chapterEnd)
+    {
+        var psi = CreateBaseStartInfo();
+        psi.ArgumentList.Add("--masiro-url");
+        psi.ArgumentList.Add(bookUrl);
+        psi.ArgumentList.Add("--masiro-preview");
+        if (!string.IsNullOrWhiteSpace(cookieFile))
+        {
+            psi.ArgumentList.Add("--masiro-cookie-file");
+            psi.ArgumentList.Add(cookieFile);
+        }
+        if (!string.IsNullOrWhiteSpace(userAgent))
+        {
+            psi.ArgumentList.Add("--masiro-user-agent");
+            psi.ArgumentList.Add(userAgent);
+        }
+        if (maxChapters is > 0)
+        {
+            psi.ArgumentList.Add("--max-chapters");
+            psi.ArgumentList.Add(maxChapters.Value.ToString());
+        }
+        if (chapterStart is > 0)
+        {
+            psi.ArgumentList.Add("--chapter-start");
+            psi.ArgumentList.Add(chapterStart.Value.ToString());
+        }
+        if (chapterEnd is > 0)
+        {
+            psi.ArgumentList.Add("--chapter-end");
+            psi.ArgumentList.Add(chapterEnd.Value.ToString());
+        }
         return psi;
     }
 }

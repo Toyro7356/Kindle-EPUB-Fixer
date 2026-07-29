@@ -12,13 +12,30 @@ namespace KindleEpubFixer.WinUI.Views;
 
 public sealed partial class EsjzonePage : UserControl
 {
-    private const string DefaultEsjzoneBaseUrl = "https://www.esjzone.cc/";
-    private const string LegacyEsjzoneBaseUrl = "https://www.esjzone.one/";
     private const int MaxLogLines = 2000;
     private const int MaxLogFlushLines = 250;
 
+    private static readonly SourceConfig EsjzoneConfig = new(
+        "esjzone",
+        "ESJZone",
+        "https://www.esjzone.cc/detail/...",
+        "https://www.esjzone.cc/my/profile.html",
+        "https://www.esjzone.one/my/profile.html",
+        ["https://www.esjzone.cc/", "https://www.esjzone.one/"],
+        ["esjzone.cc", "www.esjzone.cc", "esjzone.one", "www.esjzone.one"]);
+
+    private static readonly SourceConfig MasiroConfig = new(
+        "masiro",
+        "Masiro",
+        "https://masiro.me/admin/novelView?novel_id=...",
+        "https://masiro.me/admin",
+        null,
+        ["https://masiro.me/", "https://www.masiro.me/"],
+        ["masiro.me", "www.masiro.me", "masi.ro", "www.masi.ro"]);
+
     private readonly BackendRunner _backend = new();
     private readonly SettingsStore _settings = new();
+    private readonly SourceConfig _source;
     private readonly object _logLock = new();
     private readonly Queue<string> _pendingLogLines = new();
     private readonly List<string> _logLines = new();
@@ -26,10 +43,21 @@ public sealed partial class EsjzonePage : UserControl
     private CancellationTokenSource? _cancellation;
     private bool _isRunning;
     private bool _isLoadingSettings;
+    private string _userAgent = string.Empty;
 
     public EsjzonePage()
+        : this(EsjzoneConfig)
     {
+    }
+
+    public static EsjzonePage CreateMasiroPage() => new(MasiroConfig);
+
+    private EsjzonePage(SourceConfig source)
+    {
+        _source = source;
         InitializeComponent();
+        UrlBox.PlaceholderText = source.UrlPlaceholder;
+        AutoPurchaseBox.Visibility = source.SourceId == "masiro" ? Visibility.Visible : Visibility.Collapsed;
         _logFlushTimer = DispatcherQueue.CreateTimer();
         _logFlushTimer.Interval = TimeSpan.FromMilliseconds(120);
         _logFlushTimer.Tick += (_, _) => FlushPendingLogs(MaxLogFlushLines);
@@ -47,11 +75,17 @@ public sealed partial class EsjzonePage : UserControl
         {
             OutputDirBox.Text = _settings.DefaultOutputDirectory;
         }
-        RememberCookieBox.IsChecked = _settings.RememberEsjzoneCookie;
-        if (_settings.RememberEsjzoneCookie && string.IsNullOrWhiteSpace(CookieBox.Text))
+        var rememberCookie = _source.SourceId == "masiro"
+            ? _settings.RememberMasiroCookie
+            : _settings.RememberEsjzoneCookie;
+        RememberCookieBox.IsChecked = rememberCookie;
+        if (rememberCookie && string.IsNullOrWhiteSpace(CookieBox.Text))
         {
-            CookieBox.Text = _settings.EsjzoneCookie;
+            CookieBox.Text = _source.SourceId == "masiro"
+                ? _settings.MasiroCookie
+                : _settings.EsjzoneCookie;
         }
+        _userAgent = _source.SourceId == "masiro" ? _settings.MasiroUserAgent : string.Empty;
         _isLoadingSettings = false;
     }
 
@@ -80,13 +114,13 @@ public sealed partial class EsjzonePage : UserControl
         var url = UrlBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(url))
         {
-            App.MainWindowInstance?.ShowNotification("请输入 ESJZone 地址", null, InfoBarSeverity.Warning);
+            App.MainWindowInstance?.ShowNotification($"请输入 {_source.DisplayName} 地址", null, InfoBarSeverity.Warning);
             return;
         }
 
-        if (!IsSupportedEsjzoneUrl(url))
+        if (!IsSupportedSourceUrl(url))
         {
-            App.MainWindowInstance?.ShowNotification("地址无效", "请使用 ESJZone 详情页地址。", InfoBarSeverity.Warning);
+            App.MainWindowInstance?.ShowNotification("地址无效", $"请使用 {_source.DisplayName} 详情页地址。", InfoBarSeverity.Warning);
             return;
         }
 
@@ -104,15 +138,45 @@ public sealed partial class EsjzonePage : UserControl
         Progress.Value = 0;
         ClearLog();
         OutputText.Text = string.Empty;
-        StatusChanged?.Invoke(this, "ESJZone 转制中");
+        StatusChanged?.Invoke(this, $"{_source.DisplayName} 转制中");
         await Task.Yield();
 
         try
         {
-            var output = await _backend.BuildEsjzoneAsync(
+            var autoPurchase = _source.SourceId == "masiro" && AutoPurchaseBox.IsChecked == true;
+            int? approvedPurchaseCost = null;
+            if (autoPurchase)
+            {
+                StatusChanged?.Invoke(this, "计算 Masiro 购买费用");
+                var purchasePlan = await _backend.PreviewMasiroPurchaseAsync(
+                    url,
+                    CookieBox.Text,
+                    _userAgent,
+                    maxChapters,
+                    chapterStart,
+                    chapterEnd,
+                    _cancellation.Token);
+                if (purchasePlan.AccountBalance is not null && purchasePlan.TotalCost > purchasePlan.AccountBalance)
+                {
+                    throw new InvalidOperationException(
+                        $"所选章节需要 {purchasePlan.TotalCost} 金币，当前余额为 {purchasePlan.AccountBalance} 金币。");
+                }
+                if (purchasePlan.ChapterCount > 0 && !await ConfirmPurchaseAsync(purchasePlan))
+                {
+                    StatusChanged?.Invoke(this, "已取消自动购买");
+                    return;
+                }
+                approvedPurchaseCost = purchasePlan.TotalCost;
+            }
+
+            var output = await _backend.BuildNovelAsync(
+                _source.SourceId,
                 url,
                 string.IsNullOrWhiteSpace(OutputDirBox.Text) ? null : OutputDirBox.Text.Trim(),
                 CookieBox.Text,
+                _userAgent,
+                autoPurchase,
+                approvedPurchaseCost,
                 maxChapters,
                 chapterStart,
                 chapterEnd,
@@ -135,7 +199,7 @@ public sealed partial class EsjzonePage : UserControl
             FlushPendingLogs();
             OutputText.Text = output;
             Progress.Value = 100;
-            StatusChanged?.Invoke(this, "ESJZone 转制完成");
+            StatusChanged?.Invoke(this, $"{_source.DisplayName} 转制完成");
             App.MainWindowInstance?.ShowNotification("转制完成", output, InfoBarSeverity.Success);
         }
         catch (OperationCanceledException)
@@ -147,7 +211,7 @@ public sealed partial class EsjzonePage : UserControl
         catch (Exception exc)
         {
             AppendLog($"错误: {exc.Message}");
-            StatusChanged?.Invoke(this, "ESJZone 转制失败");
+            StatusChanged?.Invoke(this, $"{_source.DisplayName} 转制失败");
             App.MainWindowInstance?.ShowNotification("转制失败", exc.Message, InfoBarSeverity.Error);
         }
         finally
@@ -155,9 +219,29 @@ public sealed partial class EsjzonePage : UserControl
             FlushPendingLogs();
             _isRunning = false;
             SetStartButton(cancelMode: false);
+            AutoPurchaseBox.IsChecked = false;
             _cancellation?.Dispose();
             _cancellation = null;
         }
+    }
+
+    private async Task<bool> ConfirmPurchaseAsync(MasiroPurchasePlan plan)
+    {
+        var balanceText = plan.AccountBalance is null
+            ? "未能读取当前余额。"
+            : $"当前余额：{plan.AccountBalance} 金币。";
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "确认自动购买",
+            Content = $"所选范围包含 {plan.ChapterCount} 个付费章节，预计总计 {plan.TotalCost} 金币。\n"
+                + balanceText
+                + "\n购买成功后无法由本工具撤销。后端将以本次总价作为硬预算上限，价格变化时会停止。",
+            PrimaryButtonText = $"购买（{plan.TotalCost} 金币）",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
     private void AppendLog(string message)
@@ -257,8 +341,17 @@ public sealed partial class EsjzonePage : UserControl
 
     private void SaveCookiePreference()
     {
-        _settings.RememberEsjzoneCookie = RememberCookieBox.IsChecked == true;
-        _settings.EsjzoneCookie = _settings.RememberEsjzoneCookie ? CookieBox.Text.Trim() : string.Empty;
+        if (_source.SourceId == "masiro")
+        {
+            _settings.RememberMasiroCookie = RememberCookieBox.IsChecked == true;
+            _settings.MasiroCookie = _settings.RememberMasiroCookie ? CookieBox.Text.Trim() : string.Empty;
+            _settings.MasiroUserAgent = _settings.RememberMasiroCookie ? _userAgent : string.Empty;
+        }
+        else
+        {
+            _settings.RememberEsjzoneCookie = RememberCookieBox.IsChecked == true;
+            _settings.EsjzoneCookie = _settings.RememberEsjzoneCookie ? CookieBox.Text.Trim() : string.Empty;
+        }
         _settings.SaveAppSettings();
     }
 
@@ -295,18 +388,14 @@ public sealed partial class EsjzonePage : UserControl
         return true;
     }
 
-    private static bool IsSupportedEsjzoneUrl(string url)
+    private bool IsSupportedSourceUrl(string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed))
         {
             return false;
         }
 
-        var host = parsed.Host.ToLowerInvariant();
-        return host == "www.esjzone.cc"
-            || host == "esjzone.cc"
-            || host == "www.esjzone.one"
-            || host == "esjzone.one";
+        return _source.Hosts.Contains(parsed.Host, StringComparer.OrdinalIgnoreCase);
     }
 
     private async void Login_Click(object sender, RoutedEventArgs e)
@@ -315,11 +404,11 @@ public sealed partial class EsjzonePage : UserControl
         {
             Width = 920,
             Height = 620,
-            Source = new Uri(DefaultEsjzoneBaseUrl + "my/profile.html"),
+            Source = new Uri(_source.LoginUrl),
         };
         var statusText = new TextBlock
         {
-            Text = "登录完成后会自动读取 Cookie，也可以点击“获取 Cookie”。",
+            Text = "会自动读取当前 Cookie；如旧登录态已失效，请点击“重新登录”。",
             TextWrapping = TextWrapping.Wrap,
             Foreground = Application.Current.Resources["MutedTextBrush"] as Microsoft.UI.Xaml.Media.Brush,
         };
@@ -333,17 +422,20 @@ public sealed partial class EsjzonePage : UserControl
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = "ESJZone 网页登录",
+            Title = $"{_source.DisplayName} 网页登录",
             Content = content,
             PrimaryButtonText = "获取 Cookie",
-            SecondaryButtonText = "打开 .one",
+            SecondaryButtonText = _source.SourceId == "masiro"
+                ? "重新登录"
+                : _source.AlternateLoginUrl is null ? null : "打开 .one",
             CloseButtonText = "关闭",
             DefaultButton = ContentDialogButton.Primary,
         };
 
         DispatcherQueueTimer? autoCloseTimer = null;
+        var hasSeenLoginPage = false;
 
-        async Task<bool> CaptureCookiesAsync(bool notify, bool requireLoggedIn)
+        async Task<bool> CaptureCookiesAsync(bool notify, bool requireLoggedIn, bool autoClose)
         {
             try
             {
@@ -365,21 +457,27 @@ public sealed partial class EsjzonePage : UserControl
                 }
 
                 CookieBox.Text = cookieText;
+                _userAgent = await ReadBrowserUserAgentAsync(webView);
                 SaveCookiePreference();
-                statusText.Text = "已读取 Cookie。窗口会自动关闭。";
+                statusText.Text = autoClose
+                    ? "已读取新的 Cookie。窗口会自动关闭。"
+                    : "已刷新当前 Cookie。若请求仍被拒绝，请点击“重新登录”清除旧会话。";
                 if (notify)
                 {
-                    App.MainWindowInstance?.ShowNotification("已获取 ESJZone Cookie", null, InfoBarSeverity.Success);
+                    App.MainWindowInstance?.ShowNotification($"已获取 {_source.DisplayName} Cookie", null, InfoBarSeverity.Success);
                 }
 
-                autoCloseTimer ??= DispatcherQueue.CreateTimer();
-                autoCloseTimer.Interval = TimeSpan.FromMilliseconds(450);
-                autoCloseTimer.Tick += (_, _) =>
+                if (autoClose)
                 {
-                    autoCloseTimer.Stop();
-                    dialog.Hide();
-                };
-                autoCloseTimer.Start();
+                    autoCloseTimer ??= DispatcherQueue.CreateTimer();
+                    autoCloseTimer.Interval = TimeSpan.FromMilliseconds(450);
+                    autoCloseTimer.Tick += (_, _) =>
+                    {
+                        autoCloseTimer.Stop();
+                        dialog.Hide();
+                    };
+                    autoCloseTimer.Start();
+                }
                 return true;
             }
             catch (Exception exc)
@@ -396,24 +494,54 @@ public sealed partial class EsjzonePage : UserControl
                 return;
             }
 
-            if (webView.Source.Host.EndsWith("esjzone.cc", StringComparison.OrdinalIgnoreCase)
-                || webView.Source.Host.EndsWith("esjzone.one", StringComparison.OrdinalIgnoreCase))
+            if (_source.Hosts.Contains(webView.Source.Host, StringComparer.OrdinalIgnoreCase))
             {
-                await CaptureCookiesAsync(notify: false, requireLoggedIn: true);
+                if (!await LooksLoggedInAsync(webView))
+                {
+                    hasSeenLoginPage = true;
+                    statusText.Text = "等待登录完成。成功后会自动读取新的 Cookie。";
+                    return;
+                }
+
+                await CaptureCookiesAsync(
+                    notify: false,
+                    requireLoggedIn: false,
+                    autoClose: hasSeenLoginPage);
             }
         };
 
         dialog.PrimaryButtonClick += async (_, args) =>
         {
             var deferral = args.GetDeferral();
-            args.Cancel = !await CaptureCookiesAsync(notify: true, requireLoggedIn: false);
+            args.Cancel = !await CaptureCookiesAsync(notify: true, requireLoggedIn: false, autoClose: true);
             deferral.Complete();
         };
-        dialog.SecondaryButtonClick += (_, args) =>
+        dialog.SecondaryButtonClick += async (_, args) =>
         {
             args.Cancel = true;
-            webView.Source = new Uri(LegacyEsjzoneBaseUrl + "my/profile.html");
-            statusText.Text = "已切换到 .one 登录页。登录完成后会自动读取 Cookie。";
+            if (_source.SourceId == "masiro")
+            {
+                try
+                {
+                    await webView.EnsureCoreWebView2Async();
+                    webView.CoreWebView2.CookieManager.DeleteAllCookies();
+                    CookieBox.Text = string.Empty;
+                    _userAgent = string.Empty;
+                    SaveCookiePreference();
+                    hasSeenLoginPage = true;
+                    statusText.Text = "旧 Cookie 已清除，请在网页中重新登录。";
+                    webView.CoreWebView2.Navigate(_source.LoginUrl);
+                }
+                catch (Exception exc)
+                {
+                    statusText.Text = $"清除旧登录态失败：{exc.Message}";
+                }
+            }
+            else if (_source.AlternateLoginUrl is not null)
+            {
+                webView.Source = new Uri(_source.AlternateLoginUrl);
+                statusText.Text = "已切换到备用登录页。登录完成后会自动读取 Cookie。";
+            }
         };
 
         await dialog.ShowAsync();
@@ -437,13 +565,15 @@ public sealed partial class EsjzonePage : UserControl
         }
     }
 
-    private static async Task<string> ReadCookieHeaderAsync(WebView2 webView)
+    private async Task<string> ReadCookieHeaderAsync(WebView2 webView)
     {
         await webView.EnsureCoreWebView2Async();
         var manager = webView.CoreWebView2.CookieManager;
         var cookies = new List<Microsoft.Web.WebView2.Core.CoreWebView2Cookie>();
-        cookies.AddRange(await manager.GetCookiesAsync(DefaultEsjzoneBaseUrl));
-        cookies.AddRange(await manager.GetCookiesAsync(LegacyEsjzoneBaseUrl));
+        foreach (var baseUrl in _source.CookieBaseUrls)
+        {
+            cookies.AddRange(await manager.GetCookiesAsync(baseUrl));
+        }
 
         return string.Join(
             "; ",
@@ -452,6 +582,19 @@ public sealed partial class EsjzonePage : UserControl
                 .Select(group => group.First())
                 .Where(cookie => !string.IsNullOrWhiteSpace(cookie.Name))
                 .Select(cookie => $"{cookie.Name}={cookie.Value}"));
+    }
+
+    private static async Task<string> ReadBrowserUserAgentAsync(WebView2 webView)
+    {
+        try
+        {
+            var result = await webView.ExecuteScriptAsync("navigator.userAgent");
+            return JsonSerializer.Deserialize<string>(result) ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     private void Input_TextChanged(object sender, TextChangedEventArgs e)
@@ -477,4 +620,13 @@ public sealed partial class EsjzonePage : UserControl
             },
         };
     }
+
+    private sealed record SourceConfig(
+        string SourceId,
+        string DisplayName,
+        string UrlPlaceholder,
+        string LoginUrl,
+        string? AlternateLoginUrl,
+        string[] CookieBaseUrls,
+        string[] Hosts);
 }

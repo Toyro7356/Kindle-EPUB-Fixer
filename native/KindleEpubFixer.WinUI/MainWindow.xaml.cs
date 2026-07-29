@@ -22,6 +22,7 @@ public sealed partial class MainWindow : Window
     private HomePage? _homePage;
     private SettingsPage? _settingsPage;
     private EsjzonePage? _esjzonePage;
+    private EsjzonePage? _masiroPage;
     private AboutPage? _aboutPage;
 
     public MainWindow()
@@ -120,6 +121,11 @@ public sealed partial class MainWindow : Window
                 _esjzonePage.RefreshSettings();
                 ContentHost.Children.Add(_esjzonePage);
                 break;
+            case "Masiro":
+                _masiroPage ??= CreateMasiroPage();
+                _masiroPage.RefreshSettings();
+                ContentHost.Children.Add(_masiroPage);
+                break;
             case "About":
                 _aboutPage ??= new AboutPage();
                 ContentHost.Children.Add(_aboutPage);
@@ -146,6 +152,7 @@ public sealed partial class MainWindow : Window
         {
             _homePage?.RefreshSettings();
             _esjzonePage?.RefreshSettings();
+            _masiroPage?.RefreshSettings();
         };
         return page;
     }
@@ -153,6 +160,13 @@ public sealed partial class MainWindow : Window
     private EsjzonePage CreateEsjzonePage()
     {
         var page = new EsjzonePage();
+        page.StatusChanged += (_, status) => StatusText.Text = status;
+        return page;
+    }
+
+    private EsjzonePage CreateMasiroPage()
+    {
+        var page = EsjzonePage.CreateMasiroPage();
         page.StatusChanged += (_, status) => StatusText.Text = status;
         return page;
     }
